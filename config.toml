@@ -1,9 +1,9 @@
-baseurl = "http://hansjoerg.me/"
+baseurl = "http://hansjoerg.netlify.com/"
 title = "It was simple."
 theme = "ghostwriter"
 languageCode = "en-us"
 copyright = "Hansjörg Plieninger"
-# disqusShortname = "XXX"
+disqusShortname = "hansjoergplieninger"
 # googleAnalytics = "XXX"
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 math = true
