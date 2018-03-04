@@ -1,25 +1,24 @@
-baseurl = "http://hansjoerg.netlify.com/"
-title = "It was simple."
+baseurl = "https://hansjoerg.netlify.com/"
+title = "IT WAS SIMPLE"
 theme = "ghostwriter"
 languageCode = "en-us"
 copyright = "Hansjörg Plieninger"
 disqusShortname = "hansjoergplieninger"
-# googleAnalytics = "XXX"
+googleAnalytics = "XXX"
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
-math = true
 
 [Author]
-    name = "Hansjörg Plieninger"
-    # profile = "https://google.com/+XXX"
+    name = "My Name"
+    profile = "https://google.com/+XXX"
 
 [Taxonomies]
     tag = "tags"
 
 [Params]
     intro = true
-    headline = "IT WAS SIMPLE"
-    description = "Data science, psychology, R, blog by Hansjörg Plieninger"
-    github = "https://github.com/hplieninger/"
+    headline = "Ghostwriter example"
+    description = "Ghostwriter example description"
+    # github = "https://github.com/XXX"
     # gitlab = "https://gitlab.com/XXX"
     # linkedin = "https://linkedin.com/in/XXX/"
     # gplus = "https://google.com/+XXX"
@@ -31,16 +30,15 @@ math = true
     shareFacebook = true
     shareGooglePlus = true
     shareLinkedIn = false
-    dateFormat = "Mon, Jan 2, 2006"
+    # dateFormat = "Mon, Jan 2, 2006"
+    dateFormat = "Jan 2, 2006"
     highlightJsUrl = ""
     highlightJsLocalUrl = ""
+    # options for highlight.js (version, additional languages, and theme)
     highlightjsVersion = "9.11.0"
     highlightjsCDN = "//cdn.bootcss.com"
-    highlightjsLang = ["r", "yaml", "tex", "Stan"]
-    highlightjsTheme = "github"
-
-    MathJaxCDN = "//cdn.bootcss.com"
-    MathJaxVersion = "2.7.1"
+    highlightjsLang = ["r", "yaml", "tex"]
+    highlightjsTheme = "tomorrow"
 
 [Permalinks]
     post = "/:year/:month/:day/:slug/"

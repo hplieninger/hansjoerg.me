@@ -18,6 +18,7 @@
             <link href="{{ .RSSLink }}" rel="alternate" type="application/rss+xml">
         {{ end }}
         {{ partial "extra-in-head.html" . }}
+        {{ partial "head_highlightjs" . }}
     </head>
     <body>
         {{ template "_internal/google_analytics.html" . }}

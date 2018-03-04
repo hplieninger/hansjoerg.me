@@ -1,0 +1,9 @@
+# Ignore all files in this directory
+*
+# Except this file
+!.gitignore
+# Now, whitelist anything that's a directory
+# !*/
+!dist/
+# And all the file types you're interested in.
+!dist/styles.css

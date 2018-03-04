@@ -32,6 +32,8 @@
         {{ else }}
             <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
         {{ end }}
+        {{ partial "extra-in-foot.html" . }}
+        {{ partial "footer_highlightjs" . }}
         
         <script src="{{ .Site.BaseURL }}js/scripts.js"></script>
     </body>

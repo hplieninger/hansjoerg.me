@@ -34,13 +34,14 @@ dat &lt;- affect %&gt;%
     group_by(Film) %&gt;% 
     sample_n(50)
 
-table(dat$Film)</code></pre>
-<pre><code>## 
-## documentary      horror      nature      comedy 
-##          50          50          50          50</code></pre>
-<pre class="r"><code>(group_means &lt;- tapply(dat$PA2, dat$Film, mean))</code></pre>
-<pre><code>## documentary      horror      nature      comedy 
-##       7.612       7.460       7.960      12.090</code></pre>
+table(dat$Film)
+#&gt; 
+#&gt; documentary      horror      nature      comedy 
+#&gt;          50          50          50          50
+
+(group_means &lt;- tapply(dat$PA2, dat$Film, mean))
+#&gt; documentary      horror      nature      comedy 
+#&gt;       7.612       7.460       7.960      12.090</code></pre>
 </div>
 <div id="anova-and-spss-perspective" class="section level2">
 <h2>ANOVA and SPSS Perspective</h2>
@@ -80,7 +81,7 @@ table(dat$Film)</code></pre>
 </tbody>
 </table>
 <p>Furthermore, one of the very few things that I like about SPSS is the fact that I can relatively easily define such contrasts using <code>UNIANOVA</code>:</p>
-<pre class="r"><code># SPSS Syntax
+<pre class="r"><code>### SPSS Syntax ###
 UNIANOVA PA2 BY Film
   /CONTRAST(Film) = SPECIAL(-1 -1 -1  3
                              1 -2  1  0
@@ -137,58 +138,62 @@ UNIANOVA PA2 BY Film
 <div id="solution" class="section level2">
 <h2>Solution</h2>
 <p>The solution is simple, but:</p>
-<pre class="r"><code>fortunes::fortune(&quot;done it.&quot;)</code></pre>
-<pre><code>## 
-## It was simple, but you know, it&#39;s always simple when you&#39;ve done it.
-##    -- Simone Gabbriellini (after solving a problem with a trick suggested
-##       on the list)
-##       R-help (August 2005)</code></pre>
+<pre class="r"><code>fortunes::fortune(&quot;done it.&quot;)
+#&gt; 
+#&gt; It was simple, but you know, it&#39;s always simple when you&#39;ve done it.
+#&gt;    -- Simone Gabbriellini (after solving a problem with a trick suggested
+#&gt;       on the list)
+#&gt;       R-help (August 2005)</code></pre>
 <p>The solution is that the coding scheme used in SPSS above directly defines the <strong>contrast matrix</strong> <span class="math inline">\(\mathbf{C}\)</span> and this allows us to contrasts group means in a sensible way. On the other hand, the dummy-coding scheme used above was a <strong>coding matrix</strong> <span class="math inline">\(\mathbf{B}\)</span>. These are two different things and they are related in the following way: <span class="math display">\[\beta = \mathbf{C} \mu = \mathbf{B}^{-1} \mu.\]</span> That is, the estimates are the reparameterized group means. The contrasts in <span class="math inline">\(\mathbf{C}\)</span> directly specify the weights of the groups and are easily interpretable. However, only the inverse of <span class="math inline">\(\mathbf{B}\)</span> and not the codes themselves give us the meaning of the estimates.</p>
 <div id="examples" class="section level3">
 <h3>Examples</h3>
 <div id="dummy-coding" class="section level4">
 <h4>Dummy Coding</h4>
 <p>Using dummy coding for the affect data gives the following results:</p>
-<pre class="r"><code>contr.treatment(4)</code></pre>
-<pre><code>##   2 3 4
-## 1 0 0 0
-## 2 1 0 0
-## 3 0 1 0
-## 4 0 0 1</code></pre>
-<pre class="r"><code>summary(lm(PA2 ~ Film, data = dat))</code></pre>
-<pre><code>## 
-## Call:
-## lm(formula = PA2 ~ Film, data = dat)
-## 
-## Residuals:
-##     Min      1Q  Median      3Q     Max 
-## -12.090  -4.612  -0.536   3.942  18.040 
-## 
-## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)   7.6120     0.8058   9.446  &lt; 2e-16 ***
-## Filmhorror   -0.1520     1.1396  -0.133 0.894029    
-## Filmnature    0.3480     1.1396   0.305 0.760407    
-## Filmcomedy    4.4780     1.1396   3.929 0.000118 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Residual standard error: 5.698 on 196 degrees of freedom
-## Multiple R-squared:  0.1038, Adjusted R-squared:  0.09005 
-## F-statistic: 7.564 on 3 and 196 DF,  p-value: 8.184e-05</code></pre>
-<pre class="r"><code>group_means</code></pre>
-<pre><code>## documentary      horror      nature      comedy 
-##       7.612       7.460       7.960      12.090</code></pre>
-<pre class="r"><code>7.46 - 7.612       # == &#39;Filmhorror&#39;</code></pre>
-<pre><code>## [1] -0.152</code></pre>
+<pre class="r"><code>contr.treatment(4)
+#&gt;   2 3 4
+#&gt; 1 0 0 0
+#&gt; 2 1 0 0
+#&gt; 3 0 1 0
+#&gt; 4 0 0 1
+
+summary(lm(PA2 ~ Film, data = dat))
+#&gt; 
+#&gt; Call:
+#&gt; lm(formula = PA2 ~ Film, data = dat)
+#&gt; 
+#&gt; Residuals:
+#&gt;     Min      1Q  Median      3Q     Max 
+#&gt; -12.090  -4.612  -0.536   3.942  18.040 
+#&gt; 
+#&gt; Coefficients:
+#&gt;             Estimate Std. Error t value Pr(&gt;|t|)    
+#&gt; (Intercept)   7.6120     0.8058   9.446  &lt; 2e-16 ***
+#&gt; Filmhorror   -0.1520     1.1396  -0.133 0.894029    
+#&gt; Filmnature    0.3480     1.1396   0.305 0.760407    
+#&gt; Filmcomedy    4.4780     1.1396   3.929 0.000118 ***
+#&gt; ---
+#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+#&gt; 
+#&gt; Residual standard error: 5.698 on 196 degrees of freedom
+#&gt; Multiple R-squared:  0.1038, Adjusted R-squared:  0.09005 
+#&gt; F-statistic: 7.564 on 3 and 196 DF,  p-value: 8.184e-05
+
+group_means
+#&gt; documentary      horror      nature      comedy 
+#&gt;       7.612       7.460       7.960      12.090
+
+7.46 - 7.612       # == &#39;Filmhorror&#39;
+#&gt; [1] -0.152</code></pre>
 <p>Everybody knows that the intercept is equal to the first group mean, and so on and so forth. But why is this exactly the case. This can be seen when taking the inverse of the coding matrix (we need to add a vector of 1’s for the intercept):</p>
-<pre class="r"><code>solve(cbind(Ave = 1, contr.treatment(4)))</code></pre>
-<pre><code>##      1 2 3 4
-## Ave  1 0 0 0
-## 2   -1 1 0 0
-## 3   -1 0 1 0
-## 4   -1 0 0 1</code></pre>
-<pre class="r"><code># codingMatrices::mean_contrasts(contr.treatment(4))</code></pre>
+<pre class="r"><code>solve(cbind(Ave = 1, contr.treatment(4)))
+#&gt;      1 2 3 4
+#&gt; Ave  1 0 0 0
+#&gt; 2   -1 1 0 0
+#&gt; 3   -1 0 1 0
+#&gt; 4   -1 0 0 1
+
+# codingMatrices::mean_contrasts(contr.treatment(4))</code></pre>
 <p>This is the contrast matrix <span class="math inline">\(\mathbf{C}\)</span>. The first row gives you the interpretation of the intercept, and we see that it’s <span class="math inline">\(\beta_0 = 1\mu_1 + 0\mu_2 + 0\mu_3 + 0\mu_4\)</span>. Likewise, <span class="math inline">\(\beta_1 = -1\mu_1 + 1\mu_2\)</span>. (So if you want to use hand-coded dummy coding in SPSS, you need to use the last three rows of this <span class="math inline">\(\mathbf{C}\)</span> matrix above.)</p>
 </div>
 <div id="planned-comparisonscontrast-coding" class="section level4">
@@ -197,103 +202,108 @@ UNIANOVA PA2 BY Film
 <pre class="r"><code>(B1 &lt;- matrix(c( 1,  1,  1, 1,
                 -1, -1, -1, 3,
                  1, -2,  1, 0,
-                -1,  0,  1, 0), 4, 4, byrow = TRUE))</code></pre>
-<pre><code>##      [,1] [,2] [,3] [,4]
-## [1,]    1    1    1    1
-## [2,]   -1   -1   -1    3
-## [3,]    1   -2    1    0
-## [4,]   -1    0    1    0</code></pre>
-<pre class="r"><code>B1 &lt;- B1 / (4:1)
+                -1,  0,  1, 0), 4, 4, byrow = TRUE))
+#&gt;      [,1] [,2] [,3] [,4]
+#&gt; [1,]    1    1    1    1
+#&gt; [2,]   -1   -1   -1    3
+#&gt; [3,]    1   -2    1    0
+#&gt; [4,]   -1    0    1    0
+B1 &lt;- B1 / (4:1)
 
 C &lt;- solve(B1)[, -1]
 colnames(C) &lt;- paste0(&quot;_Hyp&quot;, 1:3)
 
-summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = C)))</code></pre>
-<pre><code>## 
-## Call:
-## lm(formula = PA2 ~ Film, data = dat, contrasts = list(Film = C))
-## 
-## Residuals:
-##     Min      1Q  Median      3Q     Max 
-## -12.090  -4.612  -0.536   3.942  18.040 
-## 
-## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)   8.7805     0.4029  21.793  &lt; 2e-16 ***
-## Film_Hyp1     4.4127     0.9305   4.742 4.06e-06 ***
-## Film_Hyp2     0.3260     0.9869   0.330    0.742    
-## Film_Hyp3     0.3480     1.1396   0.305    0.760    
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Residual standard error: 5.698 on 196 degrees of freedom
-## Multiple R-squared:  0.1038, Adjusted R-squared:  0.09005 
-## F-statistic: 7.564 on 3 and 196 DF,  p-value: 8.184e-05</code></pre>
-<pre class="r"><code>group_means[4] - mean(group_means[1:3])</code></pre>
-<pre><code>##   comedy 
-## 4.412667</code></pre>
+summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = C)))
+#&gt; 
+#&gt; Call:
+#&gt; lm(formula = PA2 ~ Film, data = dat, contrasts = list(Film = C))
+#&gt; 
+#&gt; Residuals:
+#&gt;     Min      1Q  Median      3Q     Max 
+#&gt; -12.090  -4.612  -0.536   3.942  18.040 
+#&gt; 
+#&gt; Coefficients:
+#&gt;             Estimate Std. Error t value Pr(&gt;|t|)    
+#&gt; (Intercept)   8.7805     0.4029  21.793  &lt; 2e-16 ***
+#&gt; Film_Hyp1     4.4127     0.9305   4.742 4.06e-06 ***
+#&gt; Film_Hyp2     0.3260     0.9869   0.330    0.742    
+#&gt; Film_Hyp3     0.3480     1.1396   0.305    0.760    
+#&gt; ---
+#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+#&gt; 
+#&gt; Residual standard error: 5.698 on 196 degrees of freedom
+#&gt; Multiple R-squared:  0.1038, Adjusted R-squared:  0.09005 
+#&gt; F-statistic: 7.564 on 3 and 196 DF,  p-value: 8.184e-05
+
+group_means[4] - mean(group_means[1:3])
+#&gt;   comedy 
+#&gt; 4.412667</code></pre>
 <p>As you can see, the following holds: <span class="math inline">\(\beta_1 = -.33\mu_1 -.33\mu_2 -.33\mu_3 + 1\mu_4\)</span>. And this gives us huge power. We can now test more specific hypotheses in a regression framework compared to what is possible using the software’s defaults. And we know now how to interpret the estimates in relationship to the group means instead of relying on textbook knowledge. For Helmert coding (<code>contr.helmert()</code>), for example, the last contrasts tests my first hypothesis described above (and again we have t=4.742). However, the estimate of 1.1032 has no direct or intuitive meaning because it’s <span class="math inline">\(\beta_3 = -\frac{1}{12}\mu_1 - \frac{1}{12}\mu_2 - \frac{1}{12}\mu_3 + \frac{1}{4}\mu_4\)</span>.</p>
-<pre class="r"><code># Helmert
-summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = contr.helmert)))</code></pre>
-<pre><code>## 
-## Call:
-## lm(formula = PA2 ~ Film, data = dat, contrasts = list(Film = contr.helmert))
-## 
-## Residuals:
-##     Min      1Q  Median      3Q     Max 
-## -12.090  -4.612  -0.536   3.942  18.040 
-## 
-## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)   8.7805     0.4029  21.793  &lt; 2e-16 ***
-## Film1        -0.0760     0.5698  -0.133    0.894    
-## Film2         0.1413     0.3290   0.430    0.668    
-## Film3         1.1032     0.2326   4.742 4.06e-06 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Residual standard error: 5.698 on 196 degrees of freedom
-## Multiple R-squared:  0.1038, Adjusted R-squared:  0.09005 
-## F-statistic: 7.564 on 3 and 196 DF,  p-value: 8.184e-05</code></pre>
-<pre class="r"><code>contr.helmert(4)</code></pre>
-<pre><code>##   [,1] [,2] [,3]
-## 1   -1   -1   -1
-## 2    1   -1   -1
-## 3    0    2   -1
-## 4    0    0    3</code></pre>
-<pre class="r"><code>C1 &lt;- solve(cbind(Ave = 1, contr.helmert(4)))
-fractional::fractional(C1)</code></pre>
-<pre><code>##     1     2     3     4    
-## Ave   1/4   1/4   1/4   1/4
-##      -1/2   1/2     .     .
-##      -1/6  -1/6   1/3     .
-##     -1/12 -1/12 -1/12   1/4</code></pre>
-<pre class="r"><code># codingMatrices::mean_contrasts(contr.helmert(4))
-C1 %*% group_means</code></pre>
-<pre><code>##           [,1]
-## Ave  8.7805000
-##     -0.0760000
-##      0.1413333
-##      1.1031667</code></pre>
+<pre class="r"><code>### Helmert ###
+summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = contr.helmert)))
+#&gt; 
+#&gt; Call:
+#&gt; lm(formula = PA2 ~ Film, data = dat, contrasts = list(Film = contr.helmert))
+#&gt; 
+#&gt; Residuals:
+#&gt;     Min      1Q  Median      3Q     Max 
+#&gt; -12.090  -4.612  -0.536   3.942  18.040 
+#&gt; 
+#&gt; Coefficients:
+#&gt;             Estimate Std. Error t value Pr(&gt;|t|)    
+#&gt; (Intercept)   8.7805     0.4029  21.793  &lt; 2e-16 ***
+#&gt; Film1        -0.0760     0.5698  -0.133    0.894    
+#&gt; Film2         0.1413     0.3290   0.430    0.668    
+#&gt; Film3         1.1032     0.2326   4.742 4.06e-06 ***
+#&gt; ---
+#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+#&gt; 
+#&gt; Residual standard error: 5.698 on 196 degrees of freedom
+#&gt; Multiple R-squared:  0.1038, Adjusted R-squared:  0.09005 
+#&gt; F-statistic: 7.564 on 3 and 196 DF,  p-value: 8.184e-05
+
+contr.helmert(4)
+#&gt;   [,1] [,2] [,3]
+#&gt; 1   -1   -1   -1
+#&gt; 2    1   -1   -1
+#&gt; 3    0    2   -1
+#&gt; 4    0    0    3
+
+C1 &lt;- solve(cbind(Ave = 1, contr.helmert(4)))
+fractional::fractional(C1)
+#&gt;     1     2     3     4    
+#&gt; Ave   1/4   1/4   1/4   1/4
+#&gt;      -1/2   1/2     .     .
+#&gt;      -1/6  -1/6   1/3     .
+#&gt;     -1/12 -1/12 -1/12   1/4
+
+# codingMatrices::mean_contrasts(contr.helmert(4))
+
+C1 %*% group_means
+#&gt;           [,1]
+#&gt; Ave  8.7805000
+#&gt;     -0.0760000
+#&gt;      0.1413333
+#&gt;      1.1031667</code></pre>
 </div>
 </div>
 </div>
 <div id="orthogonal-contrasts" class="section level2">
 <h2>Orthogonal Contrasts</h2>
 <p>This knowledge alows us to test wheter our contrasts are orthogonal, because this is required for the contrasts in <span class="math inline">\(\textbf{C}\)</span> and not for the coding vectors in <span class="math inline">\(\textbf{B}\)</span>.</p>
-<pre class="r"><code># Dummy
+<pre class="r"><code>### Dummy ###
 summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = contr.treatment)))
 summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = code_control)))
 
-# Effect
+### Effect ###
 summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = contr.sum)))
 summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = code_deviation)))
 
-# Difference
+### Difference ###
 summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = contr.diff)))
 summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = code_diff)))
 
-# Helmert
+### Helmert ###
 summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = contr.helmert)))
 summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = code_helmert)))
 
@@ -303,5 +313,6 @@ x1[, 1] &lt;- c(-3, 1, 1, 1)
 x1[, 2] &lt;- c( 0, -2, 1, 1)
 x1[, 3] &lt;- c( 0,  0, -1, 1)
 
-summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = x1)))</code></pre>
+summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = x1)))
+</code></pre>
 </div>
