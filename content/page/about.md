@@ -1,8 +1,8 @@
 +++
 title = "About"
-date = 2018-03-01
-author = "Hansjörg Plieninger"
-description = "Things about me."
+# date = 2018-03-01
+# author = "Hansjörg Plieninger"
+# description = "Things about me."
 +++
 
 ## About

@@ -8,6 +8,10 @@ tags: []
 description: ''
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = T, comment = "#>")
+```
+
 Hello. My name is Hansjörg, I am a postdoctoral researcher in the psychology department at the University of Mannheim, Germany. I want to start blogging today, because I always wanted to, and because one of my R heroes Yihui Xie made this possible through his R package **blogdown**. Thank you.
 
 ```{r echo=FALSE}
@@ -20,3 +24,7 @@ This blog, as of today, serves the following purposes:
 * Blog about things I learned to make it easier for me to do the same thing quicker next time.
 * Blog about things I love to make it easier for others to love them, too.
 * Blog about things I do to make it easier for you to get in touch with me.
+
+```{r}
+fortunes::fortune("done it.")
+```

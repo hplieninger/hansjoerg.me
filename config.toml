@@ -1,5 +1,5 @@
-baseurl = "https://hansjoerg.netlify.com/"
-title = "IT WAS SIMPLE"
+baseurl = "https://hansjoerg.me/"
+title = "It was simple"
 theme = "ghostwriter"
 languageCode = "en-us"
 copyright = "Hansjörg Plieninger"
@@ -8,7 +8,7 @@ googleAnalytics = "XXX"
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 
 [Author]
-    name = "My Name"
+    name = "Hansjörg Plieninger"
     profile = "https://google.com/+XXX"
 
 [Taxonomies]
@@ -16,9 +16,9 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 
 [Params]
     intro = true
-    headline = "Ghostwriter example"
-    description = "Ghostwriter example description"
-    # github = "https://github.com/XXX"
+    headline = "It was simple."
+    description = "But you know, it's always simple when you've done it."
+    github = "https://github.com/hplieninger/"
     # gitlab = "https://gitlab.com/XXX"
     # linkedin = "https://linkedin.com/in/XXX/"
     # gplus = "https://google.com/+XXX"
@@ -29,7 +29,7 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
     shareTwitter = true
     shareFacebook = true
     shareGooglePlus = true
-    shareLinkedIn = false
+    shareLinkedIn = true
     # dateFormat = "Mon, Jan 2, 2006"
     dateFormat = "Jan 2, 2006"
     highlightJsUrl = ""
@@ -48,10 +48,10 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
     url = "/"
     weight = 1
 
-[[menu.main]]
-    name = "Projects"
-    url = "/project/"
-    weight = 2
+# [[menu.main]]
+#     name = "Projects"
+#     url = "/project/"
+#     weight = 2
 
 [[menu.main]]
     name = "Contact"

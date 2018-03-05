@@ -195,3 +195,7 @@ summary(lm(PA2 ~ Film, data = dat, contrasts = list(Film = x1)))
 
 ```
 
+```{r, include = F}
+grateful::cite_packages(all.pkg = FALSE, style = "apa", out.format = "md")
+```
+

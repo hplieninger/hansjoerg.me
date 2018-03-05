@@ -8,7 +8,6 @@ tags: ["R Markdown", "plot", "regression"]
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(collapse = TRUE)
-# knitr::opts_chunk$set(comment = "##")
 ```
 
 # R Markdown
@@ -17,8 +16,10 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 You can embed an R code chunk like this:
 
-```{r echo=FALSE}
-blogdown::shortcode('tweet', '943194437076897792')
+```{r cars}
+summary(cars)
+fit <- lm(dist ~ speed, data = cars)
+fit
 ```
 
 # Including Plots

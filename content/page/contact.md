@@ -1,6 +1,6 @@
 +++
 title = "Contact"
-date = 2018-03-01
+# date = 2018-03-01
 author = "Hansjörg Plieninger"
 description = "How to contact me."
 +++
