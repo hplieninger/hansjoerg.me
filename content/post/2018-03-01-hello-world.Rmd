@@ -20,10 +20,10 @@ blogdown::shortcode('tweet', '943194437076897792')
 
 This blog is about ...
 
-* things I learned to make it simpler for other people to learn the same thing quicker,
-* things I learned to make it simpler for me to do the same thing quicker next time,
-* things I love to make it simpler for others to love them, too,
-* things I do to make it simpler for you to get in touch with me.
+* things I learned, to make it simpler for other people to learn the same thing quicker,
+* things I learned,  to make it simpler for me to do the same thing quicker next time,
+* things I love, to make it simpler for others to love them, too,
+* things I do, to make it simpler for you to get in touch with me.
 
 And the motto of this blog comes from one of my favourite R packages, **fortunes**:
 
