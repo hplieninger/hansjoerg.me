@@ -1,0 +1,125 @@
+---
+title: "Working with different versions of an R package"
+author: "Hansjörg"
+date: 2018-03-06
+categories: ["R"]
+tags: ["R"]
+slug: working-with-different-package-versions
+# output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = T, comment = "#>")
+
+
+library(cli)
+
+options(crayon.enabled = TRUE)
+options(crayon.colors = 256)
+crayon::num_colors(forget = TRUE)
+```
+
+## Motivation
+
+Recently, I had to install an older version of an R package, because a function was deprecated that I wanted to use.
+I wanted to install the old version in addition to and not instead
+of the new version and I came up with the following solution.
+
+## Installing Packages to a Different Location
+
+```{r, eval = F}
+library(devtools)
+library(httr)
+library(curl)
+```
+
+In addtion to my custom Windows library, I created two new folders to store packages in, one for older packages and one for devel versions.
+
+```{r, eval = T}
+dev_lib <- file.path("~/../Documents/R/win-library/dev-versions/")
+old_lib <- file.path("~/../Documents/R/win-library/old-versions/")
+
+list.dirs("~/../Documents/R/win-library", recursive = FALSE)
+```
+
+
+
+```{r tree, render=ansistrings:::knit_print.html, eval = F, include = F}
+
+# ```{r tree, render=ansistrings:::knit_print.html, echo = F}
+# ```{r tree, render=function(x, ...) ansistrings:::knit_print.html(x, zoom = 10), echo = F}
+
+dat <- data.frame(
+  stringsAsFactors = FALSE,
+  package = c(
+      "R",
+      "win.library",
+      "3.4",
+      "dev.versions",
+      "old.versions",
+      "ggplot2",
+      "...",
+      "MplusAutomation"
+      ),
+  dependencies = I(list(
+      "win.library",
+      c("3.4", "dev.versions", "old.versions"),
+      c("...", "ggplot2", "...", "MplusAutomation", "..."),
+      character(0),
+      character(0),
+      character(0),
+      character(0),
+      character(0)
+      ))
+  )
+tree(dat, root = "R")
+```
+
+Then, I can install packages in these folders using custom arguments:
+ 
+```{r, eval = FALSE}
+install.packages("~/../Downloads/MplusAutomation_0.7.tar.gz",
+                 lib = old_lib, repos = NULL)
+```
+
+## Installing Packages to a Different Location Using devtools
+
+`devtools::install_version()` allows to install a specific version of a package automatically without having to manually download the achive.
+However, you cannot use a custom path, but `withr::with_libpaths()` can take care of that. Here, for example, I install an old version of **MplusAutomation** and the devel version of **ggplot2**.
+
+```{r, eval = F}
+withr::with_libpaths(new = old_lib,
+                     code = install_version("MplusAutomation",
+                                            version = "0.7",
+                                            dependencies = FALSE))
+``` 
+
+```{r, eval = F}
+withr::with_libpaths(new = dev_lib,
+                     code = install_github("tidyverse/ggplot2",
+                                           dependencies = FALSE))
+```
+
+Note, that I loaded **devtools**, **httr**, and **curl** above, because they need to be available inside `with_libpaths()`. Furthermore, I used `dependencies = FALSE`, because I already have the package dependencies in my default folder `"/win.library/3.4/"` and do not want them to be installed in the custom folders as well.
+
+## Loading Packages
+
+When I load **MplusAutomation** (version 0.7-1), the function `extractModelSummaries()` is not available, and the call returns an error.
+
+```{r, eval = T, warning=FALSE}
+suppressPackageStartupMessages(
+    library(MplusAutomation)
+    )
+
+# doesn't work:
+MplusAutomation::extractModelSummaries()
+```
+
+However, when I load the old version 0.7, I can use this function as I did in previous years.
+
+```{r, eval = FALSE}
+library(MplusAutomation, lib.loc = old_lib)
+
+# works:
+MplusAutomation::extractModelSummaries()
+```

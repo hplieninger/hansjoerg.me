@@ -1,0 +1,61 @@
+---
+title: "Working with different versions of an R package"
+author: "Hansjörg"
+date: 2018-03-06
+categories: ["R"]
+tags: ["R"]
+slug: working-with-different-package-versions
+# output: github_document
+---
+
+
+
+<div id="motivation" class="section level2">
+<h2>Motivation</h2>
+<p>Recently, I had to install an older version of an R package, because a function was deprecated that I wanted to use. I wanted to install the old version in addition to and not instead of the new version and I came up with the following solution.</p>
+</div>
+<div id="installing-packages-to-a-different-location" class="section level2">
+<h2>Installing Packages to a Different Location</h2>
+<pre class="r"><code>library(devtools)
+library(httr)
+library(curl)</code></pre>
+<p>In addtion to my custom Windows library, I created two new folders to store packages in, one for older packages and one for devel versions.</p>
+<pre class="r"><code>dev_lib &lt;- file.path(&quot;~/../Documents/R/win-library/dev-versions/&quot;)
+old_lib &lt;- file.path(&quot;~/../Documents/R/win-library/old-versions/&quot;)
+
+list.dirs(&quot;~/../Documents/R/win-library&quot;, recursive = FALSE)
+#&gt; [1] &quot;C:/Users/Hansjoerg/Documents/../Documents/R/win-library/3.1&quot;         
+#&gt; [2] &quot;C:/Users/Hansjoerg/Documents/../Documents/R/win-library/dev-versions&quot;
+#&gt; [3] &quot;C:/Users/Hansjoerg/Documents/../Documents/R/win-library/old-versions&quot;</code></pre>
+<p>Then, I can install packages in these folders using custom arguments:</p>
+<pre class="r"><code>install.packages(&quot;~/../Downloads/MplusAutomation_0.7.tar.gz&quot;,
+                 lib = old_lib, repos = NULL)</code></pre>
+</div>
+<div id="installing-packages-to-a-different-location-using-devtools" class="section level2">
+<h2>Installing Packages to a Different Location Using devtools</h2>
+<p><code>devtools::install_version()</code> allows to install a specific version of a package automatically without having to manually download the achive. However, you cannot use a custom path, but <code>withr::with_libpaths()</code> can take care of that. Here, for example, I install an old version of <strong>MplusAutomation</strong> and the devel version of <strong>ggplot2</strong>.</p>
+<pre class="r"><code>withr::with_libpaths(new = old_lib,
+                     code = install_version(&quot;MplusAutomation&quot;,
+                                            version = &quot;0.7&quot;,
+                                            dependencies = FALSE))</code></pre>
+<pre class="r"><code>withr::with_libpaths(new = dev_lib,
+                     code = install_github(&quot;tidyverse/ggplot2&quot;,
+                                           dependencies = FALSE))</code></pre>
+<p>Note, that I loaded <strong>devtools</strong>, <strong>httr</strong>, and <strong>curl</strong> above, because they need to be available inside <code>with_libpaths()</code>. Furthermore, I used <code>dependencies = FALSE</code>, because I already have the package dependencies in my default folder <code>&quot;/win.library/3.4/&quot;</code> and do not want them to be installed in the custom folders as well.</p>
+</div>
+<div id="loading-packages" class="section level2">
+<h2>Loading Packages</h2>
+<p>When I load <strong>MplusAutomation</strong> (version 0.7-1), the function <code>extractModelSummaries()</code> is not available, and the call returns an error.</p>
+<pre class="r"><code>suppressPackageStartupMessages(
+    library(MplusAutomation)
+    )
+
+# doesn&#39;t work:
+MplusAutomation::extractModelSummaries()
+#&gt; extractModelSummaries has been deprecated. Please use readModels(&quot;nameofMplusoutfile.out&quot;, what=&quot;summaries&quot;)$summaries to replicate the old functionality.</code></pre>
+<p>However, when I load the old version 0.7, I can use this function as I did in previous years.</p>
+<pre class="r"><code>library(MplusAutomation, lib.loc = old_lib)
+
+# works:
+MplusAutomation::extractModelSummaries()</code></pre>
+</div>

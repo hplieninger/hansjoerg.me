@@ -3,8 +3,8 @@ title = "It was simple"
 theme = "ghostwriter"
 languageCode = "en-us"
 copyright = "Hansjörg Plieninger"
-disqusShortname = "hansjoergplieninger"
-googleAnalytics = "XXX"
+disqusShortname = "hansjoerg-me"
+googleAnalytics = "UA-115435099-1"
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 
 [Author]
@@ -38,14 +38,14 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
     highlightjsVersion = "9.11.0"
     highlightjsCDN = "//cdn.bootcss.com"
     highlightjsLang = ["r", "yaml", "tex"]
-    highlightjsTheme = "tomorrow"
+    highlightjsTheme = "github"
 
 [Permalinks]
     post = "/:year/:month/:day/:slug/"
 
 [[menu.main]]
     name = "Blog"
-    url = "/"
+    url = "/post/"
     weight = 1
 
 # [[menu.main]]
