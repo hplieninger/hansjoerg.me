@@ -1,64 +1,119 @@
 baseurl = "https://hansjoerg.me/"
+DefaultContentLanguage = "en"
+#DefaultContentLanguage = "ja"
 title = "It was simple"
-theme = "ghostwriter"
-languageCode = "en-us"
-copyright = "Hansjörg Plieninger"
+theme = "beautifulhugo"
+metaDataFormat = "yaml"
+#pygmentsStyle = "trac"
+#pygmentsUseClasses = false
+#pygmentsCodeFences = false
+#pygmentsCodefencesGuessSyntax = true
+#pygmentsUseClassic = true
+#pygmentOptions = "linenos=inline"
 disqusShortname = "hansjoerg-me"
 googleAnalytics = "UA-115435099-1"
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
-
-[Author]
-    name = "Hansjörg Plieninger"
-    profile = "https://google.com/+XXX"
-
-[Taxonomies]
-    tag = "tags"
+copyright = "Hansjörg Plieninger"
 
 [Params]
-    intro = true
-    headline = "It was simple."
-    description = "But you know, it's always simple when you've done it."
-    github = "https://github.com/hplieninger/"
-    # gitlab = "https://gitlab.com/XXX"
-    # linkedin = "https://linkedin.com/in/XXX/"
-    # gplus = "https://google.com/+XXX"
-    # twitter = "https://twitter.com/XXX"
-    stackoverflow = "https://stackoverflow.com/users/2563804/hplieninger"
-    # email = "XXX@example.com"
-    opengraph = true
-    shareTwitter = true
-    shareFacebook = true
-    shareGooglePlus = true
-    shareLinkedIn = true
-    # dateFormat = "Mon, Jan 2, 2006"
-    dateFormat = "Jan 2, 2006"
-    highlightJsUrl = ""
-    highlightJsLocalUrl = ""
-    # options for highlight.js (version, additional languages, and theme)
-    highlightjsVersion = "9.11.0"
-    highlightjsCDN = "//cdn.bootcss.com"
-    highlightjsLang = ["r", "yaml", "tex"]
-    highlightjsTheme = "github"
+#   homeTitle = "Beautiful Hugo Theme" # Set a different text for the header on the home page
+  subtitle = "But it's always simple when you've done it."
+#   logo = "img/avatar-icon.png"
+#   favicon = "img/favicon.ico"
+  dateFormat = "January 2, 2006"
+  commit = false
+  rss = true
+  comments = true
+  readingTime = true
+  useHLJS = true
+  socialShare = true
+#   gcse = "001109883246625728971:bhm8k26cb2e" # Get your code from google.com/cse. Make sure to go to "Look and Feel" and change Layout to "Full Width" and Theme to "Classic"
+  # options for highlight.js (version, additional languages, and theme)
+  highlightjsVersion = "9.12.0"
+  highlightjsCDN = "//cdn.bootcss.com"
+  highlightjsLang = ["r", "yaml", "tex"]
+  highlightjsTheme = "monokai"
+  description = "This is the personal website and blog of Hansjörg Plieninger. It's about R, psychometrics, data science, psychology, and other topics alike."
 
-[Permalinks]
+[permalinks]
     post = "/:year/:month/:day/:slug/"
+
+#[[Params.bigimg]]
+#  src = "img/triangle.jpg"
+#  desc = "Triangle"
+#[[Params.bigimg]]
+#  src = "img/sphere.jpg"
+#  desc = "Sphere"
+#  # position: see values of CSS background-position.
+#  position = "center top"
+#[[Params.bigimg]]
+#  src = "img/hexagon.jpg"
+#  desc = "Hexagon"
+
+[Author]
+  name = "Hansjörg Plieninger"
+  website = "hansjoerg.me"
+  email = "youremail@domain.com"
+#   facebook = "username"
+#   googleplus = "+username" # or xxxxxxxxxxxxxxxxxxxxx
+  github = "hplieninger"
+#   gitlab = "username"
+#   bitbucket = "username"
+#   twitter = "username"
+#   reddit = "username"
+#   linkedin = "username"
+#   xing = "username"
+  stackoverflow = "users/2563804/hplieninger"
+#   snapchat = "username"
+#   instagram = "username"
+#   youtube = "user/username" # or channel/channelname
+#   soundcloud = "username"
+#   spotify = "username"
+#   bandcamp = "username"
+#   itchio = "username"
+#   vk = "username"
+#   paypal = "username"
+#   telegram = "username"
 
 [[menu.main]]
     name = "Blog"
-    url = "/post/"
+    url = ""
     weight = 1
-
-# [[menu.main]]
-#     name = "Projects"
-#     url = "/project/"
-#     weight = 2
-
-[[menu.main]]
-    name = "Contact"
-    url = "/page/contact/"
-    weight = 3
 
 [[menu.main]]
     name = "About"
-    url = "/page/about/"
+    url = "page/about/"
     weight = 4
+
+# [[menu.main]]
+#     identifier = "samples"
+#     name = "Samples"
+#     weight = 2
+# 
+# [[menu.main]]
+#     parent = "samples"
+#     name = "Big Image Sample"
+#     url = "post/2017-03-07-bigimg-sample"
+#     weight = 1
+# 
+# [[menu.main]]
+#     parent = "samples"
+#     name = "Math Sample"
+#     url = "post/2017-03-05-math-sample"
+#     weight = 2
+# 
+# [[menu.main]]
+#     parent = "samples"
+#     name = "Code Sample"
+#     url = "post/2016-03-08-code-sample"
+#     weight = 3
+
+[[menu.main]]
+    name = "Tags"
+    url = "tags"
+    weight = 2
+    
+[[menu.main]]
+    name = "Publications"
+    url = "page/publications"
+    weight = 3

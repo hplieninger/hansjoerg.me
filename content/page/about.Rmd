@@ -1,0 +1,27 @@
+---
+title: "About me"
+# subtitle: "Why you'd want to go on a date with me"
+comments: false
+author: "Hansjörg Plieninger"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = T, comment = "#>")
+```
+
+## About
+
+My name is Hansjörg Plieninger, I am a postdoctoral researcher in the psychology department at the University of Mannheim, Germany. I love data science and I love R. From an academic perspective, I am an expert in psychometrics, item response theory, structural equation modeling, and multilevel modeling; more specifically, I use this machinery to investigate response styles (e.g., tendency to give extreme responses). From a data-science perspective, I am an expert in dealing with survey data, Likert-type data and the like.
+
+This blog is about ...
+
+* things I learned to make it simpler for other people to learn the same thing quicker,
+* things I learned to make it simpler for me to do the same thing quicker next time,
+* things I love to make it simpler for others to love them, too,
+* things I do to make it simpler for you to get in touch with me.
+
+And the motto of this blog comes from one of my favourite R packages, **fortunes**:
+
+```{r}
+fortunes::fortune("done it.")
+```

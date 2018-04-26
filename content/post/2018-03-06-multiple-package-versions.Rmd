@@ -5,7 +5,9 @@ date: 2018-03-06
 categories: ["R"]
 tags: ["R"]
 slug: working-with-different-package-versions
-# output: github_document
+output:
+  blogdown::html_page:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}

@@ -5,10 +5,20 @@ date: 2018-03-06
 categories: ["R"]
 tags: ["R"]
 slug: working-with-different-package-versions
-# output: github_document
+output:
+  blogdown::html_page:
+    toc: true
 ---
 
 
+<div id="TOC">
+<ul>
+<li><a href="#motivation">Motivation</a></li>
+<li><a href="#installing-packages-to-a-different-location">Installing Packages to a Different Location</a></li>
+<li><a href="#installing-packages-to-a-different-location-using-devtools">Installing Packages to a Different Location Using devtools</a></li>
+<li><a href="#loading-packages">Loading Packages</a></li>
+</ul>
+</div>
 
 <div id="motivation" class="section level2">
 <h2>Motivation</h2>
@@ -24,9 +34,10 @@ library(curl)</code></pre>
 old_lib &lt;- file.path(&quot;~/../Documents/R/win-library/old-versions/&quot;)
 
 list.dirs(&quot;~/../Documents/R/win-library&quot;, recursive = FALSE)
-#&gt; [1] &quot;C:/Users/Hansjoerg/Documents/../Documents/R/win-library/3.1&quot;         
-#&gt; [2] &quot;C:/Users/Hansjoerg/Documents/../Documents/R/win-library/dev-versions&quot;
-#&gt; [3] &quot;C:/Users/Hansjoerg/Documents/../Documents/R/win-library/old-versions&quot;</code></pre>
+#&gt; [1] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/3.3&quot;         
+#&gt; [2] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/3.4&quot;         
+#&gt; [3] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/dev-versions&quot;
+#&gt; [4] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/old-versions&quot;</code></pre>
 <p>Then, I can install packages in these folders using custom arguments:</p>
 <pre class="r"><code>install.packages(&quot;~/../Downloads/MplusAutomation_0.7.tar.gz&quot;,
                  lib = old_lib, repos = NULL)</code></pre>
