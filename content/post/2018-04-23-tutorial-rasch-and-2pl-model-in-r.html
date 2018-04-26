@@ -1,0 +1,679 @@
+---
+title: 'Tutorial: Rasch and 2PL Model in R'
+author: Hansjörg Plieninger
+date: '2018-04-23'
+slug: rasch-in-r-tutorial
+categories:
+  - R
+tags:
+  - R
+  - IRT
+  - psychometrics
+  - tutorial
+  - package
+description: ''
+bibliography: C:/Users/plieninger/Documents/Literature/lib.bib
+csl: C:/Users/plieninger/Documents/Literature/apa.csl
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#setup">Setup</a></li>
+<li><a href="#data">Data</a></li>
+<li><a href="#rasch-model">Rasch Model</a><ul>
+<li><a href="#plots">Plots</a></li>
+<li><a href="#model-identification">Model Identification</a></li>
+<li><a href="#note-on-item-parameters-in-erm-package">Note on Item Parameters in eRm Package</a></li>
+<li><a href="#mml-estimation">MML Estimation</a></li>
+</ul></li>
+<li><a href="#pl-model">2PL Model</a></li>
+<li><a href="#model-fit">Model Fit</a><ul>
+<li><a href="#relative-fit-of-rasch-and-2pl-model">Relative Fit of Rasch and 2PL Model</a></li>
+<li><a href="#absolute-fit-of-the-rasch-model">Absolute Fit of the Rasch Model</a></li>
+<li><a href="#dif">DIF</a></li>
+</ul></li>
+<li><a href="#person-parameters">Person Parameters</a><ul>
+<li><a href="#ml">ML</a></li>
+<li><a href="#map-and-eap">MAP and EAP</a></li>
+</ul></li>
+<li><a href="#item-and-test-information">Item and Test Information</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+</div>
+
+<p>Recently, I wrote a summary of some illustrative IRT analyses for my students. Quickly, I realized that this might be of interest to others as well, and I am posting here a tutorial for the Rasch model and the 2PL model in R. It is meant for people with a basic understanding of these models who have heard terms like <em>ICC</em> or <em>item difficulty</em> before and who would like to see a practical, worked example. Possibly, the code may be copied and applied to your own data. Let me know if there is anything that needs further clarification.</p>
+<div id="setup" class="section level2">
+<h2>Setup</h2>
+<p>Herein, we will use the following three R packages: <strong>eRm</strong> <span class="citation">(Mair &amp; Hatzinger, 2007)</span>, <strong>ltm</strong> <span class="citation">(Rizopoulos, 2006)</span>, and <strong>difR</strong> <span class="citation">(Magis, Béland, Tuerlinckx, &amp; De Boeck, 2010)</span>. Those need to be loaded via <code>library()</code> and installed beforehand if necessary.</p>
+<pre class="r"><code># install.packages(&quot;eRm&quot;)
+# install.packages(&quot;ltm&quot;)
+# install.packages(&quot;difR&quot;)
+library(&quot;eRm&quot;)
+library(&quot;ltm&quot;)
+library(&quot;difR&quot;)</code></pre>
+</div>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<p>An illustrative data set on <em>verbal aggression</em> will be used, which is comprised of 24 dichotomized items and 316 persons. The data set called verbal is included in the <strong>difR</strong> package and can be loaded using the function <code>data()</code>. Documentation for the data is available through <code>?verbal</code>.</p>
+<pre class="r"><code>data(verbal, package = &quot;difR&quot;)
+# ?verbal</code></pre>
+</div>
+<div id="rasch-model" class="section level2">
+<h2>Rasch Model</h2>
+<p>A Rasch model is fit to the data using conditional maximum likelihood (CML) estimation of the item parameters as provided in the function <code>RM()</code> of the <strong>eRm</strong> package.</p>
+<p>The item difficulty parameters are returned and the output shows that S2WantCurse is the easiest item and S3DoShout is the most difficult item, for which only people with high levels of verbal aggression are expected to agree with.</p>
+<pre class="r"><code>dat_1 &lt;- verbal[, 1:24]
+
+res_rm_1 &lt;- RM(dat_1)
+
+# res_rm_1                   # Short summary of item parameters
+# summary(res_rm_1)          # Longer summary of item parameters
+betas &lt;- -coef(res_rm_1)     # Item difficulty parameters
+round(sort(betas), 2)
+#&gt; beta S2WantCurse   beta S1DoCurse beta S1wantCurse beta S4WantCurse 
+#&gt;            -1.91            -1.38            -1.38            -1.25 
+#&gt;   beta S2DoCurse   beta S4DoCurse beta S2WantScold beta S1WantScold 
+#&gt;            -1.04            -0.87            -0.87            -0.73 
+#&gt; beta S3WantCurse   beta S1DoScold beta S1WantShout beta S2WantShout 
+#&gt;            -0.70            -0.56            -0.25            -0.18 
+#&gt;   beta S2DoScold   beta S3DoCurse beta S4WantScold   beta S4DoScold 
+#&gt;            -0.11             0.04             0.18             0.21 
+#&gt; beta S3WantScold   beta S1DoShout beta S4WantShout   beta S2DoShout 
+#&gt;             0.51             0.70             0.87             1.31 
+#&gt;   beta S3DoScold beta S3WantShout   beta S4DoShout   beta S3DoShout 
+#&gt;             1.33             1.36             1.84             2.87</code></pre>
+<div id="plots" class="section level3">
+<h3>Plots</h3>
+<p>We may plot the ICC of a single or all items, which is just a graphical illustration of the estimated item parameters.</p>
+<pre class="r"><code>plotICC(res_rm_1, item.subset = 6)
+abline(v = -0.18, col = &quot;grey&quot;)
+abline(h = .5, col = &quot;grey&quot;)</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/rasch-plots-1.png" width="80%" /></p>
+<pre class="r"><code>plotjointICC(res_rm_1, item.subset =  1:12, cex = .6)</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/rasch-plots-2.png" width="80%" /></p>
+<pre class="r"><code>plotjointICC(res_rm_1, item.subset = 13:24, cex = .6)</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/rasch-plots-3.png" width="80%" /></p>
+<p>From the plots of the ICCs, it seems like the “want”-items are easier than the “do”-items. We may further investigate this by comparing the means of the item difficulties. This shows that this is indeed the case. (The two means sum to 0, because of the identification constraint, see below.)</p>
+<pre class="r"><code>mean(betas[ 1:12])           # Want-items
+#&gt; [1] -0.3622058
+mean(betas[13:24])           # Do-items
+#&gt; [1] 0.3622058</code></pre>
+<p>Furthermore, a very informative plot called a person-item map is available in <strong>eRm</strong>:</p>
+<blockquote>
+<p>A person-item map displays the location of item (and threshold) parameters as well as the distribution of person parameters.along the latent dimension. Person-item maps are useful to compare the range and position of the item measure distribution (lower panel) to the range and position of the person measure distribution (upper panel). Items should ideally be located along the whole scale to meaningfully measure the ‘ability’ of all persons. (From <code>?plotPImap</code>)</p>
+</blockquote>
+<pre class="r"><code>plotPImap(res_rm_1, cex.gen = .55)</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/unnamed-chunk-3-1.png" width="80%" /></p>
+<pre class="r"><code>plotPImap(res_rm_1, cex.gen = .55, sorted = TRUE)</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/unnamed-chunk-3-2.png" width="80%" /></p>
+</div>
+<div id="model-identification" class="section level3">
+<h3>Model Identification</h3>
+<p>The model needs an identification constraint, because otherwise the location of the latent scale is undetermined. When looking at the help (<code>?RM</code>), we can see that the identification constraint in <code>RM()</code> is a sum-to-zero constraint by default (<code>sum0 = TRUE</code>). We can verify that by calculating the sum of the item parameters.</p>
+<pre class="r"><code>round(sum(betas), 10)
+#&gt; [1] 0</code></pre>
+<p>When setting <code>sum0 = FALSE</code>, the first item parameter is set to zero. These are the only two options implemented in <code>RM()</code>.</p>
+<pre class="r"><code>tmp1 &lt;- RM(dat_1, sum0 = FALSE)
+round(coef(tmp1), 2)
+#&gt; beta S1wantCurse beta S1WantScold beta S1WantShout beta S2WantCurse 
+#&gt;             0.00            -0.65            -1.13             0.53 
+#&gt; beta S2WantScold beta S2WantShout beta S3WantCurse beta S3WantScold 
+#&gt;            -0.51            -1.20            -0.69            -1.90 
+#&gt; beta S3WantShout beta S4WantCurse beta S4WantScold beta S4WantShout 
+#&gt;            -2.74            -0.14            -1.56            -2.25 
+#&gt;   beta S1DoCurse   beta S1DoScold   beta S1DoShout   beta S2DoCurse 
+#&gt;             0.00            -0.83            -2.08            -0.35 
+#&gt;   beta S2DoScold   beta S2DoShout   beta S3DoCurse   beta S3DoScold 
+#&gt;            -1.27            -2.70            -1.42            -2.72 
+#&gt;   beta S3DoShout   beta S4DoCurse   beta S4DoScold   beta S4DoShout 
+#&gt;            -4.25            -0.51            -1.60            -3.22</code></pre>
+</div>
+<div id="note-on-item-parameters-in-erm-package" class="section level3">
+<h3>Note on Item Parameters in eRm Package</h3>
+<p>Note that the <strong>eRm</strong> package works with easiness parameters, which are called beta, and those can be transformed into difficulty parameters, which are called eta, and <span class="math inline">\(-\eta = \beta\)</span>.</p>
+<p>Note further that often only <span class="math inline">\(I-1\)</span> item parameters are returned (here 23), which illustrates the fact that only 23 item parameters can be estimated and that one has to be fixed either as <span class="math inline">\(\beta_1=\sum_2^I \beta_i\)</span> (if <code>sum0 = TRUE</code>) or <span class="math inline">\(\beta_1 = 0\)</span> (if <code>sum0 = FALSE</code>). The first item parameter can then be calculated (not estimated) accordingly.</p>
+<pre class="r"><code># No difficulty (eta) parameter is returned for the first item S1wantCurse
+summary(res_rm_1)
+#&gt; 
+#&gt; Results of RM estimation: 
+#&gt; 
+#&gt; Call:  RM(X = dat_1) 
+#&gt; 
+#&gt; Conditional log-likelihood: -3049.923 
+#&gt; Number of iterations: 31 
+#&gt; Number of parameters: 23 
+#&gt; 
+#&gt; Item (Category) Difficulty Parameters (eta): with 0.95 CI:
+#&gt;             Estimate Std. Error lower CI upper CI
+#&gt; S1WantScold   -0.731      0.131   -0.987   -0.475
+#&gt; S1WantShout   -0.249      0.128   -0.501    0.003
+#&gt; S2WantCurse   -1.909      0.153   -2.210   -1.608
+#&gt; S2WantScold   -0.873      0.132   -1.132   -0.614
+#&gt; S2WantShout   -0.181      0.128   -0.433    0.070
+#&gt; S3WantCurse   -0.696      0.130   -0.951   -0.440
+#&gt; S3WantScold    0.514      0.132    0.254    0.773
+#&gt; S3WantShout    1.358      0.149    1.065    1.650
+#&gt; S4WantCurse   -1.245      0.137   -1.514   -0.976
+#&gt; S4WantScold    0.178      0.129   -0.076    0.432
+#&gt; S4WantShout    0.871      0.138    0.601    1.141
+#&gt; S1DoCurse     -1.383      0.140   -1.658   -1.109
+#&gt; S1DoScold     -0.557      0.129   -0.810   -0.303
+#&gt; S1DoShout      0.698      0.135    0.434    0.963
+#&gt; S2DoCurse     -1.037      0.134   -1.300   -0.774
+#&gt; S2DoScold     -0.113      0.128   -0.365    0.138
+#&gt; S2DoShout      1.312      0.148    1.022    1.602
+#&gt; S3DoCurse      0.040      0.129   -0.212    0.293
+#&gt; S3DoScold      1.335      0.149    1.044    1.626
+#&gt; S3DoShout      2.871      0.222    2.436    3.306
+#&gt; S4DoCurse     -0.873      0.132   -1.132   -0.614
+#&gt; S4DoScold      0.213      0.130   -0.042    0.467
+#&gt; S4DoShout      1.840      0.165    1.516    2.165
+#&gt; 
+#&gt; Item Easiness Parameters (beta) with 0.95 CI:
+#&gt;                  Estimate Std. Error lower CI upper CI
+#&gt; beta S1wantCurse    1.383      0.140    1.109    1.658
+#&gt; beta S1WantScold    0.731      0.131    0.475    0.987
+#&gt; beta S1WantShout    0.249      0.128   -0.003    0.501
+#&gt; beta S2WantCurse    1.909      0.153    1.608    2.210
+#&gt; beta S2WantScold    0.873      0.132    0.614    1.132
+#&gt; beta S2WantShout    0.181      0.128   -0.070    0.433
+#&gt; beta S3WantCurse    0.696      0.130    0.440    0.951
+#&gt; beta S3WantScold   -0.514      0.132   -0.773   -0.254
+#&gt; beta S3WantShout   -1.358      0.149   -1.650   -1.065
+#&gt; beta S4WantCurse    1.245      0.137    0.976    1.514
+#&gt; beta S4WantScold   -0.178      0.129   -0.432    0.076
+#&gt; beta S4WantShout   -0.871      0.138   -1.141   -0.601
+#&gt; beta S1DoCurse      1.383      0.140    1.109    1.658
+#&gt; beta S1DoScold      0.557      0.129    0.303    0.810
+#&gt; beta S1DoShout     -0.698      0.135   -0.963   -0.434
+#&gt; beta S2DoCurse      1.037      0.134    0.774    1.300
+#&gt; beta S2DoScold      0.113      0.128   -0.138    0.365
+#&gt; beta S2DoShout     -1.312      0.148   -1.602   -1.022
+#&gt; beta S3DoCurse     -0.040      0.129   -0.293    0.212
+#&gt; beta S3DoScold     -1.335      0.149   -1.626   -1.044
+#&gt; beta S3DoShout     -2.871      0.222   -3.306   -2.436
+#&gt; beta S4DoCurse      0.873      0.132    0.614    1.132
+#&gt; beta S4DoScold     -0.213      0.130   -0.467    0.042
+#&gt; beta S4DoShout     -1.840      0.165   -2.165   -1.516
+
+# Calculate eta for item S1wantCurse
+-sum(res_rm_1$etapar)
+#&gt; [1] -1.383377</code></pre>
+</div>
+<div id="mml-estimation" class="section level3">
+<h3>MML Estimation</h3>
+<p>In contrast to the CML estimation above, the model is now fit using marginal maximum likelihood (MML) estimation. Therein, the model is identified by assuming a standard normal distribution of the person parameters. Thus, all item parameters can be freely estimated because the mean of the person parameters is fixed to 0 (which was not the case with CML).</p>
+<pre class="r"><code>res_rm_2 &lt;- rasch(dat_1)
+res_rm_2
+#&gt; 
+#&gt; Call:
+#&gt; rasch(data = dat_1)
+#&gt; 
+#&gt; Coefficients:
+#&gt; Dffclt.S1wantCurse  Dffclt.S1WantScold  Dffclt.S1WantShout  
+#&gt;             -0.889              -0.409              -0.055  
+#&gt; Dffclt.S2WantCurse  Dffclt.S2WantScold  Dffclt.S2WantShout  
+#&gt;             -1.274              -0.513              -0.005  
+#&gt; Dffclt.S3WantCurse  Dffclt.S3WantScold  Dffclt.S3WantShout  
+#&gt;             -0.383               0.505               1.120  
+#&gt; Dffclt.S4WantCurse  Dffclt.S4WantScold  Dffclt.S4WantShout  
+#&gt;             -0.787               0.259               0.767  
+#&gt;   Dffclt.S1DoCurse    Dffclt.S1DoScold    Dffclt.S1DoShout  
+#&gt;             -0.888              -0.281               0.641  
+#&gt;   Dffclt.S2DoCurse    Dffclt.S2DoScold    Dffclt.S2DoShout  
+#&gt;             -0.634               0.045               1.087  
+#&gt;   Dffclt.S3DoCurse    Dffclt.S3DoScold    Dffclt.S3DoShout  
+#&gt;              0.158               1.103               2.176  
+#&gt;   Dffclt.S4DoCurse    Dffclt.S4DoScold    Dffclt.S4DoShout  
+#&gt;             -0.513               0.285               1.464  
+#&gt;             Dscrmn  
+#&gt;              1.368  
+#&gt; 
+#&gt; Log.Lik: -4037.402</code></pre>
+<p>Note further that <code>rasch()</code> did not only fix the mean of the person-parameter distribution, but also the variance. Thus, the variability or units of the latent scale are determined by this. With CML estimation, this was fixed by assuming discrimination parameters equal to 1. However, two constraints (variance of person-parameter distribution as well as discrimination parameter) would be overly restrictive, and thus a common discrimination parameter is freely estimated by <code>rasch()</code>, which equals 1.37. Don’t get distracted by these technical issues, the software takes care of it.</p>
+<p>The difficulty parameters estimated via MML or CML are nearly identical here highlighting the fact that the normal-distribution assumption in MML did not do any harm.</p>
+<pre class="r"><code>cor(coef(res_rm_2)[, 1], betas)
+#&gt; [1] 0.9999381</code></pre>
+</div>
+</div>
+<div id="pl-model" class="section level2">
+<h2>2PL Model</h2>
+<p>A 2PL model cannot be estimated with <strong>eRm</strong>, but with the package <strong>ltm</strong>, for example.</p>
+<p>The estimated difficulty parameters (Dffclt) seem roughly comparable to those from the Rasch model. The discrimination parameters, which were all equal in the Rasch model, show some but not massive heterogeneity. This is also evident from the plot of the ICCs.</p>
+<p>Note that <code>res_2pl_1</code> and <code>res_rm_1</code> were estimated using two different packages. Thus, the structure of these objects is completely different and also the output if they are printed or the functions you may use with them (e.g., <code>plot()</code> vs. <code>plotICC()</code>).</p>
+<pre class="r"><code># lmt() takes a formula (with a ~) as its first argument. The left-hand side
+# must be the data and the right-hand side are the lantent variables (only one
+# here).
+res_2pl_1 &lt;- ltm(dat_1 ~ z1)
+res_2pl_1
+#&gt; 
+#&gt; Call:
+#&gt; ltm(formula = dat_1 ~ z1)
+#&gt; 
+#&gt; Coefficients:
+#&gt;              Dffclt  Dscrmn
+#&gt; S1wantCurse  -0.913   1.358
+#&gt; S1WantScold  -0.409   1.525
+#&gt; S1WantShout  -0.078   1.340
+#&gt; S2WantCurse  -1.243   1.468
+#&gt; S2WantScold  -0.500   1.567
+#&gt; S2WantShout  -0.026   1.249
+#&gt; S3WantCurse  -0.531   0.880
+#&gt; S3WantScold   0.475   1.409
+#&gt; S3WantShout   1.455   0.912
+#&gt; S4WantCurse  -0.906   1.129
+#&gt; S4WantScold   0.214   1.588
+#&gt; S4WantShout   0.946   0.967
+#&gt; S1DoCurse    -0.821   1.666
+#&gt; S1DoScold    -0.251   2.272
+#&gt; S1DoShout     0.605   1.420
+#&gt; S2DoCurse    -0.630   1.475
+#&gt; S2DoScold     0.009   1.987
+#&gt; S2DoShout     0.968   1.625
+#&gt; S3DoCurse     0.164   1.089
+#&gt; S3DoScold     1.098   1.342
+#&gt; S3DoShout     2.457   1.126
+#&gt; S4DoCurse    -0.537   1.363
+#&gt; S4DoScold     0.255   1.430
+#&gt; S4DoShout     1.592   1.180
+#&gt; 
+#&gt; Log.Lik: -4017.413
+
+# ?plot.ltm
+plot(res_2pl_1, items =  1:12)</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/2pl-1.png" width="80%" /></p>
+<pre class="r"><code>plot(res_2pl_1, items = 13:24)</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/2pl-2.png" width="80%" /></p>
+</div>
+<div id="model-fit" class="section level2">
+<h2>Model Fit</h2>
+<div id="relative-fit-of-rasch-and-2pl-model" class="section level3">
+<h3>Relative Fit of Rasch and 2PL Model</h3>
+<p>To compare the Rasch and the 2PL model, both need to be fit using the same assumptions and the same algorithm. Therefore, the comparison is made here based on the models estimated via MML.</p>
+<div id="likelihood-ratio-test" class="section level4">
+<h4>Likelihood-Ratio Test</h4>
+<p>Since the two models are nested, they can be compared using a Likelihood-Ratio (LR) test. Here, the test is significant (p = .015) indicating that both models do <strong>not</strong> fit equally well and that the more complex 2PL model is preferred.</p>
+<p>Note that a model with more parameters always leads to a higher likelihood, which is also the case here. Note further, that the degrees of freedom (df) for the LR test equal the number of constrained parameters. In the 2PL model, 24 discrimination parameters were estimated, and in the Rasch model only 1, which gives df = 23.</p>
+<pre class="r"><code>anova(res_rm_2, res_2pl_1)
+#&gt; 
+#&gt;  Likelihood Ratio Table
+#&gt;               AIC    BIC  log.Lik   LRT df p.value
+#&gt; res_rm_2  8124.80 8218.7 -4037.40                 
+#&gt; res_2pl_1 8130.83 8311.1 -4017.41 39.98 23   0.015</code></pre>
+</div>
+<div id="aic-and-bic" class="section level4">
+<h4>AIC and BIC</h4>
+<p>To compare two models descriptively, they need not necessarily be nested. With respect to AIC and BIC, lower values indicate better fit. Herein, the Rasch model is preferred by both criteria.</p>
+</div>
+<div id="comparison-of-item-parameters" class="section level4">
+<h4>Comparison of Item Parameters</h4>
+<p>To further evaluate differences between the two models, the difficulty parameters can be correlated across models. Again, the extremely high correlation indicates that the differences between models is small.</p>
+<pre class="r"><code>cor(coef(res_rm_2)[, 1], coef(res_2pl_1)[, 1])
+#&gt; [1] 0.9942499</code></pre>
+</div>
+</div>
+<div id="absolute-fit-of-the-rasch-model" class="section level3">
+<h3>Absolute Fit of the Rasch Model</h3>
+<p>In the remainder of this subsection, a few procedures for assessing the fit of the Rasch model will be illustrated.</p>
+<p>Several of them are based on the idea that the item parameters—estimated separately in two groups—should be equal if the model holds. For illustrative purposes, the variable sex is used here but other/additional variables can of course be used.</p>
+<div id="andersens-likelihood-ratio-test-and-graphical-model-check" class="section level4">
+<h4>Andersen’s Likelihood-Ratio Test and Graphical Model Check</h4>
+<p>The item parameters should be equal if the model holds and thus be close to the line in the following plot. The ellipses indicate the confidence intervals, and many of them overlap the line indicating good fit. A few items stand out, for example item 6 (S2WantShout), which is easier for women than for men.</p>
+<p>The significance test that formalizes this idea is called Andersen’s Likelihood Ratio test <span class="citation">(Andersen, 1973)</span>. Herein, it is significant indicating bad fit due to too many items with diverging item difficulties.</p>
+<pre class="r"><code>lrt_1 &lt;- LRtest(res_rm_1, splitcr = verbal$Gender)
+plotGOF(lrt_1, conf = list(), tlab = &quot;number&quot;,
+        xlab = &quot;Women&quot;, ylab = &quot;Men&quot;)</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/unnamed-chunk-11-1.png" width="80%" /></p>
+<pre class="r"><code>lrt_1
+#&gt; 
+#&gt; Andersen LR-test: 
+#&gt; LR-value: 70.693 
+#&gt; Chi-square df: 23 
+#&gt; p-value:  0</code></pre>
+<p>Removing bad fitting items should improve fit, and this is indeed the case here if item 6 is removed: The test statistic is smaller now even though still significant.</p>
+<pre class="r"><code>tmp1 &lt;- RM(dat_1[, -6])
+LRtest(tmp1, splitcr = verbal$Gender)
+#&gt; 
+#&gt; Andersen LR-test: 
+#&gt; LR-value: 59.533 
+#&gt; Chi-square df: 22 
+#&gt; p-value:  0</code></pre>
+</div>
+<div id="wald-test" class="section level4">
+<h4>Wald Test</h4>
+<p>The Wald test is also based on the comparison of two groups, however it is used for individual items. Again, misfit is indicated for item 6 among others. It is interesting to note that the z-statistic is mostly negative for do-items and positive for want-items. Negative values indicate that the item is easier for the second group, namely, men. Thus, it seems easier for men compared to women to “do” or show verbal aggression.</p>
+<pre class="r"><code>Waldtest(res_rm_1, splitcr = verbal$Gender)
+#&gt; 
+#&gt; Wald test on item level (z-values):
+#&gt; 
+#&gt;                  z-statistic p-value
+#&gt; beta S1wantCurse       1.402   0.161
+#&gt; beta S1WantScold       1.306   0.192
+#&gt; beta S1WantShout       1.408   0.159
+#&gt; beta S2WantCurse       2.028   0.043
+#&gt; beta S2WantScold       1.595   0.111
+#&gt; beta S2WantShout       3.260   0.001
+#&gt; beta S3WantCurse       0.518   0.604
+#&gt; beta S3WantScold      -1.304   0.192
+#&gt; beta S3WantShout       1.579   0.114
+#&gt; beta S4WantCurse       1.518   0.129
+#&gt; beta S4WantScold      -0.146   0.884
+#&gt; beta S4WantShout       2.038   0.042
+#&gt; beta S1DoCurse        -0.675   0.500
+#&gt; beta S1DoScold        -1.963   0.050
+#&gt; beta S1DoShout         0.789   0.430
+#&gt; beta S2DoCurse        -2.610   0.009
+#&gt; beta S2DoScold        -2.898   0.004
+#&gt; beta S2DoShout        -0.368   0.713
+#&gt; beta S3DoCurse        -2.645   0.008
+#&gt; beta S3DoScold        -2.218   0.027
+#&gt; beta S3DoShout        -0.773   0.440
+#&gt; beta S4DoCurse        -1.315   0.189
+#&gt; beta S4DoScold        -1.547   0.122
+#&gt; beta S4DoShout         1.046   0.295</code></pre>
+</div>
+<div id="infit-and-outfit" class="section level4">
+<h4>Infit and Outfit</h4>
+<p>Infit and outfit statistics are not based on the comparison of groups, but on residuals. Descriptively, the MSQ values should be, for instance, within the range from 0.7 to 1.3 <span class="citation">(Wright &amp; Linacre, 1994)</span>. A t-Test is also reported for infit and outfit, and the t-value should conventionally be within the range from -1.96 to +1.96. Here, the previously flagged item 6 performs quite good, but other items do not, for example item 14 (S1DoScold). The <strong>eRm</strong> package also provides a plot of the infit t-values, called a Pathway Map, which is also available for persons instead of items (<code>plotPWmap(res_rm_1, pmap = TRUE, imap = FALSE)</code>).</p>
+<pre class="r"><code># To calculate infit/outfit via itemfit(), the person parameters have to be
+# estimated first
+pp_ml_1 &lt;- person.parameter(res_rm_1)
+itemfit(pp_ml_1)
+#&gt; 
+#&gt; Itemfit Statistics: 
+#&gt;                Chisq  df p-value Outfit MSQ Infit MSQ Outfit t Infit t
+#&gt; S1wantCurse  333.752 306   0.132      1.087     0.973     0.58   -0.36
+#&gt; S1WantScold  285.433 306   0.795      0.930     0.959    -0.58   -0.69
+#&gt; S1WantShout  303.008 306   0.538      0.987     0.981    -0.09   -0.33
+#&gt; S2WantCurse  231.914 306   0.999      0.755     0.976    -1.18   -0.25
+#&gt; S2WantScold  274.211 306   0.904      0.893     0.950    -0.85   -0.83
+#&gt; S2WantShout  296.628 306   0.639      0.966     1.001    -0.30    0.04
+#&gt; S3WantCurse  370.936 306   0.006      1.208     1.138     1.73    2.27
+#&gt; S3WantScold  267.323 306   0.946      0.871     0.956    -1.10   -0.72
+#&gt; S3WantShout  399.960 306   0.000      1.303     1.097     1.58    1.19
+#&gt; S4WantCurse  298.519 306   0.609      0.972     1.051    -0.14    0.77
+#&gt; S4WantScold  297.046 306   0.633      0.968     0.929    -0.27   -1.27
+#&gt; S4WantShout  366.629 306   0.010      1.194     1.082     1.35    1.21
+#&gt; S1DoCurse    256.352 306   0.982      0.835     0.895    -1.04   -1.53
+#&gt; S1DoScold    226.531 306   1.000      0.738     0.837    -2.59   -3.01
+#&gt; S1DoShout    294.109 306   0.677      0.958     0.956    -0.29   -0.68
+#&gt; S2DoCurse    301.914 306   0.555      0.983     0.951    -0.08   -0.77
+#&gt; S2DoScold    246.872 306   0.994      0.804     0.891    -2.01   -2.02
+#&gt; S2DoShout    267.965 306   0.943      0.873     0.910    -0.69   -1.14
+#&gt; S3DoCurse    345.909 306   0.058      1.127     1.069     1.21    1.23
+#&gt; S3DoScold    263.468 306   0.962      0.858     1.006    -0.77    0.10
+#&gt; S3DoShout   1001.107 306   0.000      3.261     0.986     3.70   -0.04
+#&gt; S4DoCurse    285.345 306   0.796      0.929     0.970    -0.54   -0.49
+#&gt; S4DoScold    289.620 306   0.741      0.943     0.996    -0.50   -0.05
+#&gt; S4DoShout    312.841 306   0.382      1.019     1.035     0.16    0.38
+
+plotPWmap(res_rm_1)</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/unnamed-chunk-14-1.png" width="80%" /></p>
+</div>
+</div>
+<div id="dif" class="section level3">
+<h3>DIF</h3>
+<p>Herein, differential item functioning (DIF) or item bias or measurement invariance is treated as a topic within Model Fit, but it could also be treated as a topic of its own given the high relevance in the IRT literature.</p>
+<p>Above, we already compared item parameters across groups from a fit perspective. However, if the groups are the focal and the reference group, these procedures can also be interpreted from a DIF perspective. Thus, the Wald test indicated that item 6 showed DIF, namely, uniform DIF.</p>
+<div id="mantel-haenszel" class="section level4">
+<h4>Mantel-Haenszel</h4>
+<p>The Mantel-Haenszel method is a non-parametric approach to DIF. Herein, again item 6 is flagged having significant DIF (p = .002) with a large effect size of <span class="math inline">\(\Delta_{MH}\)</span>=-2.49. The negative effect size indicates that the item is harder for the focal group, namely, men, mirroring the results from above. The plot gives a compact summary across all items.</p>
+<pre class="r"><code>tmp1 &lt;- difMH(dat_1, group = verbal$Gender, focal.name = 1)
+tmp1
+#&gt; 
+#&gt; Detection of Differential Item Functioning using Mantel-Haenszel method 
+#&gt; with continuity correction and without item purification
+#&gt; 
+#&gt; Results based on asymptotic inference 
+#&gt;  
+#&gt; No set of anchor items was provided 
+#&gt;  
+#&gt; No p-value adjustment for multiple comparisons 
+#&gt;  
+#&gt; Mantel-Haenszel Chi-square statistic: 
+#&gt;  
+#&gt;             Stat.  P-value   
+#&gt; S1wantCurse 1.7076 0.1913    
+#&gt; S1WantScold 2.1486 0.1427    
+#&gt; S1WantShout 0.9926 0.3191    
+#&gt; S2WantCurse 1.9302 0.1647    
+#&gt; S2WantScold 2.9540 0.0857  . 
+#&gt; S2WantShout 9.6032 0.0019  **
+#&gt; S3WantCurse 0.0013 0.9711    
+#&gt; S3WantScold 0.6752 0.4112    
+#&gt; S3WantShout 0.8185 0.3656    
+#&gt; S4WantCurse 1.6292 0.2018    
+#&gt; S4WantScold 0.0152 0.9020    
+#&gt; S4WantShout 4.1188 0.0424  * 
+#&gt; S1DoCurse   0.1324 0.7160    
+#&gt; S1DoScold   2.7501 0.0972  . 
+#&gt; S1DoShout   0.0683 0.7938    
+#&gt; S2DoCurse   6.3029 0.0121  * 
+#&gt; S2DoScold   6.8395 0.0089  **
+#&gt; S2DoShout   0.2170 0.6414    
+#&gt; S3DoCurse   5.7817 0.0162  * 
+#&gt; S3DoScold   3.8880 0.0486  * 
+#&gt; S3DoShout   0.2989 0.5846    
+#&gt; S4DoCurse   1.1220 0.2895    
+#&gt; S4DoScold   1.4491 0.2287    
+#&gt; S4DoShout   0.8390 0.3597    
+#&gt; 
+#&gt; Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1  
+#&gt; 
+#&gt; Detection threshold: 3.8415 (significance level: 0.05)
+#&gt; 
+#&gt; Items detected as DIF items: 
+#&gt;             
+#&gt;  S2WantShout
+#&gt;  S4WantShout
+#&gt;  S2DoCurse  
+#&gt;  S2DoScold  
+#&gt;  S3DoCurse  
+#&gt;  S3DoScold  
+#&gt; 
+#&gt;  
+#&gt; Effect size (ETS Delta scale): 
+#&gt;  
+#&gt; Effect size code: 
+#&gt;  &#39;A&#39;: negligible effect 
+#&gt;  &#39;B&#39;: moderate effect 
+#&gt;  &#39;C&#39;: large effect 
+#&gt;  
+#&gt;             alphaMH deltaMH  
+#&gt; S1wantCurse  1.7005 -1.2476 B
+#&gt; S1WantScold  1.7702 -1.3420 B
+#&gt; S1WantShout  1.4481 -0.8701 A
+#&gt; S2WantCurse  1.9395 -1.5567 C
+#&gt; S2WantScold  1.9799 -1.6052 C
+#&gt; S2WantShout  2.8804 -2.4861 C
+#&gt; S3WantCurse  0.9439  0.1358 A
+#&gt; S3WantScold  0.7194  0.7741 A
+#&gt; S3WantShout  1.5281 -0.9965 A
+#&gt; S4WantCurse  1.6849 -1.2260 B
+#&gt; S4WantScold  1.0901 -0.2028 A
+#&gt; S4WantShout  2.3458 -2.0036 C
+#&gt; S1DoCurse    0.7967  0.5340 A
+#&gt; S1DoScold    0.4995  1.6313 C
+#&gt; S1DoShout    1.1765 -0.3821 A
+#&gt; S2DoCurse    0.3209  2.6709 C
+#&gt; S2DoScold    0.3746  2.3072 C
+#&gt; S2DoShout    0.7931  0.5447 A
+#&gt; S3DoCurse    0.4616  1.8165 C
+#&gt; S3DoScold    0.4727  1.7606 C
+#&gt; S3DoShout    0.6373  1.0585 B
+#&gt; S4DoCurse    0.6444  1.0327 B
+#&gt; S4DoScold    0.6385  1.0541 B
+#&gt; S4DoShout    1.6053 -1.1123 B
+#&gt; 
+#&gt; Effect size codes: 0 &#39;A&#39; 1.0 &#39;B&#39; 1.5 &#39;C&#39; 
+#&gt;  (for absolute values of &#39;deltaMH&#39;) 
+#&gt;  
+#&gt; Output was not captured!
+
+plot(tmp1)</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/Mantel-Haenszel-1.png" width="80%" /></p>
+<pre><code>#&gt; The plot was not captured!</code></pre>
+</div>
+<div id="lords-chi-square-test" class="section level4">
+<h4>Lord’s Chi-Square-Test</h4>
+<p>Lord’s <span class="math inline">\(\chi^2\)</span>-Test allows to test for non-uniform (crossing) DIF, because a 2PL (or even 3PL) model is estimated in each group rather than a Rasch model, which was used for the Wald test.</p>
+<p>Here, item 6 has still a relatively high <span class="math inline">\(\chi^2\)</span>-value but it is non-significant (p = .075). The ICCs indicate that item 6 is a little bit harder for men and also a little bit less discriminating (uniform and non-uniform DIF)—but non-significant.</p>
+<pre class="r"><code>tmp1 &lt;- difLord(dat_1, group = verbal$Gender, focal.name = 1, model = &quot;2PL&quot;)
+# tmp1 &lt;- difLord(dat_1, group = verbal$Gender, focal.name = 1, model = &quot;1PL&quot;, discr = NULL)
+tmp1
+#&gt; 
+#&gt; Detection of Differential Item Functioning using Lord&#39;s method 
+#&gt; with 2PL model and without item purification
+#&gt; 
+#&gt; Engine &#39;ltm&#39; for item parameter estimation 
+#&gt;  
+#&gt; No set of anchor items was provided 
+#&gt;  
+#&gt; No p-value adjustment for multiple comparisons 
+#&gt;  
+#&gt; Lord&#39;s chi-square statistic: 
+#&gt;  
+#&gt;             Stat.  P-value  
+#&gt; S1wantCurse 1.3458 0.5102   
+#&gt; S1WantScold 2.3185 0.3137   
+#&gt; S1WantShout 0.8788 0.6444   
+#&gt; S2WantCurse 4.5812 0.1012   
+#&gt; S2WantScold 3.3121 0.1909   
+#&gt; S2WantShout 5.1932 0.0745  .
+#&gt; S3WantCurse 1.1636 0.5589   
+#&gt; S3WantScold 2.2611 0.3229   
+#&gt; S3WantShout 1.0015 0.6061   
+#&gt; S4WantCurse 2.8886 0.2359   
+#&gt; S4WantScold 0.6412 0.7257   
+#&gt; S4WantShout 2.1526 0.3409   
+#&gt; S1DoCurse   1.8026 0.4060   
+#&gt; S1DoScold   3.7448 0.1538   
+#&gt; S1DoShout   0.3376 0.8447   
+#&gt; S2DoCurse   7.6852 0.0214  *
+#&gt; S2DoScold   6.9684 0.0307  *
+#&gt; S2DoShout   2.7932 0.2474   
+#&gt; S3DoCurse   5.6040 0.0607  .
+#&gt; S3DoScold   5.6378 0.0597  .
+#&gt; S3DoShout   0.9704 0.6156   
+#&gt; S4DoCurse   3.5649 0.1682   
+#&gt; S4DoScold   4.2514 0.1193   
+#&gt; S4DoShout   0.4827 0.7856   
+#&gt; 
+#&gt; Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1  
+#&gt;  
+#&gt; Detection threshold: 5.9915 (significance level: 0.05)
+#&gt; 
+#&gt; Items detected as DIF items: 
+#&gt;           
+#&gt;  S2DoCurse
+#&gt;  S2DoScold
+#&gt; 
+#&gt; Output was not captured!
+
+plot(tmp1)</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/Lord-1.png" width="80%" /></p>
+<pre><code>#&gt; The plot was not captured!
+plot(tmp1, plot = &quot;itemCurve&quot;, item = 6)</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/Lord-2.png" width="80%" /></p>
+<pre><code>#&gt; The plot was not captured!</code></pre>
+</div>
+</div>
+</div>
+<div id="person-parameters" class="section level2">
+<h2>Person Parameters</h2>
+<p>An ability parameter for every person can be estimated using different methods, and those will be illustrated and compared in the following.</p>
+<div id="ml" class="section level3">
+<h3>ML</h3>
+<p>Maximum likelihood (ML) estimation without further assumptions/information is available in the <strong>eRm</strong> package. ML estimation does not allow an estimate for persons who solved none or all items. Estimates are calculated via extrapolation for those persons per default (<code>coef(extrapolated = TRUE)</code>), but this can be disabled.</p>
+<pre class="r"><code>tmp1 &lt;- person.parameter(res_rm_1)
+pp_ml &lt;- coef(tmp1)</code></pre>
+</div>
+<div id="map-and-eap" class="section level3">
+<h3>MAP and EAP</h3>
+<p>Maximum a Posteriori (MAP) or Empirical Bayes (EB) estimates are available in the <strong>ltm</strong> package, as well as the closely related Expected a Posteriori (EAP) estimates. Both assume a normal distribution prior for the person parameters.</p>
+<p>The high correlation among the estimates indicates that the methods lead to the same conclusions for the present data set, and this will often be the case.</p>
+<pre class="r"><code>pp_map &lt;- factor.scores(res_rm_2, method = &quot;EB&quot;, resp.patterns = dat_1)
+pp_eap &lt;- factor.scores(res_rm_2, method = &quot;EAP&quot;, resp.patterns = dat_1)
+tmp1 &lt;- data.frame(ML = pp_ml, MAP = pp_map$score.dat$z1, EAP = pp_eap$score.dat$z1)
+round(cor(tmp1), 4)
+#&gt;         ML    MAP    EAP
+#&gt; ML  1.0000 0.9950 0.9954
+#&gt; MAP 0.9950 1.0000 0.9999
+#&gt; EAP 0.9954 0.9999 1.0000</code></pre>
+<p>Furthermore, the scatter plot of the ML and the MAP estimates illustrates the effect of the prior. The relationship is linear for intermediate person parameters. However, shrinkage towards 0 is observed for extreme person parameters such that the MAP estimates are less extreme than the ML estimates.</p>
+<pre class="r"><code>plot(tmp1[, 1:2])</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/unnamed-chunk-17-1.png" width="80%" /></p>
+<p>Furthermore, we may compare the estimates for the Rasch and the 2PL model as a supplement to the model comparison from above. Again, the person parameters are almost identical highlighting again that the difference between the two models is not large for the present data set.</p>
+<pre class="r"><code>pp_2pl &lt;- factor.scores(res_2pl_1, method = &quot;EB&quot;, resp.patterns = dat_1)
+cor(pp_map$score.dat$z1, pp_2pl$score.dat$z1)
+#&gt; [1] 0.9956129</code></pre>
+</div>
+</div>
+<div id="item-and-test-information" class="section level2">
+<h2>Item and Test Information</h2>
+<p>Item information curves (IICs) are available in both the <strong>eRm</strong> (<code>plotINFO()</code>) and <strong>ltm</strong> (<code>plot(type = &quot;IIC&quot;)</code>) package. Those curves are an illustration of the difficulty and discrimination parameters. Therefore, it is expected that maximum information is highest for the items with the highest discrimination parameter (e.g., item 14 S1DoScold). It is interesting to see that the do-items show generally larger discrimination parameters, which is often interpreted as being a closer or better measure of the latent variable.</p>
+<pre class="r"><code>res_2pl_1
+#&gt; 
+#&gt; Call:
+#&gt; ltm(formula = dat_1 ~ z1)
+#&gt; 
+#&gt; Coefficients:
+#&gt;              Dffclt  Dscrmn
+#&gt; S1wantCurse  -0.913   1.358
+#&gt; S1WantScold  -0.409   1.525
+#&gt; S1WantShout  -0.078   1.340
+#&gt; S2WantCurse  -1.243   1.468
+#&gt; S2WantScold  -0.500   1.567
+#&gt; S2WantShout  -0.026   1.249
+#&gt; S3WantCurse  -0.531   0.880
+#&gt; S3WantScold   0.475   1.409
+#&gt; S3WantShout   1.455   0.912
+#&gt; S4WantCurse  -0.906   1.129
+#&gt; S4WantScold   0.214   1.588
+#&gt; S4WantShout   0.946   0.967
+#&gt; S1DoCurse    -0.821   1.666
+#&gt; S1DoScold    -0.251   2.272
+#&gt; S1DoShout     0.605   1.420
+#&gt; S2DoCurse    -0.630   1.475
+#&gt; S2DoScold     0.009   1.987
+#&gt; S2DoShout     0.968   1.625
+#&gt; S3DoCurse     0.164   1.089
+#&gt; S3DoScold     1.098   1.342
+#&gt; S3DoShout     2.457   1.126
+#&gt; S4DoCurse    -0.537   1.363
+#&gt; S4DoScold     0.255   1.430
+#&gt; S4DoShout     1.592   1.180
+#&gt; 
+#&gt; Log.Lik: -4017.413
+
+plot(res_2pl_1, items =  1:12, type = &quot;IIC&quot;, ylim = c(0, 1.3))</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/IIC-1.png" width="80%" /></p>
+<pre class="r"><code>plot(res_2pl_1, items = 13:24, type = &quot;IIC&quot;, ylim = c(0, 1.3))</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/IIC-2.png" width="80%" /></p>
+<pre class="r"><code>plot(res_2pl_1, items = 0, type = &quot;IIC&quot;)</code></pre>
+<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/IIC-3.png" width="80%" /></p>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2>References</h2>
+<div id="refs" class="references">
+<div id="ref-andersen_goodness_1973">
+<p>Andersen, E. B. (1973). A goodness of fit test for the Rasch model. <em>Psychometrika</em>, <em>38</em>, 123–140. <a href="https://doi.org/10.1007/BF02291180" class="uri">https://doi.org/10.1007/BF02291180</a></p>
+</div>
+<div id="ref-magis_general_2010">
+<p>Magis, D., Béland, S., Tuerlinckx, F., &amp; De Boeck, P. (2010). A general framework and an R package for the detection of dichotomous differential item functioning. <em>Behavior Research Methods</em>, <em>42</em>, 847–862. <a href="https://doi.org/10.3758/BRM.42.3.847" class="uri">https://doi.org/10.3758/BRM.42.3.847</a></p>
+</div>
+<div id="ref-mair_extended_2007">
+<p>Mair, P., &amp; Hatzinger, R. (2007). Extended Rasch modeling: The eRm package for the application of IRT models in R. <em>Journal of Statistical Software</em>, <em>20</em>(9), 1–20. <a href="https://doi.org/10.18637/jss.v020.i09" class="uri">https://doi.org/10.18637/jss.v020.i09</a></p>
+</div>
+<div id="ref-rizopoulos_ltm_2006">
+<p>Rizopoulos, D. (2006). ltm: An R package for latent variable modelling and item response theory analyses. <em>Journal of Statistical Software</em>, <em>17</em>(5), 1–25. Retrieved from <a href="http://www.jstatsoft.org/v17/i05/" class="uri">http://www.jstatsoft.org/v17/i05/</a></p>
+</div>
+<div id="ref-wright_reasonable_1994">
+<p>Wright, B. D., &amp; Linacre, J. M. (1994). Reasonable mean-square fit values. <em>Rasch Measurement Transactions</em>, <em>8</em>, 370. Retrieved from <a href="https://www.rasch.org/rmt/rmt83b.htm" class="uri">https://www.rasch.org/rmt/rmt83b.htm</a></p>
+</div>
+</div>
+</div>
