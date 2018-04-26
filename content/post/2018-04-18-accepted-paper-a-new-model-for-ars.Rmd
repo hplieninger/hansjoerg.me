@@ -1,0 +1,13 @@
+---
+title: 'Accepted Paper: A New Model for Acquiescence'
+author: Hansjörg Plieninger
+date: '2018-04-18'
+slug: accepted-paper-a-new-model-for-ars
+categories: []
+tags: [academia, IRT, psychometrics, bayes]
+# bigimg: [{src: "/img/mpt-model.png", desc: "ARS-Model"}]
+---
+
+Today, our paper "A new model for acquiescence at the interface of psychometrics and cognitive psychology" has been accepted at *Multivariate Behavioral Research*. Therein, I developed together with [Daniel Heck](dwheck.de) a model for acquiescence response style on the basis of item response theory, more specifically IR-tree models, and multinomial processing tree models. This research took a long time but was also great fun, especially the collaboration with Daniel. You will soon find the final paper under [publications](/page/publications/) and at [MBR](https://doi.org/10.1080/00273171.2018.1469966), and the abstract is posted below.
+
+> When measuring psychological traits, one has to consider that respondents often show content-unrelated response behavior in answering questionnaires. To disentangle the target trait and two such response styles, extreme responding and midpoint responding, Böckenholt (2012a) developed an item response model based on a latent processing tree structure. We propose a theoretically motivated extension of this model to also measure acquiescence, the tendency to agree with both regular and reversed items. Substantively, our approach builds on multinomial processing tree (MPT) models that are used in cognitive psychology to disentangle qualitatively distinct processes. Accordingly, the new model for response styles assumes a mixture distribution of affirmative responses, which are either determined by the underlying target trait or by acquiescence. In order to estimate the model parameters, we rely on Bayesian hierarchical estimation of MPT models. In simulations, we show that the model provides unbiased estimates of response styles and the target trait, and we compare the new model and Böckenholt’s model in a recovery study. An empirical example from personality psychology is used for illustrative purposes.
