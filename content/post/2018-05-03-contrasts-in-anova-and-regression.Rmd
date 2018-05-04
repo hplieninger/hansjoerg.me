@@ -246,8 +246,9 @@ But maybe because the interpretation of orthogonal contrasts is relatively easy,
 ```{r}
 # B matrix for Helmert coding
 contr.helmert(5)
-tmp1 <- solve(cbind(1, contr.helmert(5)))[-1, ]
+
 # C matrix
+tmp1 <- solve(cbind(1, contr.helmert(5)))[-1, ]
 round(t(tmp1), 2)
 ```
 

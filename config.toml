@@ -33,7 +33,7 @@ copyright = "Hansjörg Plieninger"
   highlightjsCDN = "//cdn.bootcss.com"
   highlightjsLang = ["r", "yaml", "tex"]
   highlightjsTheme = "monokai"
-  description = "This is the personal website and blog of Hansjörg Plieninger. It's about R, psychometrics, data science, psychology, and other topics alike."
+#   description = "This is the personal website and blog of Hansjörg Plieninger. It's about R, psychometrics, data science, psychology, and other topics alike."
 
 [permalinks]
     post = "/:year/:month/:day/:slug/"
@@ -52,7 +52,7 @@ copyright = "Hansjörg Plieninger"
 
 [Author]
   name = "Hansjörg Plieninger"
-  website = "page/about/"
+  website = "/page/about/"
 #   email = "youremail@domain.com"
 #   facebook = "username"
 #   googleplus = "+username" # or xxxxxxxxxxxxxxxxxxxxx

@@ -358,8 +358,9 @@ contr.helmert(5)
 #&gt; 3    0    2   -1   -1
 #&gt; 4    0    0    3   -1
 #&gt; 5    0    0    0    4
-tmp1 &lt;- solve(cbind(1, contr.helmert(5)))[-1, ]
+
 # C matrix
+tmp1 &lt;- solve(cbind(1, contr.helmert(5)))[-1, ]
 round(t(tmp1), 2)
 #&gt;   [,1]  [,2]  [,3]  [,4]
 #&gt; 1 -0.5 -0.17 -0.08 -0.05

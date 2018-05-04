@@ -5,7 +5,6 @@ date: '2018-02-01'
 slug: hello-world
 categories: []
 tags: []
-description: 'This is my first post, my HelloWorld.'
 ---
 
 ```{r setup, include=FALSE}
