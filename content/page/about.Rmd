@@ -1,8 +1,9 @@
 ---
-title: "About me"
-# subtitle: "Why you'd want to go on a date with me"
+title: 'About me'
+# subtitle: Why you'd want to go on a date with me
 comments: false
-author: "Hansjörg Plieninger"
+author: 'Hansjörg Plieninger'
+date: '2018-02-01'
 ---
 
 ```{r setup, include=FALSE}
@@ -15,12 +16,12 @@ My name is Hansjörg Plieninger, I am a postdoctoral researcher in the psycholog
 
 This blog is about ...
 
-* things I learned to make it simpler for other people to learn the same thing quicker,
-* things I learned to make it simpler for me to do the same thing quicker next time,
-* things I love to make it simpler for others to love them, too,
-* things I do to make it simpler for you to get in touch with me.
+* things I learned, to make it simpler for other people to learn the same thing quicker,
+* things I learned, to make it simpler for me to do the same thing quicker next time,
+* things I love, to make it simpler for others to love them, too,
+* things I do, to make it simpler for you to get in touch with me.
 
-And the motto of this blog comes from one of my favourite R packages, **fortunes**:
+And the motto of this blog comes from one of my favorite R packages, **fortunes**:
 
 ```{r}
 fortunes::fortune("done it.")

@@ -1,0 +1,11 @@
++++
+title = 'Contact'
+# date = 
+author = 'Hansjörg Plieninger'
+# description = "How to contact me."
+comment = false
++++
+
+## Contact
+
+You can find my mail adress [here](http://methods.uni-mannheim.de/Mitarbeiter/hansjoerg_plieninger/).

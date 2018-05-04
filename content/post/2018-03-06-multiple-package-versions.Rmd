@@ -1,10 +1,12 @@
 ---
-title: "Working with different versions of an R package"
-author: "Hansjörg"
-date: 2018-03-06
-categories: ["R"]
-tags: ["R"]
-slug: working-with-different-package-versions
+title: 'Working with different versions of an R package'
+author: 'Hansjörg Plieninger'
+date: '2018-03-06'
+categories:
+  - R
+tags:
+  - R
+slug: multiple-package-versions
 output:
   blogdown::html_page:
     toc: true
@@ -12,16 +14,12 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(collapse = T, comment = "#>")
-
-
-library(cli)
-
-options(crayon.enabled = TRUE)
-options(crayon.colors = 256)
-crayon::num_colors(forget = TRUE)
+# library(cli)
+# 
+# options(crayon.enabled = TRUE)
+# options(crayon.colors = 256)
+# crayon::num_colors(forget = TRUE)
 ```
-
-## Motivation
 
 Recently, I had to install an older version of an R package, because a function was deprecated that I wanted to use.
 I wanted to install the old version in addition to and not instead
@@ -35,7 +33,7 @@ library(httr)
 library(curl)
 ```
 
-In addtion to my custom Windows library, I created two new folders to store packages in, one for older packages and one for devel versions.
+In addition to my custom Windows library, I created two new folders to store packages in, one for older packages and one for devel versions.
 
 ```{r, eval = T}
 dev_lib <- file.path("~/../Documents/R/win-library/dev-versions/")
@@ -46,10 +44,9 @@ list.dirs("~/../Documents/R/win-library", recursive = FALSE)
 
 
 
-```{r tree, render=ansistrings:::knit_print.html, eval = F, include = F}
+```{r tree, eval = F, include = F}
 
-# ```{r tree, render=ansistrings:::knit_print.html, echo = F}
-# ```{r tree, render=function(x, ...) ansistrings:::knit_print.html(x, zoom = 10), echo = F}
+# ```{r tree, render=ansistrings:::knit_print.html, eval = F, include = F}
 
 dat <- data.frame(
   stringsAsFactors = FALSE,
@@ -86,7 +83,7 @@ install.packages("~/../Downloads/MplusAutomation_0.7.tar.gz",
 
 ## Installing Packages to a Different Location Using devtools
 
-`devtools::install_version()` allows to install a specific version of a package automatically without having to manually download the achive.
+`devtools::install_version()` allows to install a specific version of a package automatically without having to manually download the archive.
 However, you cannot use a custom path, but `withr::with_libpaths()` can take care of that. Here, for example, I install an old version of **MplusAutomation** and the devel version of **ggplot2**.
 
 ```{r, eval = F}

@@ -52,8 +52,8 @@ copyright = "Hansjörg Plieninger"
 
 [Author]
   name = "Hansjörg Plieninger"
-  website = "hansjoerg.me"
-  email = "youremail@domain.com"
+  website = "page/about/"
+#   email = "youremail@domain.com"
 #   facebook = "username"
 #   googleplus = "+username" # or xxxxxxxxxxxxxxxxxxxxx
   github = "hplieninger"
@@ -64,6 +64,7 @@ copyright = "Hansjörg Plieninger"
 #   linkedin = "username"
 #   xing = "username"
   stackoverflow = "users/2563804/hplieninger"
+  crossvalidated = "users/27276/hplieninger"
 #   snapchat = "username"
 #   instagram = "username"
 #   youtube = "user/username" # or channel/channelname

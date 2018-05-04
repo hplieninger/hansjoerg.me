@@ -1,11 +1,12 @@
 ---
-title: Publications
-author: Hansjörg
-date: "2018-03-01"
+title: 'Publications'
+author: 'Hansjörg Plieninger'
+date: '2018-04-18'
 slug: publications
-categories: []
-tags: []
-description: ''
+# categories: []
+# tags: []
+# description: ''
+comments: false
 ---
 
 ## Articles
@@ -31,7 +32,7 @@ doi:[10.1177&#47;0013164413514998](https://doi.org/10.1177/0013164413514998)
 
 -   Meiser, T., Steinwascher, M., & Plieninger, H. (2016). Rasch models for
 measuring change. In *Wiley StatsRef: Statistics Reference Online*.
-doi:[10.1002/9781118445112.stat06384.pub2](https://doi.org/10.1002/9781118445112.stat06384.pub2)
+doi:[10.1002&#47;9781118445112.stat06384.pub2](https://doi.org/10.1002/9781118445112.stat06384.pub2)
 
 ## Thesis
 

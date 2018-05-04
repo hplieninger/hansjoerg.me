@@ -1,0 +1,67 @@
+---
+title: 'Font Embedding for LaTeX and R users'
+subtitle: 'Use cairo_pdf()'
+author: 'Hansjörg Plieninger'
+date: '2018-02-15'
+slug: font-embedding-for-latex-and-r-users
+categories:
+  - R
+tags:
+  - R
+  - LaTeX
+  - pdf
+  - note-to-myself
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+Recently, I sent my dissertation as a PDF file to a copy shop and got an email back that I had not embedded all fonts and that they won't print it for me. What? So instead of celebrating the submission, I had to search online for *pdf latex "font embedding"*, and this blog post is a summary of that afternoon.
+
+## What is Font Embedding
+
+In order to display or print a PDF, the system has to know which fonts it should use.
+
+* If the font used in the PDF is available on the system, it is able to handle it correctly (e.g., Arial).
+* If the font used in the PDF is not available on the system but is embedded in the PDF, the system is able to handle it correctly.
+* If the font is not available and not embedded, the system will guess what font to use for display/print and this may or may not work. This [link](http://wiki.opf-labs.org/download/attachments/101613571/fonts_notembedded.jpg?version=1&modificationDate=1430223649000) shows an extreme example of what might happen.
+
+Embedding fonts is probably not crucial for non-exotic fonts on non-exotic devices/printers.
+However, if you want to make sure that your PDF is correctly displayed or printed on any possible device, fonts should be embedded.
+Such devices could be, for example, a printer of a copy shop, an exotic device of a student, or a person with an otherwise different setup (e.g., someone in the year 2076 in Tanzania).
+
+## Problem: R does not embed fonts
+
+```{r, eval = F}
+pdf()
+plot(cars)
+dev.off()
+```
+
+R does not embed fonts when producing a PDF via `pdf()` as above. Thus, if you compile a PDF with LaTeX and include R plots (i.e., PDFs), LaTeX cannot embed the fonts of the plots, and then you finally have a PDF with some fonts not embedded. LaTeX itself seems to embed all fonts automatically, so if you don't include any plots, you don't have to worry.
+
+You can check whether fonts are embedded with most PDF readers and something along the lines of Properties -> Fonts.
+
+## Solution in R: Use cairo_pdf()
+
+If you wish to embed the fonts of your R plots, you have the following options.
+
+* Do not produce vector graphics via `pdf()` but images via `png()`, for example. This is probably not the desired solution because of quality, but it circumvents the problem of font embedding.
+* Produce vector graphics not via `pdf()` but via `cairo_pdf()`. This will embed the fonts automatically, and LaTeX will subsequently embed these fonts, too. This is the workflow that I recommend.
+* Postscript may also be an alternative (e.g., `cairo_ps()`), but I don't know much about postscript.
+* You may also embed fonts post hoc. R has a function `embedFonts()`, and the package **extrafont** provides a wrapper, for example, `extrafont::embed_fonts("f1.pdf", outfile="f1_embedded.pdf")`.  
+BTW: You may use any font (available on your system) in any R plot with the **extrafont** package.
+
+
+## Solution With Completed PDF
+
+If you already have a PDF with unembedded fonts and want to embed the fonts post hoc, things are different and may be a bit more difficult. What worked for me in a one or two test cases are the following solutions.
+
+* Use ghostscript via `embedFonts()` or the **extrafont** package as stated above.
+* You may also call ghostscript directly (rather than from R) as described in a [blog post by Karl Rupp](https://www.karlrupp.net/2016/01/embed-all-fonts-in-pdfs-latex-pdflatex/), close to the end of the post. What worked for me is the following command in a Windows Command Prompt:
+	
+```{r, eval = F}
+gswin64c -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dEmbedAllFonts=true -sOutputFile=C:\...\my_plot_embedded.pdf -f C:\...\my_plot.pdf
+```
+
+These solutions are certainly dependent on the fact that you have the fonts, which you want to embed, installed on your computer.

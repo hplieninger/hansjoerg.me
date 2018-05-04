@@ -1,6 +1,6 @@
 ---
 title: 'Tutorial: Rasch and 2PL Model in R'
-author: Hansjörg Plieninger
+author: 'Hansjörg Plieninger'
 date: '2018-04-23'
 slug: rasch-in-r-tutorial
 categories:
@@ -11,9 +11,8 @@ tags:
   - psychometrics
   - tutorial
   - package
-description: ''
-bibliography: C:/Users/plieninger/Documents/Literature/lib.bib
-csl: C:/Users/plieninger/Documents/Literature/apa.csl
+bibliography: ../../misc/lib.bib
+csl: ../../misc/apa.csl
 output:
   blogdown::html_page:
     toc: true
@@ -89,15 +88,15 @@ round(sort(betas), 2)
 <div id="plots" class="section level3">
 <h3>Plots</h3>
 <p>We may plot the ICC of a single or all items, which is just a graphical illustration of the estimated item parameters.</p>
-<pre class="r"><code>plotICC(res_rm_1, item.subset = 6)
+<pre class="r"><code>plotICC(res_rm_1, item.subset = &quot;S2WantShout&quot;)
 abline(v = -0.18, col = &quot;grey&quot;)
 abline(h = .5, col = &quot;grey&quot;)</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/rasch-plots-1.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/rasch-plots-1.png" width="80%" /></p>
 <pre class="r"><code>plotjointICC(res_rm_1, item.subset =  1:12, cex = .6)</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/rasch-plots-2.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/rasch-plots-2.png" width="80%" /></p>
 <pre class="r"><code>plotjointICC(res_rm_1, item.subset = 13:24, cex = .6)</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/rasch-plots-3.png" width="80%" /></p>
-<p>From the plots of the ICCs, it seems like the “want”-items are easier than the “do”-items. We may further investigate this by comparing the means of the item difficulties. This shows that this is indeed the case. (The two means sum to 0, because of the identification constraint, see below.)</p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/rasch-plots-3.png" width="80%" /></p>
+<p>From the plots of the ICCs, it seems like the “want”-items (items 1:12) are easier than the “do”-items (items 13:24). We may further investigate this by comparing the means of the item difficulties. This shows that this is indeed the case. (The two means sum to 0, because of the identification constraint, see below.)</p>
 <pre class="r"><code>mean(betas[ 1:12])           # Want-items
 #&gt; [1] -0.3622058
 mean(betas[13:24])           # Do-items
@@ -107,9 +106,9 @@ mean(betas[13:24])           # Do-items
 <p>A person-item map displays the location of item (and threshold) parameters as well as the distribution of person parameters.along the latent dimension. Person-item maps are useful to compare the range and position of the item measure distribution (lower panel) to the range and position of the person measure distribution (upper panel). Items should ideally be located along the whole scale to meaningfully measure the ‘ability’ of all persons. (From <code>?plotPImap</code>)</p>
 </blockquote>
 <pre class="r"><code>plotPImap(res_rm_1, cex.gen = .55)</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/unnamed-chunk-3-1.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/unnamed-chunk-3-1.png" width="80%" /></p>
 <pre class="r"><code>plotPImap(res_rm_1, cex.gen = .55, sorted = TRUE)</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/unnamed-chunk-3-2.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/unnamed-chunk-3-2.png" width="80%" /></p>
 </div>
 <div id="model-identification" class="section level3">
 <h3>Model Identification</h3>
@@ -206,7 +205,7 @@ summary(res_rm_1)
 </div>
 <div id="mml-estimation" class="section level3">
 <h3>MML Estimation</h3>
-<p>In contrast to the CML estimation above, the model is now fit using marginal maximum likelihood (MML) estimation. Therein, the model is identified by assuming a standard normal distribution of the person parameters. Thus, all item parameters can be freely estimated because the mean of the person parameters is fixed to 0 (which was not the case with CML).</p>
+<p>In contrast to the CML estimation above, the model is now fit using marginal maximum likelihood (MML) estimation using the function <code>rasch()</code> from the <strong>ltm</strong> package. Therein, the model is identified by assuming a standard normal distribution of the person parameters. Thus, all item parameters can be freely estimated because the mean of the person parameters is fixed to 0 (which was not the case with CML).</p>
 <pre class="r"><code>res_rm_2 &lt;- rasch(dat_1)
 res_rm_2
 #&gt; 
@@ -243,10 +242,10 @@ res_rm_2
 <div id="pl-model" class="section level2">
 <h2>2PL Model</h2>
 <p>A 2PL model cannot be estimated with <strong>eRm</strong>, but with the package <strong>ltm</strong>, for example.</p>
-<p>The estimated difficulty parameters (Dffclt) seem roughly comparable to those from the Rasch model. The discrimination parameters, which were all equal in the Rasch model, show some but not massive heterogeneity. This is also evident from the plot of the ICCs.</p>
+<p>The estimated difficulty parameters (Dffclt) seem roughly comparable to those from the Rasch model. The discrimination parameters (Dscrmn), which were all equal in the Rasch model, show some but not massive heterogeneity. This is also evident from the plot of the ICCs.</p>
 <p>Note that <code>res_2pl_1</code> and <code>res_rm_1</code> were estimated using two different packages. Thus, the structure of these objects is completely different and also the output if they are printed or the functions you may use with them (e.g., <code>plot()</code> vs. <code>plotICC()</code>).</p>
-<pre class="r"><code># lmt() takes a formula (with a ~) as its first argument. The left-hand side
-# must be the data and the right-hand side are the lantent variables (only one
+<pre class="r"><code># ltm() takes a formula with a tilde (~) as its first argument. The left-hand side
+# must be the data and the right-hand side are the latent variables (only one
 # here).
 res_2pl_1 &lt;- ltm(dat_1 ~ z1)
 res_2pl_1
@@ -285,9 +284,9 @@ res_2pl_1
 
 # ?plot.ltm
 plot(res_2pl_1, items =  1:12)</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/2pl-1.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/2pl-1.png" width="80%" /></p>
 <pre class="r"><code>plot(res_2pl_1, items = 13:24)</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/2pl-2.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/2pl-2.png" width="80%" /></p>
 </div>
 <div id="model-fit" class="section level2">
 <h2>Model Fit</h2>
@@ -327,7 +326,7 @@ plot(res_2pl_1, items =  1:12)</code></pre>
 <pre class="r"><code>lrt_1 &lt;- LRtest(res_rm_1, splitcr = verbal$Gender)
 plotGOF(lrt_1, conf = list(), tlab = &quot;number&quot;,
         xlab = &quot;Women&quot;, ylab = &quot;Men&quot;)</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/unnamed-chunk-11-1.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/unnamed-chunk-11-1.png" width="80%" /></p>
 <pre class="r"><code>lrt_1
 #&gt; 
 #&gt; Andersen LR-test: 
@@ -345,7 +344,7 @@ LRtest(tmp1, splitcr = verbal$Gender)
 </div>
 <div id="wald-test" class="section level4">
 <h4>Wald Test</h4>
-<p>The Wald test is also based on the comparison of two groups, however it is used for individual items. Again, misfit is indicated for item 6 among others. It is interesting to note that the z-statistic is mostly negative for do-items and positive for want-items. Negative values indicate that the item is easier for the second group, namely, men. Thus, it seems easier for men compared to women to “do” or show verbal aggression.</p>
+<p>The Wald test is also based on the comparison of two groups; however it is used for individual items. Again, misfit is indicated for item 6 among others. It is interesting to note that the z-statistic is mostly negative for do-items and positive for want-items. Negative values indicate that the item is easier for the second group, namely, men. Thus, it seems easier for men compared to women to “do” or show verbal aggression.</p>
 <pre class="r"><code>Waldtest(res_rm_1, splitcr = verbal$Gender)
 #&gt; 
 #&gt; Wald test on item level (z-values):
@@ -378,7 +377,7 @@ LRtest(tmp1, splitcr = verbal$Gender)
 </div>
 <div id="infit-and-outfit" class="section level4">
 <h4>Infit and Outfit</h4>
-<p>Infit and outfit statistics are not based on the comparison of groups, but on residuals. Descriptively, the MSQ values should be, for instance, within the range from 0.7 to 1.3 <span class="citation">(Wright &amp; Linacre, 1994)</span>. A t-Test is also reported for infit and outfit, and the t-value should conventionally be within the range from -1.96 to +1.96. Here, the previously flagged item 6 performs quite good, but other items do not, for example item 14 (S1DoScold). The <strong>eRm</strong> package also provides a plot of the infit t-values, called a Pathway Map, which is also available for persons instead of items (<code>plotPWmap(res_rm_1, pmap = TRUE, imap = FALSE)</code>).</p>
+<p>Infit and outfit statistics are not based on the comparison of groups, but on residuals. Descriptively, the MSQ values should be, for instance, within the range from 0.7 to 1.3 <span class="citation">(Wright &amp; Linacre, 1994)</span>. A t-test is also reported for infit and outfit, and the t-value should conventionally be within the range from -1.96 to +1.96. Here, the previously flagged item 6 performs quite good, but other items do not, for example item 14 (S1DoScold). The <strong>eRm</strong> package also provides a plot of the infit t-values, called a Pathway Map, which is also available for persons instead of items (i.e., <code>plotPWmap(res_rm_1, pmap = TRUE, imap = FALSE)</code>).</p>
 <pre class="r"><code># To calculate infit/outfit via itemfit(), the person parameters have to be
 # estimated first
 pp_ml_1 &lt;- person.parameter(res_rm_1)
@@ -412,7 +411,7 @@ itemfit(pp_ml_1)
 #&gt; S4DoShout    312.841 306   0.382      1.019     1.035     0.16    0.38
 
 plotPWmap(res_rm_1)</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/unnamed-chunk-14-1.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/unnamed-chunk-14-1.png" width="80%" /></p>
 </div>
 </div>
 <div id="dif" class="section level3">
@@ -515,7 +514,7 @@ tmp1
 #&gt; Output was not captured!
 
 plot(tmp1)</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/Mantel-Haenszel-1.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/Mantel-Haenszel-1.png" width="80%" /></p>
 <pre><code>#&gt; The plot was not captured!</code></pre>
 </div>
 <div id="lords-chi-square-test" class="section level4">
@@ -575,10 +574,10 @@ tmp1
 #&gt; Output was not captured!
 
 plot(tmp1)</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/Lord-1.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/Lord-1.png" width="80%" /></p>
 <pre><code>#&gt; The plot was not captured!
 plot(tmp1, plot = &quot;itemCurve&quot;, item = 6)</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/Lord-2.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/Lord-2.png" width="80%" /></p>
 <pre><code>#&gt; The plot was not captured!</code></pre>
 </div>
 </div>
@@ -588,14 +587,14 @@ plot(tmp1, plot = &quot;itemCurve&quot;, item = 6)</code></pre>
 <p>An ability parameter for every person can be estimated using different methods, and those will be illustrated and compared in the following.</p>
 <div id="ml" class="section level3">
 <h3>ML</h3>
-<p>Maximum likelihood (ML) estimation without further assumptions/information is available in the <strong>eRm</strong> package. ML estimation does not allow an estimate for persons who solved none or all items. Estimates are calculated via extrapolation for those persons per default (<code>coef(extrapolated = TRUE)</code>), but this can be disabled.</p>
+<p>Maximum likelihood (ML) estimation without further assumptions/information is available in the <strong>eRm</strong> package. ML estimation does not allow an estimate for persons who solved none or all items. Estimates are calculated via extrapolation for those persons per default (i.e., <code>coef(extrapolated = TRUE)</code>), but this can be disabled.</p>
 <pre class="r"><code>tmp1 &lt;- person.parameter(res_rm_1)
 pp_ml &lt;- coef(tmp1)</code></pre>
 </div>
 <div id="map-and-eap" class="section level3">
 <h3>MAP and EAP</h3>
-<p>Maximum a Posteriori (MAP) or Empirical Bayes (EB) estimates are available in the <strong>ltm</strong> package, as well as the closely related Expected a Posteriori (EAP) estimates. Both assume a normal distribution prior for the person parameters.</p>
-<p>The high correlation among the estimates indicates that the methods lead to the same conclusions for the present data set, and this will often be the case.</p>
+<p>Maximum a Posteriori (MAP) also known as Empirical Bayes (EB) estimates are available in the <strong>ltm</strong> package, as well as the closely related Expected a Posteriori (EAP) estimates. Both assume a normal distribution prior for the person parameters.</p>
+<p>The extremely high correlation among the estimates indicates that the methods lead to the same conclusions for the present data set, and this will often be the case.</p>
 <pre class="r"><code>pp_map &lt;- factor.scores(res_rm_2, method = &quot;EB&quot;, resp.patterns = dat_1)
 pp_eap &lt;- factor.scores(res_rm_2, method = &quot;EAP&quot;, resp.patterns = dat_1)
 tmp1 &lt;- data.frame(ML = pp_ml, MAP = pp_map$score.dat$z1, EAP = pp_eap$score.dat$z1)
@@ -606,7 +605,7 @@ round(cor(tmp1), 4)
 #&gt; EAP 0.9954 0.9999 1.0000</code></pre>
 <p>Furthermore, the scatter plot of the ML and the MAP estimates illustrates the effect of the prior. The relationship is linear for intermediate person parameters. However, shrinkage towards 0 is observed for extreme person parameters such that the MAP estimates are less extreme than the ML estimates.</p>
 <pre class="r"><code>plot(tmp1[, 1:2])</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/unnamed-chunk-17-1.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/unnamed-chunk-17-1.png" width="80%" /></p>
 <p>Furthermore, we may compare the estimates for the Rasch and the 2PL model as a supplement to the model comparison from above. Again, the person parameters are almost identical highlighting again that the difference between the two models is not large for the present data set.</p>
 <pre class="r"><code>pp_2pl &lt;- factor.scores(res_2pl_1, method = &quot;EB&quot;, resp.patterns = dat_1)
 cor(pp_map$score.dat$z1, pp_2pl$score.dat$z1)
@@ -651,11 +650,11 @@ cor(pp_map$score.dat$z1, pp_2pl$score.dat$z1)
 #&gt; Log.Lik: -4017.413
 
 plot(res_2pl_1, items =  1:12, type = &quot;IIC&quot;, ylim = c(0, 1.3))</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/IIC-1.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/IIC-1.png" width="80%" /></p>
 <pre class="r"><code>plot(res_2pl_1, items = 13:24, type = &quot;IIC&quot;, ylim = c(0, 1.3))</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/IIC-2.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/IIC-2.png" width="80%" /></p>
 <pre class="r"><code>plot(res_2pl_1, items = 0, type = &quot;IIC&quot;)</code></pre>
-<p><img src="/post/2018-04-23-tutorial-rasch-and-2pl-model-in-r_files/figure-html/IIC-3.png" width="80%" /></p>
+<p><img src="/post/2018-04-23-rasch-in-r-tutorial_files/figure-html/IIC-3.png" width="80%" /></p>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2>References</h2>
