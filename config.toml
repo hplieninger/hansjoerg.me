@@ -25,14 +25,14 @@ copyright = "Hansjörg Plieninger"
   rss = true
   comments = true
   readingTime = true
-  useHLJS = true
+  useHLJS = false
   socialShare = true
 #   gcse = "001109883246625728971:bhm8k26cb2e" # Get your code from google.com/cse. Make sure to go to "Look and Feel" and change Layout to "Full Width" and Theme to "Classic"
   # options for highlight.js (version, additional languages, and theme)
-  highlightjsVersion = "9.12.0"
-  highlightjsCDN = "//cdn.bootcss.com"
-  highlightjsLang = ["r", "yaml", "tex"]
-  highlightjsTheme = "monokai"
+#   highlightjsVersion = "9.12.0"
+#   highlightjsCDN = "//cdn.bootcss.com"
+#   highlightjsLang = ["r", "yaml", "tex"]
+#   highlightjsTheme = "monokai"
 #   description = "This is the personal website and blog of Hansjörg Plieninger. It's about R, psychometrics, data science, psychology, and other topics alike."
 
 [permalinks]

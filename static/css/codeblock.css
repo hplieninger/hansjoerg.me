@@ -1,0 +1,19 @@
+/* --- Code blocks --- */
+
+.chroma .ln { 
+  margin-right: 0.8em; 
+  padding: 0 0.4em 0 0.4em; 
+}
+/* pre code.hljs { */
+  /* padding: 9.5px; */
+/* } */
+/* code */
+pre {
+  border: 1px solid #ddd;
+  box-shadow: 5px 5px 5px #eee;
+  background: #f8f8f8;
+  padding: 1em;
+  overflow-x: auto;
+}
+code { background: #f9f9f9; }
+pre code { background: none; }
