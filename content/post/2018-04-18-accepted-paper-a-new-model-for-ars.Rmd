@@ -8,7 +8,7 @@ tags:
   - academia
   - IRT
   - psychometrics
-  - bayes
+  - bayesian
 # bigimg: [{src: "/img/mpt-model.png", desc: "ARS-Model"}]
 ---
 

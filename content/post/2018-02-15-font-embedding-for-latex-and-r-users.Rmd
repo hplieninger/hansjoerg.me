@@ -4,6 +4,7 @@ subtitle: 'Use cairo_pdf()'
 author: 'Hansjörg Plieninger'
 date: '2018-02-15'
 slug: font-embedding-for-latex-and-r-users
+summary: 'Recently, I sent my dissertation as a PDF file to a copy shop and got an email back that I had not embedded all fonts and that they won''t print it for me. What? So instead of celebrating the submission, I had to search online for "pdf latex font embedding", and this blog post is a summary of that afternoon.'
 categories:
   - R
 tags:
@@ -16,7 +17,9 @@ output:
     toc: true
 ---
 
-Recently, I sent my dissertation as a PDF file to a copy shop and got an email back that I had not embedded all fonts and that they won't print it for me. What? So instead of celebrating the submission, I had to search online for *pdf latex "font embedding"*, and this blog post is a summary of that afternoon.
+Recently, I sent my dissertation as a PDF file to a copy shop and got an email back that I had not embedded all fonts and that they won't print it for me.
+What?
+So instead of celebrating the submission, I had to search online for *pdf latex "font embedding"*, and this blog post is a summary of that afternoon.
 
 ## What is Font Embedding
 
