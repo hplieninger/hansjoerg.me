@@ -25,11 +25,10 @@ This blog is about ...
 var username = "plieninger";
 var hostname = "uni-mannheim.de";
 var linktext = username + "@" + hostname ;
-document.write("<p>You can contact me via <a href='" + "mail" + "to:" + username + "@" + hostname + "'>" + linktext + "</a>. Finally, the motto of this blog comes from one of my favorite R packages, <b>fortunes</b>:</p>");
+document.write("<p>You can contact me via <a href='" + "mail" + "to:" + username + "@" + hostname + "'>" + linktext + "</a>.</p>");
 </script>
 
-
-And the motto of this blog comes from one of my favorite R packages, **fortunes**:
+And the motto of this blog comes from one of my favorite R packages, fortunes:
 
 ```{r}
 fortunes::fortune("done it.")
