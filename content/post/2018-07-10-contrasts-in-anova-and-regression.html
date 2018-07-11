@@ -1,4 +1,5 @@
 ---
+draft: yes
 title: 'Categorical Predictors in ANOVA and Regression'
 author: 'Hansjörg Plieninger'
 date: '2018-07-10'
@@ -152,10 +153,12 @@ UNIANOVA Y BY X
 <h2>Examples</h2>
 <div id="example-data" class="section level3">
 <h3>Example data</h3>
-<p>I will used a data set called affect from the package psych. Therein, participants watched one of four different films and their positive affect (“PA2”) was assessed afterwards. The plot below shows clearly the effect of films on positive effect. To more formally investigate this effect (using regression or ANOVA), the categorical predictor film has to be recoded into three coding variables; herein, the three schemes dummy, contrast, and Helmert coding will be illustrated.</p>
+<p>I will used a data set called affect from the package psych. Therein, participants watched one of four different films and their positive affect (“PA2”) was assessed afterwards. The plot below shows clearly the effect of films on positive effect. To more formally investigate this effect (using regression or ANOVA), the categorical predictor film has to be recoded into three coding variables; herein, the three schemes dummy, contrast, and Helmert coding will be illustrated. More coding schemes are illustrated on this <a href="https://stats.idre.ucla.edu/r/library/r-library-contrast-coding-systems-for-categorical-variables/">UCLA page</a>.</p>
 <pre class="r"><code># install.packages(c(&quot;psych&quot;, &quot;ggplot2&quot;, &quot;dplyr&quot;, &quot;codingMatrices&quot;))
 library(ggplot2)
+#&gt; Warning: package &#39;ggplot2&#39; was built under R version 3.5.1
 library(dplyr)
+#&gt; Warning: package &#39;dplyr&#39; was built under R version 3.5.1
 
 data(affect, package = &quot;psych&quot;)
 # help(affect, package = &quot;psych&quot;)

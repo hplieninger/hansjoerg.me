@@ -123,6 +123,7 @@ I will used a data set called affect from the package psych.
 Therein, participants watched one of four different films and their positive affect ("PA2") was assessed afterwards.
 The plot below shows clearly the effect of films on positive effect.
 To more formally investigate this effect (using regression or ANOVA), the categorical predictor film has to be recoded into three coding variables; herein, the three schemes dummy, contrast, and Helmert coding will be illustrated.
+More coding schemes are illustrated on this [UCLA page](https://stats.idre.ucla.edu/r/library/r-library-contrast-coding-systems-for-categorical-variables/).
 
 ```{r, message = F}
 # install.packages(c("psych", "ggplot2", "dplyr", "codingMatrices"))
