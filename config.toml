@@ -18,8 +18,8 @@ copyright = "Hansjörg Plieninger"
 [Params]
 #   homeTitle = "Beautiful Hugo Theme" # Set a different text for the header on the home page
   subtitle = "But it's always simple when you've done it."
-#   logo = "img/avatar-icon.png"
-#   favicon = "img/favicon.ico"
+  logo = "img/avatar.png"
+  favicon = "img/favicon-16x16.png"
   dateFormat = "January 2, 2006"
   commit = false
   rss = true
