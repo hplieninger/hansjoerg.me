@@ -4,7 +4,7 @@ subtitle: 'Web Scraping FIFA World Cup Data'
 author: 'Hansjörg Plieninger'
 date: '2018-07-17'
 slug: web-scraping-world-cup
-draft: true
+draft: no
 description: 'While watching a FIFA World Cup game, I suddenly had the impression that games got fairer over the years. Everybody remembers the headbutt of Zinedine Zidane, but I haven''t seen similar things in 2018. I always wanted to try out web scraping and this was the opportunity to do so.'
 categories:
   - R
