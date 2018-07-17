@@ -5,7 +5,7 @@ author: 'Hansjörg Plieninger'
 date: '2018-07-17'
 slug: web-scraping-world-cup
 draft: no
-description: 'While watching a FIFA World Cup game, I suddenly had the impression that games got fairer over the years. Everybody remembers the headbutt of Zinedine Zidane, but I haven''t seen similar things in 2018. I always wanted to try out web scraping and this was the opportunity to do so.'
+description: 'Web Scraping FIFA World Cup Data With R'
 categories:
   - R
 tags:
@@ -20,14 +20,10 @@ tags:
 
 <p>While watching a FIFA World Cup game, I suddenly had the impression that games got fairer over the years. Everybody remembers the headbutt of Zinedine Zidane, but I haven’t seen similar things in 2018. I always wanted to try out web scraping and this was the opportunity to do so.</p>
 <div class="figure">
-<img src="https://giphy.com/gifs/9AuHkzLy26AmI/html5" />
-
+<img src="/img/zidane.gif" alt="https://media.giphy.com/media/9AuHkzLy26AmI/giphy.gif" />
+<p class="caption"><a href="https://media.giphy.com/media/9AuHkzLy26AmI/giphy.gif" class="uri">https://media.giphy.com/media/9AuHkzLy26AmI/giphy.gif</a></p>
 </div>
 <p>In this post, I will give a very brief intro to web scraping focusing mostly on scraping the World Cup data. As you will see below, the <a href="#results">Results</a> confirmed my impression: World cups got fairer in recent years, and this year was the cup with the lowest number of red cards since 1974.</p>
-<div class="figure">
-<img src="/post/2018-07-17-web-scraping-world-cup-data_files/test.png" />
-
-</div>
 <pre class="r"><code>library(rvest)
 library(magrittr)
 library(ggplot2)</code></pre>
