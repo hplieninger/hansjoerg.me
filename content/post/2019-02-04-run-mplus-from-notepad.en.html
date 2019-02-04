@@ -1,0 +1,41 @@
+---
+title: Run Mplus from Notepad++
+author: Hansjörg Plieninger
+date: '2019-02-04'
+slug: run-mplus-from-notepad
+categories: []
+tags:
+  - mplus
+subtitle: ''
+description: 'Run Mplus from Notepad++'
+---
+
+
+
+<p>I use Mplus for multilevel models or structural equation modeling from time to time.
+However, I prefer to edit the input file in <a href="https://notepad-plus-plus.org/">Notepad++</a> because it has richer options to edit text files such as column mode editing.</p>
+<p>But instead of edit -&gt; save -&gt; close in Notepad++ and then open -&gt; run in Mplus, there should be an easier solution.
+I always knew that this option existed, but today I put that feeling into practice.</p>
+<p>First, you have to install a plugin for Notepad++ called NppExec.</p>
+<p>Second, you open the “Execute” option of the NppExec plugin by pressing F6.
+Then you can write any commands you like to be executed from a command line.
+For Mplus, this should be something like:</p>
+<pre><code>npp_save
+&quot;C:\Program Files\Mplus\Mplus.exe&quot; $(FULL_CURRENT_PATH) $(CURRENT_DIRECTORY)\$(NAME_PART).out
+notepad++ $(CURRENT_DIRECTORY)\$(NAME_PART).out</code></pre>
+<p>The first command <code>npp_save</code> saves the current file, which should be the Mplus input file.
+The second command simply runs this input file from the command line.
+You can learn more about the usage of environment variables such as <code>$(FULL_CURRENT_PATH)</code> in the <a href="http://docs.notepad-plus-plus.org/index.php/External_Programs">documentation</a> of the plugin.
+The third command opens the output file.</p>
+<p>Pressing OK will execute these three commands.</p>
+<p>Third, you can assign a <a href="https://sourceforge.net/p/npp-plugins/discussion/672146/thread/63412040/">keyboard shortcut</a> to this procedure which is really useful:</p>
+<ul>
+<li>Press F6, specify the command as described above and instead of pressing OK press Save and save using a custom name.</li>
+<li>Go to Plugins -&gt; NppExec -&gt; Advanced Options and choose an “Associated script”, namely, the script you just saved.
+Press Add/Modify and then OK, Notepad++ needs a restart.</li>
+<li>Finally, in Notepad++, go to Settings -&gt; Shortcut Mapper -&gt; Plugin commands.
+Select the script you just saved and assign it a shortcut of your choice.</li>
+<li>Done.</li>
+</ul>
+<p>This gives you the ability to run any Mplus file from within Notepad++, and this is really handy if you have to do complex edits on a single Mplus file.
+Of course, for running multiple Mplus files, there is nothing better than the R package <a href="https://github.com/michaelhallquist/MplusAutomation">MplusAutomation</a>.</p>
