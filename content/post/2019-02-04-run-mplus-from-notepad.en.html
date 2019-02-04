@@ -16,17 +16,21 @@ description: 'Run Mplus from Notepad++'
 However, I prefer to edit the input file in <a href="https://notepad-plus-plus.org/">Notepad++</a> because it has richer options to edit text files such as column mode editing.</p>
 <p>But instead of edit -&gt; save -&gt; close in Notepad++ and then open -&gt; run in Mplus, there should be an easier solution.
 I always knew that this option existed, but today I put that feeling into practice.</p>
-<p>First, you have to install a plugin for Notepad++ called NppExec.</p>
-<p>Second, you open the “Execute” option of the NppExec plugin by pressing F6.
+<p>In this blog post, I will show you how to setup Notepad++ (on Windows) so that you can run the currently open Mplus input file with a single keyboard shortcut.</p>
+<p>First, you have to install a plugin for Notepad++ called <a href="https://github.com/d0vgan/nppexec">NppExec</a>.
+In Notepad++, go to Plugins -&gt; Plugin Manager and select and install NppExec.</p>
+<p>Second, open the “Execute” option of the NppExec plugin by pressing F6.
 Then you can write any commands you like to be executed from a command line.
 For Mplus, this should be something like:</p>
 <pre><code>npp_save
-&quot;C:\Program Files\Mplus\Mplus.exe&quot; $(FULL_CURRENT_PATH) $(CURRENT_DIRECTORY)\$(NAME_PART).out
+cd $(CURRENT_DIRECTORY)
+&quot;C:\Program Files\Mplus\Mplus&quot; $(FULL_CURRENT_PATH) $(NAME_PART).out
 notepad++ $(CURRENT_DIRECTORY)\$(NAME_PART).out</code></pre>
 <p>The first command <code>npp_save</code> saves the current file, which should be the Mplus input file.
-The second command simply runs this input file from the command line.
+The second command sets the directory of the input file as the working directory.
+The third command simply runs this input file from the command line.
 You can learn more about the usage of environment variables such as <code>$(FULL_CURRENT_PATH)</code> in the <a href="http://docs.notepad-plus-plus.org/index.php/External_Programs">documentation</a> of the plugin.
-The third command opens the output file.</p>
+The last command opens the output file.</p>
 <p>Pressing OK will execute these three commands.</p>
 <p>Third, you can assign a <a href="https://sourceforge.net/p/npp-plugins/discussion/672146/thread/63412040/">keyboard shortcut</a> to this procedure which is really useful:</p>
 <ul>

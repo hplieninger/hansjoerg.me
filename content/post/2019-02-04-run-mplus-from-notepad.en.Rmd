@@ -16,22 +16,27 @@ However, I prefer to edit the input file in [Notepad++](https://notepad-plus-plu
 But instead of edit -> save -> close in Notepad++ and then open -> run in Mplus, there should be an easier solution.
 I always knew that this option existed, but today I put that feeling into practice.
 
-First, you have to install a plugin for Notepad++ called NppExec.
+In this blog post, I will show you how to setup Notepad++ (on Windows) so that you can run the currently open Mplus input file with a single keyboard shortcut.
 
-Second, you open the "Execute" option of the NppExec plugin by pressing F6.
+First, you have to install a plugin for Notepad++ called [NppExec](https://github.com/d0vgan/nppexec).
+In Notepad++, go to Plugins -> Plugin Manager and select and install NppExec.
+
+Second, open the "Execute" option of the NppExec plugin by pressing F6.
 Then you can write any commands you like to be executed from a command line.
 For Mplus, this should be something like:
 
 ```
 npp_save
-"C:\Program Files\Mplus\Mplus.exe" $(FULL_CURRENT_PATH) $(CURRENT_DIRECTORY)\$(NAME_PART).out
+cd $(CURRENT_DIRECTORY)
+"C:\Program Files\Mplus\Mplus" $(FULL_CURRENT_PATH) $(NAME_PART).out
 notepad++ $(CURRENT_DIRECTORY)\$(NAME_PART).out
 ```
 
 The first command `npp_save` saves the current file, which should be the Mplus input file.
-The second command simply runs this input file from the command line.
+The second command sets the directory of the input file as the working directory.
+The third command simply runs this input file from the command line.
 You can learn more about the usage of environment variables such as `$(FULL_CURRENT_PATH)` in the [documentation](http://docs.notepad-plus-plus.org/index.php/External_Programs) of the plugin.
-The third command opens the output file.
+The last command opens the output file.
 
 Pressing OK will execute these three commands.
 
