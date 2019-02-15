@@ -1,5 +1,5 @@
 ---
-title: 'Font Embedding for LaTeX and R users'
+title: 'Font Embedding for LaTeX and R Users'
 subtitle: 'Use cairo_pdf()'
 author: 'Hansjörg Plieninger'
 date: '2018-02-15'
@@ -27,7 +27,9 @@ output:
 </ul>
 </div>
 
-<p>Recently, I sent my dissertation as a PDF file to a copy shop and got an email back that I had not embedded all fonts and that they won’t print it for me. What? So instead of celebrating the submission, I had to search online for <em>pdf latex “font embedding”</em>, and this blog post is a summary of that afternoon.</p>
+<p>Recently, I sent my dissertation as a PDF file to a copy shop and got an email back that I had not embedded all fonts and that they won’t print it for me.
+What?
+So instead of celebrating the submission, I had to search online for <em>pdf latex “font embedding”</em>, and this blog post is a summary of that afternoon.</p>
 <div id="what-is-font-embedding" class="section level2">
 <h2>What is Font Embedding</h2>
 <p>In order to display or print a PDF, the system has to know which fonts it should use.</p>
@@ -36,7 +38,9 @@ output:
 <li>If the font used in the PDF is not available on the system but is embedded in the PDF, the system is able to handle it correctly.</li>
 <li>If the font is not available and not embedded, the system will guess what font to use for display/print and this may or may not work. This <a href="http://wiki.opf-labs.org/download/attachments/101613571/fonts_notembedded.jpg?version=1&amp;modificationDate=1430223649000">link</a> shows an extreme example of what might happen.</li>
 </ul>
-<p>Embedding fonts is probably not crucial for non-exotic fonts on non-exotic devices/printers. However, if you want to make sure that your PDF is correctly displayed or printed on any possible device, fonts should be embedded. Such devices could be, for example, a printer of a copy shop, an exotic device of a student, or a person with an otherwise different setup (e.g., someone in the year 2076 in Tanzania).</p>
+<p>Embedding fonts is probably not crucial for non-exotic fonts on non-exotic devices/printers.
+However, if you want to make sure that your PDF is correctly displayed or printed on any possible device, fonts should be embedded.
+Such devices could be, for example, a printer of a copy shop, an exotic device of a student, or a person with an otherwise different setup (e.g., someone in the year 2076 in Tanzania).</p>
 </div>
 <div id="problem-r-does-not-embed-fonts" class="section level2">
 <h2>Problem: R does not embed fonts</h2>

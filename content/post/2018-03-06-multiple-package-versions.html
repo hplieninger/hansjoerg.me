@@ -1,5 +1,5 @@
 ---
-title: 'Working with different versions of an R package'
+title: 'Working With Different Versions of an R Package'
 author: 'Hansjörg Plieninger'
 date: '2018-03-06'
 summary: 'Recently, I had to install an older version of an R package, because a function was deprecated that I wanted to use. I wanted to install the old version in addition to and not instead of the new version and I came up with the following solution.'
@@ -23,7 +23,8 @@ output:
 </ul>
 </div>
 
-<p>Recently, I had to install an older version of an R package, because a function was deprecated that I wanted to use. I wanted to install the old version in addition to and not instead of the new version and I came up with the following solution.</p>
+<p>Recently, I had to install an older version of an R package, because a function was deprecated that I wanted to use.
+I wanted to install the old version in addition to and not instead of the new version and I came up with the following solution.</p>
 <div id="installing-packages-to-a-different-location" class="section level2">
 <h2>Installing Packages to a Different Location</h2>
 <pre class="r"><code>library(devtools)
@@ -34,18 +35,17 @@ library(curl)</code></pre>
 old_lib &lt;- file.path(&quot;~/../Documents/R/win-library/old-versions/&quot;)
 
 list.dirs(&quot;~/../Documents/R/win-library&quot;, recursive = FALSE)
-#&gt; [1] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/3.3&quot;         
-#&gt; [2] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/3.4&quot;         
-#&gt; [3] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/3.5&quot;         
-#&gt; [4] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/dev-versions&quot;
-#&gt; [5] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/old-versions&quot;</code></pre>
+#&gt; [1] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/3.5&quot;         
+#&gt; [2] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/dev-versions&quot;
+#&gt; [3] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/old-versions&quot;</code></pre>
 <p>Then, I can install packages in these folders using custom arguments:</p>
 <pre class="r"><code>install.packages(&quot;~/../Downloads/MplusAutomation_0.7.tar.gz&quot;,
                  lib = old_lib, repos = NULL)</code></pre>
 </div>
 <div id="installing-packages-to-a-different-location-using-devtools" class="section level2">
 <h2>Installing Packages to a Different Location Using devtools</h2>
-<p><code>devtools::install_version()</code> allows to install a specific version of a package automatically without having to manually download the archive. However, you cannot use a custom path, but <code>withr::with_libpaths()</code> can take care of that. Here, for example, I install an old version of <strong>MplusAutomation</strong> and the devel version of <strong>ggplot2</strong>.</p>
+<p><code>devtools::install_version()</code> allows to install a specific version of a package automatically without having to manually download the archive.
+However, you cannot use a custom path, but <code>withr::with_libpaths()</code> can take care of that. Here, for example, I install an old version of <strong>MplusAutomation</strong> and the devel version of <strong>ggplot2</strong>.</p>
 <pre class="r"><code>withr::with_libpaths(new = old_lib,
                      code = install_version(&quot;MplusAutomation&quot;,
                                             version = &quot;0.7&quot;,

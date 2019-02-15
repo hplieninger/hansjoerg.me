@@ -1,5 +1,5 @@
 ---
-title: 'Font Embedding for LaTeX and R users'
+title: 'Font Embedding for LaTeX and R Users'
 subtitle: 'Use cairo_pdf()'
 author: 'Hansjörg Plieninger'
 date: '2018-02-15'
