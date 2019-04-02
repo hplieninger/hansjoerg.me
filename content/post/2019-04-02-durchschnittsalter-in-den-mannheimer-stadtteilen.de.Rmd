@@ -3,7 +3,7 @@ title: Durchschnittsalter in den Mannheimer Stadtteilen
 author: Hansjörg Plieninger
 date: '2019-04-02'
 slug: durchschnittsalter-mannheim
-summary: 'Ich wollte schon immer einmal Geo-Daten plotten und heute bin ich endlich dazu gekommen das auszuprobieren. Das Plotten selbst ist eigentlich ganz einfach. Die Herausforderung besteht eher darin die Daten aufzubereiten, in diesem Fall die Polygone der Stadtteile von Mannheim. In den Daten sieht man sehr schön wie unterschiedlich das Durchschnittsalter in den Mannheimer Stadtteilen ist bei gleichzeitig hoher zeitlicher Stabilität.'
+summary: 'Ich wollte schon immer einmal Geo-Daten plotten und heute bin ich endlich dazu gekommen das auszuprobieren. Das Plotten selbst ist eigentlich ganz einfach. Die Herausforderung besteht eher darin die Daten aufzubereiten, in diesem Fall die Polygone der Stadtteile von Mannheim.'
 categories: []
 tags:
   - r
@@ -14,6 +14,8 @@ subtitle: ''
 ---
 
 ```{r include=FALSE}
+
+# In den Daten sieht man sehr schön wie unterschiedlich das Durchschnittsalter in den Mannheimer Stadtteilen ist bei gleichzeitig hoher zeitlicher Stabilität.
 
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", out.width = "90%")
 
@@ -130,4 +132,4 @@ knitr::kable(tmp1, digits = 1) %>%
 
 ## R Code
 
-Ich werde sobald ich die Zeit finde ein kleines Tutorial posten um den R Code für die Abbildungen zu zeigen und zu erklären.
+Ich werde sobald ich die Zeit dazu finde ein kleines Tutorial posten um den R Code für die Abbildungen zu zeigen und zu erklären.
