@@ -3,14 +3,13 @@ title: Durchschnittsalter in den Mannheimer Stadtteilen
 author: Hansjörg Plieninger
 date: '2019-04-02'
 slug: durchschnittsalter-mannheim
-summary: 'Ich wollte schon immer einmal Geo-Daten plotten und heute bin ich endlich dazu gekommen das auszuprobieren. Das Plotten selbst ist eigentlich ganz einfach. Die Herausforderung besteht eher darin die Daten aufzubereiten, in diesem Fall die Polygone der Stadtteile von Mannheim.'
 categories: []
 tags:
   - r
   - ggplot
   - Mannheim
   - data-science
-subtitle: ''
+subtitle: 'Geodaten plotten mit ggplot2'
 ---
 
 ```{r include=FALSE}
@@ -34,7 +33,7 @@ MA_alter2 <- filter(MA_alter, gemeindeteilname != "Mannheim")
 
 ```
 
-Ich wollte schon immer einmal Geo-Daten plotten und heute bin ich endlich dazu gekommen das auszuprobieren.
+Ich wollte schon immer einmal Geodaten plotten und heute bin ich endlich dazu gekommen das auszuprobieren.
 Das Plotten selbst ist eigentlich ganz einfach ...
 
 ```{r}
@@ -118,14 +117,14 @@ filter(MA_geo_alter, jahr != 2014 & jahr != 2016) %>%
 
 Die genaueste Darstellung liefert sicherlich die Tabelle, auch wenn damit Vergleiche zwischen den Stadtteilen längst nicht so einfach sind wie in den Karten.
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, include = F}
 
 tmp1 <- reshape2::dcast(MA_alter, gemeindeteilname ~ jahr, value.var = "Alter")
 names(tmp1) <- sub("gemeindeteilname", "Stadtteil", names(tmp1))
 
 
-knitr::kable(tmp1, digits = 1) %>% 
-    kable_styling()
+knitr::kable(tmp1, digits = 1, formt = "markdown") 
+    # kable_styling()
     # scroll_box(width = "70%", height = "400px")
 
 ```
