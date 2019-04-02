@@ -3,18 +3,20 @@ title: Durchschnittsalter in den Mannheimer Stadtteilen
 author: Hansjörg Plieninger
 date: '2019-04-02'
 slug: durchschnittsalter-mannheim
+summary: 'Ich wollte schon immer einmal Geo-Daten plotten und heute bin ich endlich dazu gekommen das auszuprobieren. Das Plotten selbst ist eigentlich ganz einfach. Die Herausforderung besteht eher darin die Daten aufzubereiten, in diesem Fall die Polygone der Stadtteile von Mannheim.'
 categories: []
 tags:
   - r
   - ggplot
   - Mannheim
   - data-science
-subtitle: 'Geodaten plotten mit ggplot2'
+subtitle: ''
 ---
 
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
 
 
-<p>Ich wollte schon immer einmal Geodaten plotten und heute bin ich endlich dazu gekommen das auszuprobieren. Das Plotten selbst ist eigentlich ganz einfach …</p>
+<p>Ich wollte schon immer einmal Geo-Daten plotten und heute bin ich endlich dazu gekommen das auszuprobieren. Das Plotten selbst ist eigentlich ganz einfach …</p>
 <pre class="r"><code>fortunes::fortune(&quot;done it.&quot;)
 #&gt; 
 #&gt; It was simple, but you know, it&#39;s always simple when you&#39;ve done it.
@@ -35,6 +37,512 @@ subtitle: 'Geodaten plotten mit ggplot2'
 <p>Wenn man sich die gleichen Daten in den Karten anschaut, wird umso mehr deutlich dass die Veränderung von 2013 bis 2017 in fast allen Stadtteilen relativ klein sind. Selbst die Veränderung in Neuhermsheim ist nicht leicht zu erkennen auch wenn das Grün etwas heller wird.</p>
 <p><img src="/post/2019-04-02-durchschnittsalter-in-den-mannheimer-stadtteilen.de_files/figure-html/mannheim-entwicklung-alter-1.png" width="90%" /></p>
 <p>Die genaueste Darstellung liefert sicherlich die Tabelle, auch wenn damit Vergleiche zwischen den Stadtteilen längst nicht so einfach sind wie in den Karten.</p>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Stadtteil
+</th>
+<th style="text-align:right;">
+2013
+</th>
+<th style="text-align:right;">
+2014
+</th>
+<th style="text-align:right;">
+2015
+</th>
+<th style="text-align:right;">
+2016
+</th>
+<th style="text-align:right;">
+2017
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Luzenberg
+</td>
+<td style="text-align:right;">
+35.8
+</td>
+<td style="text-align:right;">
+35.6
+</td>
+<td style="text-align:right;">
+35.3
+</td>
+<td style="text-align:right;">
+35.8
+</td>
+<td style="text-align:right;">
+36.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Neckarstadt-West
+</td>
+<td style="text-align:right;">
+37.2
+</td>
+<td style="text-align:right;">
+37.0
+</td>
+<td style="text-align:right;">
+36.4
+</td>
+<td style="text-align:right;">
+37.1
+</td>
+<td style="text-align:right;">
+37.1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Innenstadt/Jungbusch
+</td>
+<td style="text-align:right;">
+38.0
+</td>
+<td style="text-align:right;">
+37.8
+</td>
+<td style="text-align:right;">
+37.7
+</td>
+<td style="text-align:right;">
+37.8
+</td>
+<td style="text-align:right;">
+37.6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Schwetzingerstadt
+</td>
+<td style="text-align:right;">
+39.2
+</td>
+<td style="text-align:right;">
+39.2
+</td>
+<td style="text-align:right;">
+39.0
+</td>
+<td style="text-align:right;">
+39.0
+</td>
+<td style="text-align:right;">
+38.6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Neuhermsheim
+</td>
+<td style="text-align:right;">
+40.4
+</td>
+<td style="text-align:right;">
+40.7
+</td>
+<td style="text-align:right;">
+41.0
+</td>
+<td style="text-align:right;">
+41.3
+</td>
+<td style="text-align:right;">
+41.9
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Waldhof
+</td>
+<td style="text-align:right;">
+41.1
+</td>
+<td style="text-align:right;">
+41.2
+</td>
+<td style="text-align:right;">
+41.2
+</td>
+<td style="text-align:right;">
+41.0
+</td>
+<td style="text-align:right;">
+40.7
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Neckarstadt-Ost
+</td>
+<td style="text-align:right;">
+41.3
+</td>
+<td style="text-align:right;">
+41.3
+</td>
+<td style="text-align:right;">
+41.2
+</td>
+<td style="text-align:right;">
+41.2
+</td>
+<td style="text-align:right;">
+41.1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Seckenheim
+</td>
+<td style="text-align:right;">
+41.1
+</td>
+<td style="text-align:right;">
+41.2
+</td>
+<td style="text-align:right;">
+40.5
+</td>
+<td style="text-align:right;">
+41.3
+</td>
+<td style="text-align:right;">
+41.5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Käfertal
+</td>
+<td style="text-align:right;">
+42.6
+</td>
+<td style="text-align:right;">
+42.5
+</td>
+<td style="text-align:right;">
+40.8
+</td>
+<td style="text-align:right;">
+40.9
+</td>
+<td style="text-align:right;">
+41.3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Schönau
+</td>
+<td style="text-align:right;">
+41.1
+</td>
+<td style="text-align:right;">
+41.4
+</td>
+<td style="text-align:right;">
+41.5
+</td>
+<td style="text-align:right;">
+41.7
+</td>
+<td style="text-align:right;">
+41.9
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Mannheim
+</td>
+<td style="text-align:right;">
+42.2
+</td>
+<td style="text-align:right;">
+42.2
+</td>
+<td style="text-align:right;">
+41.9
+</td>
+<td style="text-align:right;">
+42.0
+</td>
+<td style="text-align:right;">
+42.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Neckarau
+</td>
+<td style="text-align:right;">
+42.5
+</td>
+<td style="text-align:right;">
+42.5
+</td>
+<td style="text-align:right;">
+42.6
+</td>
+<td style="text-align:right;">
+42.7
+</td>
+<td style="text-align:right;">
+42.6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Almenhof
+</td>
+<td style="text-align:right;">
+43.2
+</td>
+<td style="text-align:right;">
+43.1
+</td>
+<td style="text-align:right;">
+43.1
+</td>
+<td style="text-align:right;">
+43.0
+</td>
+<td style="text-align:right;">
+42.8
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Neuostheim
+</td>
+<td style="text-align:right;">
+43.2
+</td>
+<td style="text-align:right;">
+43.2
+</td>
+<td style="text-align:right;">
+43.2
+</td>
+<td style="text-align:right;">
+42.8
+</td>
+<td style="text-align:right;">
+42.7
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Lindenhof
+</td>
+<td style="text-align:right;">
+44.2
+</td>
+<td style="text-align:right;">
+44.0
+</td>
+<td style="text-align:right;">
+43.8
+</td>
+<td style="text-align:right;">
+43.6
+</td>
+<td style="text-align:right;">
+43.5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Rheinau
+</td>
+<td style="text-align:right;">
+43.8
+</td>
+<td style="text-align:right;">
+43.9
+</td>
+<td style="text-align:right;">
+43.8
+</td>
+<td style="text-align:right;">
+43.8
+</td>
+<td style="text-align:right;">
+44.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Oststadt
+</td>
+<td style="text-align:right;">
+44.2
+</td>
+<td style="text-align:right;">
+44.2
+</td>
+<td style="text-align:right;">
+43.8
+</td>
+<td style="text-align:right;">
+43.9
+</td>
+<td style="text-align:right;">
+43.8
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sandhofen
+</td>
+<td style="text-align:right;">
+44.7
+</td>
+<td style="text-align:right;">
+44.6
+</td>
+<td style="text-align:right;">
+44.4
+</td>
+<td style="text-align:right;">
+44.4
+</td>
+<td style="text-align:right;">
+44.4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Friedrichsfeld
+</td>
+<td style="text-align:right;">
+44.8
+</td>
+<td style="text-align:right;">
+45.1
+</td>
+<td style="text-align:right;">
+45.0
+</td>
+<td style="text-align:right;">
+44.9
+</td>
+<td style="text-align:right;">
+45.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Wallstadt
+</td>
+<td style="text-align:right;">
+45.3
+</td>
+<td style="text-align:right;">
+45.3
+</td>
+<td style="text-align:right;">
+45.4
+</td>
+<td style="text-align:right;">
+45.6
+</td>
+<td style="text-align:right;">
+45.7
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Gartenstadt
+</td>
+<td style="text-align:right;">
+45.1
+</td>
+<td style="text-align:right;">
+45.4
+</td>
+<td style="text-align:right;">
+45.5
+</td>
+<td style="text-align:right;">
+45.6
+</td>
+<td style="text-align:right;">
+45.6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Feudenheim
+</td>
+<td style="text-align:right;">
+46.1
+</td>
+<td style="text-align:right;">
+46.3
+</td>
+<td style="text-align:right;">
+46.4
+</td>
+<td style="text-align:right;">
+45.5
+</td>
+<td style="text-align:right;">
+45.4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Niederfeld
+</td>
+<td style="text-align:right;">
+46.2
+</td>
+<td style="text-align:right;">
+46.6
+</td>
+<td style="text-align:right;">
+46.4
+</td>
+<td style="text-align:right;">
+46.6
+</td>
+<td style="text-align:right;">
+46.4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Vogelstang
+</td>
+<td style="text-align:right;">
+47.0
+</td>
+<td style="text-align:right;">
+47.1
+</td>
+<td style="text-align:right;">
+47.2
+</td>
+<td style="text-align:right;">
+47.0
+</td>
+<td style="text-align:right;">
+47.1
+</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="r-code" class="section level2">
 <h2>R Code</h2>
