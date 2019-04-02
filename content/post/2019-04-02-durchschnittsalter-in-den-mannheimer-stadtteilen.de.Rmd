@@ -125,8 +125,8 @@ names(tmp1) <- sub("gemeindeteilname", "Stadtteil", names(tmp1))
 
 
 knitr::kable(tmp1, digits = 1) %>% 
-    kable_styling()
-    # scroll_box(width = "70%", height = "400px")
+    kable_styling() %>%
+    scroll_box(width = "70%", height = "400px")
 
 ```
 
