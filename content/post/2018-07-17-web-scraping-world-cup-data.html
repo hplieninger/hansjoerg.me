@@ -224,7 +224,7 @@ This holds for both straight red cards (SRC) and two yellow cards (2YC).</p>
          # , caption = &quot;Data from http://www.thesoccerworldcups.com/&quot;
          ) +
     ggthemes::theme_igray()</code></pre>
-<p><img src="/post/2018-07-17-web-scraping-world-cup-data_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p><img src="/post/2018-07-17-web-scraping-world-cup-data_files/figure-html/red-cards-soccer-world-cup-1.png" width="672" /></p>
 <p>And this holds also within teams: Similar patterns are observed for the eight most successful teams compared to all other teams as shown below.</p>
 <p>For yellow cards, the pattern is less clear.
 There were fewer yellow cards compared to 1994–2010, but more than in 2014.</p>
@@ -254,5 +254,5 @@ ggplot(datax, aes(x = Year, y = CardsPerTeam, col = Team)) +
          subtitle = &quot;FIFA World Cups from 1966 to 2018&quot;,
          caption = paste(&quot;Topteams:&quot;, paste(topteams, collapse = &quot;, &quot;))) +
     ggthemes::theme_igray()</code></pre>
-<p><img src="/post/2018-07-17-web-scraping-world-cup-data_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p><img src="/post/2018-07-17-web-scraping-world-cup-data_files/figure-html/red-yellow-cards-soccer-world-cup-1.png" width="672" /></p>
 </div>
