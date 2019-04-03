@@ -12,7 +12,8 @@ tags:
   - data-science
   - web-scraping
   - ggplot
-# bigimg: [{src: "/post/2018-07-17-web-scraping-world-cup-data_files/overview.png", desc: "World Cup Red Cards"}]
+share: true
+image: /post/2018-07-17-web-scraping-world-cup-data_files/figure-html/red-cards-soccer-world-cup-1.png
 ---
 
 While watching a FIFA World Cup game, I suddenly had the impression that games got fairer over the years.
@@ -205,7 +206,7 @@ There were only four red cards in 2018, which is an average of 0.06 per match.
 This is the lowest number since 1974, and we see a steady decrease since a peek in 2006.
 This holds for both straight red cards (SRC) and two yellow cards (2YC).
 
-```{r}
+```{r red-cards-soccer-world-cup}
 data_wc %>% 
     dplyr::filter(variable %in% c("SRC", "2YC")) %>% 
     ggplot(aes(x = Year, y = CardsPerMatch, fill = variable, col = variable)) +
@@ -232,10 +233,7 @@ While my gut feeling about the decline of red cards was right, I have no final e
 Players are maybe less emotional and more focused these days.
 But habits of referees or rules and other things may have changed as well.
 
-
-
-
-```{r}
+```{r red-yellow-cards-soccer-world-cup}
 
 topteams <- c("Brazil", "Germany", "Italy", "Argentina",
               "France", "England", "Spain", "Holland")
