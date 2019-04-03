@@ -15,7 +15,8 @@ subtitle: 'Geodaten plotten mit ggplot2'
 
 
 
-<p>Ich wollte schon immer einmal Geodaten plotten und heute bin ich endlich dazu gekommen das auszuprobieren. Das Plotten selbst ist eigentlich ganz einfach …</p>
+<p>Ich wollte schon immer einmal Geodaten plotten und heute bin ich endlich dazu gekommen das auszuprobieren.
+Das Plotten selbst ist eigentlich ganz einfach …</p>
 <pre class="r"><code>fortunes::fortune(&quot;done it.&quot;)
 #&gt; 
 #&gt; It was simple, but you know, it&#39;s always simple when you&#39;ve done it.
@@ -25,15 +26,24 @@ subtitle: 'Geodaten plotten mit ggplot2'
 <p>Die Herausforderung besteht eher darin die Daten aufzubereiten, in diesem Fall die Polygone der Stadtteile von Mannheim.</p>
 <div id="durchschnittsalter-in-den-mannheimer-stadtteilen" class="section level2">
 <h2>Durchschnittsalter in den Mannheimer Stadtteilen</h2>
-<p>Für das Jahr 2017 liegen die Daten für das Alter der Mannheimer Bevölkerung in den Stadtteilen vor und können von <a href="https://mannheim.opendatasoft.com" class="uri">https://mannheim.opendatasoft.com</a> heruntergeladen werden. In der folgenden Abbildung sieht man sehr schön, dass es große Unterschiede zwischen den einzelnen Stadtteilen gibt. Der Unterschied zwischen Vogelstang und Luzenberg beträgt beispielsweise über 10 Jahre. Das gilt teilweise auch für benachbarte Stadtteile, so beträgt der Unterschied zwischen dem Durchschnittsalter in der Oststadt und in der Schwetzingerstadt ganze 5 Jahre. Obwohl die Durchmischung hoch ist, gibt es doch die – für Städte vermutlich relativ typische – Tendenz, dass mit zunehmender Entfernung der Stadtteile vom Zentrum das Durchschnittsalter steigt.</p>
+<p>Für das Jahr 2017 liegen die Daten für das Alter der Mannheimer Bevölkerung in den Stadtteilen vor und können von <a href="https://mannheim.opendatasoft.com" class="uri">https://mannheim.opendatasoft.com</a> heruntergeladen werden.
+Diese Daten habe ich kombiniert mit den Geodaten von Mannheim, die von <a href="https://www.openstreetmap.org/" class="uri">https://www.openstreetmap.org/</a> bereitgestellt werden.</p>
+<p>In der folgenden Abbildung sieht man sehr schön, dass es große Unterschiede zwischen den einzelnen Stadtteilen gibt.
+Der Unterschied zwischen Vogelstang und Luzenberg beträgt beispielsweise über 10 Jahre.
+Das gilt teilweise auch für benachbarte Stadtteile, so beträgt der Unterschied zwischen dem Durchschnittsalter in der Oststadt und in der Schwetzingerstadt ganze 5 Jahre.
+Obwohl die Durchmischung hoch ist, gibt es doch die – für Städte vermutlich relativ typische – Tendenz, dass mit zunehmender Entfernung der Stadtteile vom Zentrum das Durchschnittsalter steigt.</p>
 <p><img src="/post/2019-04-02-durchschnittsalter-in-den-mannheimer-stadtteilen.de_files/figure-html/mannheim-durchschnittsalter-1.png" width="90%" /></p>
 </div>
 <div id="altersentwicklung-von-2013-bis-2017" class="section level2">
 <h2>Altersentwicklung von 2013 bis 2017</h2>
-<p>Zusätzlich zu den oben gezeigten Daten liegen außerdem noch die Daten aus vier weiteren Jahren vor. Wenn man sich den Verlauf in den einzelnen Stadtteilen anschaut, wird klar, dass das Durchschnittsalter in diesem kurzen Zeitraum in fast allen Stadtteilen sehr stabil war. Deutliche Trends gibt es nur in wenigen Stadtteilen, beispielsweise in Neuhermsheim wo das Durchschnittsalter von 2013 bis 2017 um 1.5 Jahre anstieg. Interessanter Weise ließ sich ein paar Kilometer weiter auf dem Lindenhof die gegenteilige Entwicklung beobachten.</p>
+<p>Zusätzlich zu den oben gezeigten Daten liegen außerdem noch die Daten aus vier weiteren Jahren vor.
+Wenn man sich den Verlauf in den einzelnen Stadtteilen anschaut, wird klar, dass das Durchschnittsalter in diesem kurzen Zeitraum in fast allen Stadtteilen sehr stabil war.
+Deutliche Trends gibt es nur in wenigen Stadtteilen, beispielsweise in Neuhermsheim wo das Durchschnittsalter von 2013 bis 2017 um 1.5 Jahre anstieg.
+Interessanter Weise ließ sich ein paar Kilometer weiter auf dem Lindenhof die gegenteilige Entwicklung beobachten.</p>
 <p>Diese Daten habe ich im Folgenden auf drei verschiedene Arten und Weisen dargestellt: Einmal die zeitlichen Verläufe als Punktdiagramm, einmal als Karte und einmal als Tabelle.</p>
 <p><img src="/post/2019-04-02-durchschnittsalter-in-den-mannheimer-stadtteilen.de_files/figure-html/mannheim-stadtteile-alter-bevoelkerung-1.png" width="90%" /></p>
-<p>Wenn man sich die gleichen Daten in den Karten anschaut, wird umso mehr deutlich dass die Veränderung von 2013 bis 2017 in fast allen Stadtteilen relativ klein sind. Selbst die Veränderung in Neuhermsheim ist nicht leicht zu erkennen auch wenn das Grün etwas heller wird.</p>
+<p>Wenn man sich die gleichen Daten in den Karten anschaut, wird umso mehr deutlich dass die Veränderung von 2013 bis 2017 in fast allen Stadtteilen relativ klein sind.
+Selbst die Veränderung in Neuhermsheim ist nicht leicht zu erkennen auch wenn das Grün etwas heller wird.</p>
 <p><img src="/post/2019-04-02-durchschnittsalter-in-den-mannheimer-stadtteilen.de_files/figure-html/mannheim-entwicklung-alter-1.png" width="90%" /></p>
 <p>Die genaueste Darstellung liefert sicherlich die Tabelle, auch wenn damit Vergleiche zwischen den Stadtteilen längst nicht so einfach sind wie in den Karten.</p>
 <table>
@@ -546,4 +556,11 @@ Vogelstang
 <div id="r-code" class="section level2">
 <h2>R Code</h2>
 <p>Ich werde sobald ich die Zeit dazu finde ein kleines Tutorial posten um den R Code für die Abbildungen zu zeigen und zu erklären.</p>
+</div>
+<div id="lizenz" class="section level2">
+<h2>Lizenz</h2>
+<ul>
+<li>Die Altersdaten von Mannheim sind auf <a href="https://mannheim.opendatasoft.com" class="uri">https://mannheim.opendatasoft.com</a> unter der Lizenz <a href="http://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a> veröffentlicht.</li>
+<li>Die Geodaten sind auf <a href="https://www.openstreetmap.org/" class="uri">https://www.openstreetmap.org/</a> unter der Lizenz <a href="https://opendatacommons.org/licenses/odbl/">ODbL</a> veröffentlicht, © OpenStreetMap contributors.</li>
+</ul>
 </div>

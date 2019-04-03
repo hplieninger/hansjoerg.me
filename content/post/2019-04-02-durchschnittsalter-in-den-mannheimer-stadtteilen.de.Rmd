@@ -44,6 +44,8 @@ Die Herausforderung besteht eher darin die Daten aufzubereiten, in diesem Fall d
 ## Durchschnittsalter in den Mannheimer Stadtteilen
 
 Für das Jahr 2017 liegen die Daten für das Alter der Mannheimer Bevölkerung in den Stadtteilen vor und können von https://mannheim.opendatasoft.com heruntergeladen werden.
+Diese Daten habe ich kombiniert mit den Geodaten von Mannheim, die von https://www.openstreetmap.org/ bereitgestellt werden.
+
 In der folgenden Abbildung sieht man sehr schön, dass es große Unterschiede zwischen den einzelnen Stadtteilen gibt.
 Der Unterschied zwischen Vogelstang und Luzenberg beträgt beispielsweise über 10 Jahre.
 Das gilt teilweise auch für benachbarte Stadtteile, so beträgt der Unterschied zwischen dem Durchschnittsalter in der Oststadt und in der Schwetzingerstadt ganze 5 Jahre.
@@ -131,3 +133,8 @@ knitr::kable(tmp1, digits = 1)
 ## R Code
 
 Ich werde sobald ich die Zeit dazu finde ein kleines Tutorial posten um den R Code für die Abbildungen zu zeigen und zu erklären.
+
+## Lizenz
+
+* Die Altersdaten von Mannheim sind auf https://mannheim.opendatasoft.com unter der Lizenz [dl-de/by-2-0](http://www.govdata.de/dl-de/by-2-0) veröffentlicht.
+* Die Geodaten sind auf https://www.openstreetmap.org/ unter der Lizenz [ODbL](https://opendatacommons.org/licenses/odbl/) veröffentlicht, © OpenStreetMap contributors.
