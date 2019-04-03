@@ -19,7 +19,7 @@ Herein, I plot the mpg data, and the groups are different classes of cars.
 As you can see, it is quite easy to identify the SUVs.
 But can you spot the 2-seaters?
 
-```{r}
+```{r geom_jitter-color}
 library(ggplot2)
 
 p1 <- ggplot(mpg, aes(x = displ, y = cty)) +
@@ -37,7 +37,7 @@ Second, I will use different shapes for the groups.
 As you can see in the plot, it is a little bit easier to tell the groups apart, and we can now identify the 2-seaters.
 However, ggplot2 allows for only six colors as described in the warning, and the SUVs get completely removed from the plot.
 
-```{r}
+```{r geom_jitter-shape}
 p1 + geom_jitter(aes(shape = class), size = 3, position = jit)
 ```
 
@@ -46,7 +46,7 @@ Here, I use seven different colors combined with three different shapes.
 As you can see, it's quite easy to spot the 2-seaters.
 And also the classes compact and midsize are relatively easy to tell apart, which was rather difficult in the first plot using only color.
 
-```{r}
+```{r shape-palette-can-deal-with-a-maximum-of-6-discrete-values}
 p1 + geom_jitter(aes(shape = class, color = class), size = 3, position = jit) +
     scale_shape_manual(values = rep(15:17, len = 7))
 ```
@@ -54,7 +54,7 @@ p1 + geom_jitter(aes(shape = class, color = class), size = 3, position = jit) +
 The combination of color and shape is especially useful if you have to print your plots in grayscale.
 While its almost impossible to identify most groups in the left plot, it is much better even though not perfect in the plot on the right.
 
-```{r, message = FALSE}
+```{r plot_grid, message = FALSE}
 library(cowplot)
 
 p2 <- p1 + geom_jitter(aes(color = class), size = 3, position = jit) + 
@@ -71,7 +71,7 @@ From a puristic point of view, it might not be correct to use two different aest
 But from a practical point of view, I think this can help in certain situations with an intermediate number of groups, say 7--12.
 Of course, a possible alternative are facets, but the faceted plot may not meet your needs in all situations.
 
-```{r}
+```{r facet_wrap}
 p1 + geom_jitter(aes(color = class), size = 3, show.legend = FALSE) + 
     facet_wrap(~ class)
 ```
