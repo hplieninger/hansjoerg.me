@@ -25,12 +25,14 @@ For Mplus, this should be something like:</p>
 <pre><code>npp_save
 cd $(CURRENT_DIRECTORY)
 &quot;C:\Program Files\Mplus\Mplus&quot; $(FULL_CURRENT_PATH) $(NAME_PART).out
-notepad++ $(CURRENT_DIRECTORY)\$(NAME_PART).out</code></pre>
+notepad++ $(CURRENT_DIRECTORY)\$(NAME_PART).out
+// rundll32 user32.dll,MessageBeep</code></pre>
 <p>The first command <code>npp_save</code> saves the current file, which should be the Mplus input file.
 The second command sets the directory of the input file as the working directory.
 The third command simply runs this input file from the command line.
 You can learn more about the usage of environment variables such as <code>$(FULL_CURRENT_PATH)</code> in the <a href="http://docs.notepad-plus-plus.org/index.php/External_Programs">documentation</a> of the plugin.
-The last command opens the output file.</p>
+The fourth command opens the output file.
+If you remove the commenting <code>//</code> in the last line, a beep will be played on Windows machines to notice you that Mplus has finished.</p>
 <p>Pressing OK will execute these three commands.</p>
 <p>Third, you can assign a <a href="https://sourceforge.net/p/npp-plugins/discussion/672146/thread/63412040/">keyboard shortcut</a> to this procedure which is really useful:</p>
 <ul>

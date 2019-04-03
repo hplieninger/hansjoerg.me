@@ -30,13 +30,15 @@ npp_save
 cd $(CURRENT_DIRECTORY)
 "C:\Program Files\Mplus\Mplus" $(FULL_CURRENT_PATH) $(NAME_PART).out
 notepad++ $(CURRENT_DIRECTORY)\$(NAME_PART).out
+// rundll32 user32.dll,MessageBeep
 ```
 
 The first command `npp_save` saves the current file, which should be the Mplus input file.
 The second command sets the directory of the input file as the working directory.
 The third command simply runs this input file from the command line.
 You can learn more about the usage of environment variables such as `$(FULL_CURRENT_PATH)` in the [documentation](http://docs.notepad-plus-plus.org/index.php/External_Programs) of the plugin.
-The last command opens the output file.
+The fourth command opens the output file.
+If you remove the commenting `//` in the last line, a beep will be played on Windows machines to notice you that Mplus has finished.
 
 Pressing OK will execute these three commands.
 
