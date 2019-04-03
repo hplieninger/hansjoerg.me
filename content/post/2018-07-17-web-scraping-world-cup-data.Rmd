@@ -6,8 +6,7 @@ date: '2018-07-17'
 slug: web-scraping-world-cup
 draft: no
 description: 'Web Scraping FIFA World Cup Data With R'
-categories:
-  - R
+categories: [web scraping]
 tags:
   - R
   - data-science

@@ -6,8 +6,7 @@ date: '2018-07-17'
 slug: web-scraping-world-cup
 draft: no
 description: 'Web Scraping FIFA World Cup Data With R'
-categories:
-  - R
+categories: [web scraping]
 tags:
   - R
   - data-science
@@ -18,18 +17,29 @@ tags:
 
 
 
-<p>While watching a FIFA World Cup game, I suddenly had the impression that games got fairer over the years. Everybody remembers the headbutt of Zinedine Zidane, but I haven’t seen similar things in 2018. I always wanted to try out web scraping and this was the opportunity to do so.</p>
+<p>While watching a FIFA World Cup game, I suddenly had the impression that games got fairer over the years.
+Everybody remembers the headbutt of Zinedine Zidane, but I haven’t seen similar things in 2018.
+I always wanted to try out web scraping and this was the opportunity to do so.</p>
 <div class="figure">
 <img src="/img/zidane.gif" alt="https://media.giphy.com/media/9AuHkzLy26AmI/giphy.gif" />
 <p class="caption"><a href="https://media.giphy.com/media/9AuHkzLy26AmI/giphy.gif" class="uri">https://media.giphy.com/media/9AuHkzLy26AmI/giphy.gif</a></p>
 </div>
-<p>In this post, I will give a very brief intro to web scraping focusing mostly on scraping the World Cup data. As you will see below, the <a href="#results">Results</a> confirmed my impression: World cups got fairer in recent years, and this year was the cup with the lowest number of red cards since 1974.</p>
+<p>In this post, I will give a very brief intro to web scraping focusing mostly on scraping the World Cup data.
+As you will see below, the <a href="#results">Results</a> confirmed my impression: World cups got fairer in recent years, and this year was the cup with the lowest number of red cards since 1974.</p>
 <pre class="r"><code>library(rvest)
 library(magrittr)
 library(ggplot2)</code></pre>
 <div id="scraping-data-for-one-year" class="section level2">
 <h2>Scraping Data for One Year</h2>
-<p>I will use the <a href="https://github.com/hadley/rvest">rvest</a> package here, which makes it pretty easy to get the data from <a href="http://www.thesoccerworldcups.com" class="uri">http://www.thesoccerworldcups.com</a>. There are more comprehensive tutorials on the web, so I will just focus on this single example. As you can see below, the webpage is first given to <code>read_html()</code>. Second, one has to identify which part of the page is relevant using CSS selectors. <a href="https://selectorgadget.com/">SelectorGadget</a> is a recommended tool to do this, or you may directly inspect the page source. Here, the node name is “.c0s5”, and this information is passed to <code>html_nodes()</code>. Third, the information of interest can be extracted using another <code>html_*()</code> function. Luckily, thesoccerworldcups.com uses tables to store the data so that we can use <code>html_table()</code>, which leads to results that need little wrangling. Alternatively, <code>html_text()</code> can be used which returns a character vector.</p>
+<p>I will use the <a href="https://github.com/hadley/rvest">rvest</a> package here, which makes it pretty easy to get the data from <a href="http://www.thesoccerworldcups.com" class="uri">http://www.thesoccerworldcups.com</a>.
+There are more comprehensive tutorials on the web, so I will just focus on this single example.
+As you can see below, the webpage is first given to <code>read_html()</code>.
+Second, one has to identify which part of the page is relevant using CSS selectors.
+<a href="https://selectorgadget.com/">SelectorGadget</a> is a recommended tool to do this, or you may directly inspect the page source.
+Here, the node name is “.c0s5”, and this information is passed to <code>html_nodes()</code>.
+Third, the information of interest can be extracted using another <code>html_*()</code> function.
+Luckily, thesoccerworldcups.com uses tables to store the data so that we can use <code>html_table()</code>, which leads to results that need little wrangling.
+Alternatively, <code>html_text()</code> can be used which returns a character vector.</p>
 <pre class="r"><code>tmp1 &lt;- read_html(&quot;http://www.thesoccerworldcups.com/world_cups/2018_cards.php&quot;)
     
 tmp2 &lt;- html_nodes(tmp1, &quot;.c0s5&quot;)
@@ -51,17 +61,22 @@ tmp4[28:32, 3:7]</code></pre>
 ##  $ Player       : chr  &quot;Carlos Sánchez&quot; &quot;Jérôme Boateng&quot; &quot;Michael Lang&quot; &quot;Igor Smolnikov&quot; ...
 ##  $ Yellow Cards : chr  &quot;1&quot; &quot;-&quot; &quot;-&quot; &quot;-&quot; ...
 ##  $ Red Cards    : chr  &quot;1&quot; &quot;1&quot; &quot;1&quot; &quot;1&quot; ...
-##  $ (SRC / 2YC)  : chr  &quot;( 1   \n\t\t\t/\n\t\t\t -\t\t\t)&quot; &quot;( -   \n\t\t\t/\n\t\t\t 1\t\t\t)&quot; &quot;( 1   \n\t\t\t/\n\t\t\t -\t\t\t)&quot; &quot;( -   \n\t\t\t/\n\t\t\t 1\t\t\t)&quot; ...
+##  $ (SRC / 2YC)  : chr  &quot;( 1   \r\n\t\t\t/\r\n\t\t\t -\t\t\t)&quot; &quot;( -   \r\n\t\t\t/\r\n\t\t\t 1\t\t\t)&quot; &quot;( 1   \r\n\t\t\t/\r\n\t\t\t -\t\t\t)&quot; &quot;( -   \r\n\t\t\t/\r\n\t\t\t 1\t\t\t)&quot; ...
 ##  $ Games        : chr  &quot;3&quot; &quot;2&quot; &quot;3&quot; &quot;1&quot; ...
 ##  $ National Team: chr  &quot;Colombia&quot; &quot;Germany&quot; &quot;Switzerland&quot; &quot;Russia&quot; ...
 ##  $ NA           : logi  NA NA NA NA NA NA ...
 ##  $ NA           : logi  NA NA NA NA NA NA ...</code></pre>
-<p>As you see, we actually managed to retrieve the relevant information using only three function calls. Furthermore, the data is stored in a data frame that looks very similar to the one on thesoccerworldcups.com. We have a tidy data frame with a column for every variable and a row for every player. Nevertheless, a few things need to be done:</p>
+<p>As you see, we actually managed to retrieve the relevant information using only three function calls.
+Furthermore, the data is stored in a data frame that looks very similar to the one on thesoccerworldcups.com.
+We have a tidy data frame with a column for every variable and a row for every player.
+Nevertheless, a few things need to be done:</p>
 <ul>
 <li>Some columns have no or bad names. Address using <code>make.names()</code>.</li>
 <li>The column names are repeated in every 30th row. Address using <code>filter()</code>.</li>
 <li>Some columns should be integers instead of characters. Address using <code>as.integer()</code>.</li>
-<li>There is a single column “(SRC / 2YC)” that stores two information, namely, whether a red card was either a straight red card (SRC) or the result of two yellow cards (2YC). This needs to be split into two variables using <code>separate()</code>. But first, all the unnecessary characters like <code>\n\t\t\t</code> in that column must be removed using <code>gsub()</code> with a regular expression.</li>
+<li>There is a single column “(SRC / 2YC)” that stores two information, namely, whether a red card was either a straight red card (SRC) or the result of two yellow cards (2YC).
+This needs to be split into two variables using <code>separate()</code>.
+But first, all the unnecessary characters like <code>\n\t\t\t</code> in that column must be removed using <code>gsub()</code> with a regular expression.</li>
 <li>Several columns contain no relevant information and can be dropped.</li>
 <li>The last two rows contain the information for the whole World Cup not for individual players.</li>
 </ul>
@@ -91,12 +106,16 @@ psych::headTail(tmp6[, 3:9])</code></pre>
 <pre class="r"><code>dat1 &lt;- tmp6[1:(nrow(tmp6)-2), ]
 
 dat2 &lt;- tmp6[nrow(tmp6), ]</code></pre>
-<p>Now, all information about yellow and red cards are available for one year. This can be repeated for the other tournaments.</p>
-<p>I also scrape the data of the final standings from <a href="http://www.thesoccerworldcups.com/world_cups/2018_final_standings.php" class="uri">http://www.thesoccerworldcups.com/world_cups/2018_final_standings.php</a>. This gives me the information about how many matches a team played allowing me to calculate the number of cards per match for each team individually. These two data frames can then be merged/joined</p>
+<p>Now, all information about yellow and red cards are available for one year.
+This can be repeated for the other tournaments.</p>
+<p>I also scrape the data of the final standings from <a href="http://www.thesoccerworldcups.com/world_cups/2018_final_standings.php" class="uri">http://www.thesoccerworldcups.com/world_cups/2018_final_standings.php</a>.
+This gives me the information about how many matches a team played allowing me to calculate the number of cards per match for each team individually.
+These two data frames can then be merged/joined</p>
 </div>
 <div id="scraping-data-for-all-years" class="section level2">
 <h2>Scraping Data for All Years</h2>
-<p>In the code below, the data for all tournaments since 1966 are scraped in a loop. Furthermore, a little data wrangling is done, but I won’t bother you with the details here.</p>
+<p>In the code below, the data for all tournaments since 1966 are scraped in a loop.
+Furthermore, a little data wrangling is done, but I won’t bother you with the details here.</p>
 <pre class="r"><code>years &lt;- seq(1966, 2018, by = 4)
 
 list1 &lt;- vector(&quot;list&quot;, length = length(years))
@@ -168,7 +187,11 @@ data1$variable &lt;- factor(data1$variable,
 </div>
 <div id="calculating-the-number-of-cards" class="section level2">
 <h2>Calculating the Number of Cards</h2>
-<p>In its current form, the data stores information about cards for individual players. However, I am interested in the number of cars per tournament, and in the number of cards per team. Moreover, I want to investigate not total cards but cards per match. The relevant information is calculated below. Note that “cards per team” is not twice the number of “cards per match”, since some teams played more games than others.</p>
+<p>In its current form, the data stores information about cards for individual players.
+However, I am interested in the number of cars per tournament, and in the number of cards per team.
+Moreover, I want to investigate not total cards but cards per match.
+The relevant information is calculated below.
+Note that “cards per team” is not twice the number of “cards per match”, since some teams played more games than others.</p>
 <pre class="r"><code>data_wc &lt;- data1 %&gt;% 
     dplyr::group_by(Year, variable, WC_games) %&gt;%
     dplyr::summarize(Cards = sum(value, na.rm = TRUE)) %&gt;% 
@@ -182,7 +205,10 @@ data1$variable &lt;- factor(data1$variable,
 </div>
 <div id="results" class="section level2">
 <h2>Results</h2>
-<p>The results confirmed my impression. There were only four red cards in 2018, which is an average of 0.06 per match. This is the lowest number since 1974, and we see a steady decrease since a peek in 2006. This holds for both straight red cards (SRC) and two yellow cards (2YC).</p>
+<p>The results confirmed my impression.
+There were only four red cards in 2018, which is an average of 0.06 per match.
+This is the lowest number since 1974, and we see a steady decrease since a peek in 2006.
+This holds for both straight red cards (SRC) and two yellow cards (2YC).</p>
 <pre class="r"><code>data_wc %&gt;% 
     dplyr::filter(variable %in% c(&quot;SRC&quot;, &quot;2YC&quot;)) %&gt;% 
     ggplot(aes(x = Year, y = CardsPerMatch, fill = variable, col = variable)) +
@@ -200,8 +226,11 @@ data1$variable &lt;- factor(data1$variable,
     ggthemes::theme_igray()</code></pre>
 <p><img src="/post/2018-07-17-web-scraping-world-cup-data_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
 <p>And this holds also within teams: Similar patterns are observed for the eight most successful teams compared to all other teams as shown below.</p>
-<p>For yellow cards, the pattern is less clear. There were fewer yellow cards compared to 1994–2010, but more than in 2014.</p>
-<p>While my gut feeling about the decline of red cards was right, I have no final explanation. Players are maybe less emotional and more focused these days. But habits of referees or rules and other things may have changed as well.</p>
+<p>For yellow cards, the pattern is less clear.
+There were fewer yellow cards compared to 1994–2010, but more than in 2014.</p>
+<p>While my gut feeling about the decline of red cards was right, I have no final explanation.
+Players are maybe less emotional and more focused these days.
+But habits of referees or rules and other things may have changed as well.</p>
 <pre class="r"><code>topteams &lt;- c(&quot;Brazil&quot;, &quot;Germany&quot;, &quot;Italy&quot;, &quot;Argentina&quot;,
               &quot;France&quot;, &quot;England&quot;, &quot;Spain&quot;, &quot;Holland&quot;)
 

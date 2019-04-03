@@ -5,8 +5,7 @@ date: '2018-07-10'
 slug: contrasts-in-anova-and-regression
 draft: no
 summary: 'Data with categorical predictors can be analyzed in a regression framework as well as in an ANOVA framework. In either case, the grouping variable needs to be recoded and a default coding system for categorical variables is often dummy coding. Even though I usually prefer the more general regression framework, I like the ANOVA perspective because of its focus on meaningful coding schemes beyond dummy coding. Herein, I will illustrate how to use any coding scheme in either framework which will help you (a) to switch between ANOVA and regression and (b) use sensible comparisons of your groups.'
-categories:
-  - R
+categories: [statistics]
 tags:
   - regression
   - ANOVA

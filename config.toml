@@ -80,11 +80,6 @@ copyright = "Hansjörg Plieninger"
     url = ""
     weight = 1
 
-[[menu.main]]
-    name = "About"
-    url = "page/about/"
-    weight = 4
-
 # [[menu.main]]
 #     identifier = "samples"
 #     name = "Samples"
@@ -114,6 +109,16 @@ copyright = "Hansjörg Plieninger"
     weight = 2
     
 [[menu.main]]
+    name = "Portfolio"
+    url = "categories"
+    weight = 3
+    
+[[menu.main]]
     name = "Publications"
     url = "page/publications"
-    weight = 3
+    weight = 4
+
+[[menu.main]]
+    name = "About"
+    url = "page/about/"
+    weight = 5

@@ -5,8 +5,7 @@ date: '2018-07-10'
 slug: contrasts-in-anova-and-regression
 draft: no
 summary: 'Data with categorical predictors can be analyzed in a regression framework as well as in an ANOVA framework. In either case, the grouping variable needs to be recoded and a default coding system for categorical variables is often dummy coding. Even though I usually prefer the more general regression framework, I like the ANOVA perspective because of its focus on meaningful coding schemes beyond dummy coding. Herein, I will illustrate how to use any coding scheme in either framework which will help you (a) to switch between ANOVA and regression and (b) use sensible comparisons of your groups.'
-categories:
-  - R
+categories: [statistics]
 tags:
   - regression
   - ANOVA
@@ -40,13 +39,19 @@ output:
 </ul>
 </div>
 
-<p>Data with categorical predictors such as groups, conditions, or countries can be analyzed in a regression framework as well as in an ANOVA framework. In either case, the grouping variable needs to be recoded, it cannot enter the model like a continuous predictor such as age or income. A default coding system for categorical variables is often dummy coding.</p>
-<p>Even though I usually prefer the more general regression framework, I like the ANOVA perspective because of its focus on meaningful coding schemes beyond dummy coding. Herein, I will illustrate how to use any coding scheme in either framework which will help you (a) to switch between ANOVA and regression and (b) use sensible comparisons of your groups.</p>
+<p>Data with categorical predictors such as groups, conditions, or countries can be analyzed in a regression framework as well as in an ANOVA framework.
+In either case, the grouping variable needs to be recoded, it cannot enter the model like a continuous predictor such as age or income.
+A default coding system for categorical variables is often dummy coding.</p>
+<p>Even though I usually prefer the more general regression framework, I like the ANOVA perspective because of its focus on meaningful coding schemes beyond dummy coding.
+Herein, I will illustrate how to use any coding scheme in either framework which will help you (a) to switch between ANOVA and regression and (b) use sensible comparisons of your groups.</p>
 <p>In the example below, I use four different groups of people that watched one of four movies, namely, documentary, horror, nature, or comedy.</p>
 <!-- You can look at the problem of predicting a dependent variable using a categorical independent variable (factor) from a regression perspective or from an ANOVA perspective, and I usually prefer the former. However, what I always liked about the ANOVA perspective was the focus on meaningful coding schemes for categorical predictors with more than two levels. -->
 <div id="regression-perspective" class="section level2">
 <h2>Regression Perspective</h2>
-<p>In regression, we often deal with categorical predictors and often a first choice is dummy coding (the default in R for unordered factors). We all know how dummy coding works. Here, we choose “documentary” as a reference category, and all other categories are contrasted with that reference category using the scheme depicted in Table <a href="#tab:dummy">1</a>. Then, the resulting three estimates give us the difference between “documentary” and each of the three other groups.</p>
+<p>In regression, we often deal with categorical predictors and often a first choice is dummy coding (the default in R for unordered factors).
+We all know how dummy coding works.
+Here, we choose “documentary” as a reference category, and all other categories are contrasted with that reference category using the scheme depicted in Table <a href="#tab:dummy">1</a>.
+Then, the resulting three estimates give us the difference between “documentary” and each of the three other groups.</p>
 <table>
 <caption><span id="tab:dummy">Table 1: </span>Dummy Coding</caption>
 <thead>
@@ -87,7 +92,11 @@ output:
 </div>
 <div id="anova-and-spss-perspective" class="section level2">
 <h2>ANOVA and SPSS Perspective</h2>
-<p>In the ANOVA world or, for example, in experimental psychology, it is often desired to have more tailored comparisons to test specific hypotheses. This can be done using custom contrasts (planned comparisons) as depicted in Table <a href="#tab:contrasts1">2</a>. For example, I may investigate the difference between the last group “comedy” and the three other groups using the contrast (-1, -1, -1, 3) depicted in row H1. Furthermore, I may test the difference between “horror” vs. “documentary”+“nature” (H2). Lastly, I may test the difference between “documentary” and “nature”.</p>
+<p>In the ANOVA world or, for example, in experimental psychology, it is often desired to have more tailored comparisons to test specific hypotheses.
+This can be done using custom contrasts (planned comparisons) as depicted in Table <a href="#tab:contrasts1">2</a>.
+For example, I may investigate the difference between the last group “comedy” and the three other groups using the contrast (-1, -1, -1, 3) depicted in row H1.
+Furthermore, I may test the difference between “horror” vs. “documentary”+“nature” (H2).
+Lastly, I may test the difference between “documentary” and “nature”.</p>
 <table>
 <caption><span id="tab:contrasts1">Table 2: </span>ANOVA Contrasts</caption>
 <thead>
@@ -134,8 +143,11 @@ UNIANOVA Y BY X
 <h2>How to Combine the Perspectives?</h2>
 <p>Even though I was comfortable using either approach, the thing that always bugged me was that I personally wasn’t able to fully bridge the two worlds. For example:</p>
 <ol style="list-style-type: decimal">
-<li>How can we use such schemes within the other framework? For example, plugging the dummy codes from Table <a href="#tab:dummy">1</a> into SPSS’s <code>UNIANOVA</code> syntax won’t work.</li>
-<li>How do we actually know the meaning of our estimates? For example, everybody knows that the estimate for the first dummy code “d1” above is the difference between “horror” and “documentary”. But why exactly is this the case?</li>
+<li>How can we use such schemes within the other framework?
+For example, plugging the dummy codes from Table <a href="#tab:dummy">1</a> into SPSS’s <code>UNIANOVA</code> syntax won’t work.</li>
+<li>How do we actually know the meaning of our estimates?
+For example, everybody knows that the estimate for the first dummy code “d1” above is the difference between “horror” and “documentary”.
+But why exactly is this the case?</li>
 </ol>
 </div>
 <div id="solution" class="section level2">
@@ -147,18 +159,27 @@ UNIANOVA Y BY X
 #&gt;    -- Simone Gabbriellini (after solving a problem with a trick suggested
 #&gt;       on the list)
 #&gt;       R-help (August 2005)</code></pre>
-<p>The solution is that the scheme used in Table <a href="#tab:contrasts1">2</a> above directly defines the <strong>contrast matrix</strong> <strong>C</strong> and this allows us to contrast group means in a sensible way. On the other hand, the dummy-coding scheme depicted in Table <a href="#tab:dummy">1</a> was a <strong>coding matrix</strong> <strong>B</strong> <span class="citation">(Venables, 2018)</span>. These are two different things and they are related in the following way: <span class="math display">\[\beta = \mathbf{C} \mu = \mathbf{B}^{-1} \mu.\]</span> That is, the estimates <span class="math inline">\(\beta\)</span> are the reparameterized group means <span class="math inline">\(\mu\)</span>. The contrasts in <strong>C</strong> directly specify the weights of the group means and are easily interpretable. However, the interpretation of the codes in <strong>B</strong> (e.g., of the dummy codes used above) is not directly given, but only through the inverse of <strong>B</strong>. This relationship between <strong>B</strong> and <strong>C</strong> and the interpretation of the regression coefficients <span class="math inline">\(\beta\)</span> will be illustrated in the following.</p>
+<p>The solution is that the scheme used in Table <a href="#tab:contrasts1">2</a> above directly defines the <strong>contrast matrix</strong> <strong>C</strong> and this allows us to contrast group means in a sensible way.
+On the other hand, the dummy-coding scheme depicted in Table <a href="#tab:dummy">1</a> was a <strong>coding matrix</strong> <strong>B</strong> <span class="citation">(Venables, 2018)</span>.
+These are two different things and they are related in the following way:
+<span class="math display">\[\beta = \mathbf{C} \mu = \mathbf{B}^{-1} \mu.\]</span>
+That is, the estimates <span class="math inline">\(\beta\)</span> are the reparameterized group means <span class="math inline">\(\mu\)</span>.
+The contrasts in <strong>C</strong> directly specify the weights of the group means and are easily interpretable.
+However, the interpretation of the codes in <strong>B</strong> (e.g., of the dummy codes used above) is not directly given, but only through the inverse of <strong>B</strong>.
+This relationship between <strong>B</strong> and <strong>C</strong> and the interpretation of the regression coefficients <span class="math inline">\(\beta\)</span> will be illustrated in the following.</p>
 </div>
 <div id="examples" class="section level2">
 <h2>Examples</h2>
 <div id="example-data" class="section level3">
 <h3>Example data</h3>
-<p>I will used a data set called affect from the package psych. Therein, participants watched one of four different films and their positive affect (“PA2”) was assessed afterwards. The plot below shows clearly the effect of films on positive effect. To more formally investigate this effect (using regression or ANOVA), the categorical predictor film has to be recoded into three coding variables; herein, the three schemes dummy, contrast, and Helmert coding will be illustrated. More coding schemes are illustrated on this <a href="https://stats.idre.ucla.edu/r/library/r-library-contrast-coding-systems-for-categorical-variables/">UCLA page</a>.</p>
+<p>I will used a data set called affect from the package psych.
+Therein, participants watched one of four different films and their positive affect (“PA2”) was assessed afterwards.
+The plot below shows clearly the effect of films on positive effect.
+To more formally investigate this effect (using regression or ANOVA), the categorical predictor film has to be recoded into three coding variables; herein, the three schemes dummy, contrast, and Helmert coding will be illustrated.
+More coding schemes are illustrated on this <a href="https://stats.idre.ucla.edu/r/library/r-library-contrast-coding-systems-for-categorical-variables/">UCLA page</a>.</p>
 <pre class="r"><code># install.packages(c(&quot;psych&quot;, &quot;ggplot2&quot;, &quot;dplyr&quot;, &quot;codingMatrices&quot;))
 library(ggplot2)
-#&gt; Warning: package &#39;ggplot2&#39; was built under R version 3.5.1
 library(dplyr)
-#&gt; Warning: package &#39;dplyr&#39; was built under R version 3.5.1
 
 data(affect, package = &quot;psych&quot;)
 # help(affect, package = &quot;psych&quot;)
@@ -187,7 +208,11 @@ ggplot(dat, aes(y = PA2, x = Film)) +
 </div>
 <div id="dummy-coding" class="section level3">
 <h3>Dummy Coding</h3>
-<p>Here, we use the default in R, namely, dummy coding, for the affect data. Remember that we want to investigate whether positive affect (“PA2”) differs between groups that watched one of four films. The interpretation of the results is straightforward: The intercept is equal to the mean of the first group “documentary”, and here it is significantly different from zero. Furthermore, we observe that “comedy” in comparison to the reference category “documentary” leads to higher levels of positive effect (the difference is 4.478, p = .0001).</p>
+<p>Here, we use the default in R, namely, dummy coding, for the affect data.
+Remember that we want to investigate whether positive affect (“PA2”) differs between groups that watched one of four films.
+The interpretation of the results is straightforward:
+The intercept is equal to the mean of the first group “documentary”, and here it is significantly different from zero.
+Furthermore, we observe that “comedy” in comparison to the reference category “documentary” leads to higher levels of positive effect (the difference is 4.478, p = .0001).</p>
 <pre class="r"><code>contr.treatment(levels(dat$Film))
 #&gt;             horror nature comedy
 #&gt; documentary      0      0      0
@@ -223,7 +248,9 @@ group_means
 
 12.090 - 7.612       # == &#39;Filmcomedy&#39;
 #&gt; [1] 4.478</code></pre>
-<p>But why exactly are the four estimates interpreted in this way? We learned in stats 101 how to interpret the <strong>B</strong> matrix depicted in Table <a href="#tab:dummy">1</a> (i.e., <code>contr.treatment()</code>). But to really deduce the meaning, you have to take the inverse of the coding matrix <strong>B</strong>, which can be done using <code>solve()</code>. (The package <strong>codingMatrices</strong> has a wrapper around <code>solve()</code> with nice output, but I will use <code>solve()</code> here for transparency.)</p>
+<p>But why exactly are the four estimates interpreted in this way?
+We learned in stats 101 how to interpret the <strong>B</strong> matrix depicted in Table <a href="#tab:dummy">1</a> (i.e., <code>contr.treatment()</code>).
+But to really deduce the meaning, you have to take the inverse of the coding matrix <strong>B</strong>, which can be done using <code>solve()</code>. (The package <strong>codingMatrices</strong> has a wrapper around <code>solve()</code> with nice output, but I will use <code>solve()</code> here for transparency.)</p>
 <pre class="r"><code># we need to add a vector of 1&#39;s for the intercept
 solve(cbind(b0 = 1, contr.treatment(4)))
 #&gt;     1 2 3 4
@@ -234,7 +261,10 @@ solve(cbind(b0 = 1, contr.treatment(4)))
 
 # identical result but nicer ouput:
 # codingMatrices::mean_contrasts(contr.treatment(4))</code></pre>
-<p>This returns the contrast matrix <strong>C</strong>. The first row gives you the interpretation of the intercept, and we see that it is <span class="math inline">\(\beta_0 = 1\mu_1 + 0\mu_2 + 0\mu_3 + 0\mu_4\)</span>, namely, the mean of the first group. Likewise, from the second row, <span class="math inline">\(\beta_1 = -1\mu_1 + 1\mu_2\)</span>, that is, the difference between group two and group one; and so on. The interpretation of this <strong>C</strong> matrix is much easier than that of the <strong>B</strong> matrix, which was only easy because we learned it by hard.</p>
+<p>This returns the contrast matrix <strong>C</strong>.
+The first row gives you the interpretation of the intercept, and we see that it is <span class="math inline">\(\beta_0 = 1\mu_1 + 0\mu_2 + 0\mu_3 + 0\mu_4\)</span>, namely, the mean of the first group.
+Likewise, from the second row, <span class="math inline">\(\beta_1 = -1\mu_1 + 1\mu_2\)</span>, that is, the difference between group two and group one; and so on.
+The interpretation of this <strong>C</strong> matrix is much easier than that of the <strong>B</strong> matrix, which was only easy because we learned it by hard.</p>
 <p>Lastly, this enables us to use dummy coding (or any other coding scheme that you learned by hard) in SPSS’s <code>UNIANOVA</code>:</p>
 <pre class="r"><code>### SPSS Syntax ###
 UNIANOVA PA2 BY Film
@@ -244,7 +274,10 @@ UNIANOVA PA2 BY Film
 </div>
 <div id="planned-comparisonscontrast-coding" class="section level3">
 <h3>Planned Comparisons/Contrast Coding</h3>
-<p>The whole story gets more interesting when trying to implement non-standard coding schemes within the regression framework. Remember the hypotheses described in Table <a href="#tab:contrasts1">2</a> above; those are easily translated into a contrast matrix <strong>C</strong> called <code>C1</code> below. In order to test the hypotheses within a regression framework, we have to invert <code>C1</code> to get the <strong>B</strong> matrix <code>B1</code>. Furthermore, instead of using integral weights, I divide by the number of non-zero weights for easier interpretation of the estimates (but p-values are the same).</p>
+<p>The whole story gets more interesting when trying to implement non-standard coding schemes within the regression framework.
+Remember the hypotheses described in Table <a href="#tab:contrasts1">2</a> above; those are easily translated into a contrast matrix <strong>C</strong> called <code>C1</code> below.
+In order to test the hypotheses within a regression framework, we have to invert <code>C1</code> to get the <strong>B</strong> matrix <code>B1</code>.
+Furthermore, instead of using integral weights, I divide by the number of non-zero weights for easier interpretation of the estimates (but p-values are the same).</p>
 <pre class="r"><code>tmp1 &lt;- matrix(c( 1,  1,  1, 1,
                  -1, -1, -1, 3,
                  -1,  2, -1, 0,
@@ -311,12 +344,21 @@ group_means[[3]] - group_means[[1]]
 <li><span class="math inline">\(\beta_2 = -.5 \mu_1 + \mu_2 -.5\mu_3\)</span>,</li>
 <li><span class="math inline">\(\beta_3 = - \mu_1 + \mu_3\)</span>.</li>
 </ul>
-<p>Thus, positive affect is 4.41 points higher after watching “comedy” compared to the three other films (p &lt; .001). Moreover, positive affect is 0.33 points lower after “horror” compared to groups 1 and 3, but this is not significant (p = .742). And the difference between “documentary”&quot; and “nature” is also non-significant (p = .760).</p>
-<p>This gives us huge power. We can now test more specific hypotheses in a regression framework compared to what is possible using the software’s defaults. For example, the hypotheses depicted in Table <a href="#tab:contrasts1">2</a> were easy to test using our custom matrices <code>B1</code> and <code>C1</code> but would be hard to test with built-in functions. Furthermore, we know now how to deduce the meaning of the estimates instead of relying on textbook knowledge.</p>
+<p>Thus, positive affect is 4.41 points higher after watching “comedy” compared to the three other films (p &lt; .001).
+Moreover, positive affect is 0.33 points lower after “horror” compared to groups 1 and 3, but this is not significant (p = .742).
+And the difference between “documentary”&quot; and “nature” is also non-significant (p = .760).</p>
+<p>This gives us huge power.
+We can now test more specific hypotheses in a regression framework compared to what is possible using the software’s defaults.
+For example, the hypotheses depicted in Table <a href="#tab:contrasts1">2</a> were easy to test using our custom matrices <code>B1</code> and <code>C1</code> but would be hard to test with built-in functions.
+Furthermore, we know now how to deduce the meaning of the estimates instead of relying on textbook knowledge.</p>
 </div>
 <div id="helmert-coding" class="section level3">
 <h3>Helmert Coding</h3>
-<p>For further illustration, we will have a look at Helmert coding (<code>contr.helmert()</code>), which can be used to compare each level with the mean of the previous levels. The <strong>C</strong> matrix <code>C2</code> below already illustrates that, but it does not give an interpretation for <span class="math inline">\(\beta_0\)</span> and it does not allow to interpret the exact value of the other estimates. This is given by its inverse <code>B2</code>, which shows that <span class="math inline">\(\beta_0\)</span> is again the mean of the group means (first row of <code>B2</code>). Furthermore, <span class="math inline">\(\beta_3\)</span> compares “comedy” to the three other groups (H1 in Table <a href="#tab:contrasts1">2</a>), and the p- and t-value (4.742) are the same as above. However, the estimate of 1.10 has no easy interpretation, because it is <span class="math inline">\(\beta_3 = -0.08\mu_1 - 0.08\mu_2 - 0.08\mu_3 + 0.25\mu_4\)</span>. This was much easier to interpret above, where the estimate was 4.41, which was just the difference between “comedy” and the mean of the other three groups.</p>
+<p>For further illustration, we will have a look at Helmert coding (<code>contr.helmert()</code>), which can be used to compare each level with the mean of the previous levels.
+The <strong>C</strong> matrix <code>C2</code> below already illustrates that, but it does not give an interpretation for <span class="math inline">\(\beta_0\)</span> and it does not allow to interpret the exact value of the other estimates.
+This is given by its inverse <code>B2</code>, which shows that <span class="math inline">\(\beta_0\)</span> is again the mean of the group means (first row of <code>B2</code>). Furthermore, <span class="math inline">\(\beta_3\)</span> compares “comedy” to the three other groups (H1 in Table <a href="#tab:contrasts1">2</a>), and the p- and t-value (4.742) are the same as above.
+However, the estimate of 1.10 has no easy interpretation, because it is <span class="math inline">\(\beta_3 = -0.08\mu_1 - 0.08\mu_2 - 0.08\mu_3 + 0.25\mu_4\)</span>.
+This was much easier to interpret above, where the estimate was 4.41, which was just the difference between “comedy” and the mean of the other three groups.</p>
 <pre class="r"><code>(C2 &lt;- contr.helmert(levels(dat$Film)))
 #&gt;             [,1] [,2] [,3]
 #&gt; documentary   -1   -1   -1
@@ -360,7 +402,10 @@ sum(B2[4, ] * group_means)
 </div>
 <div id="orthogonal-and-nonorthognoal-contrasts" class="section level2">
 <h2>Orthogonal and Nonorthognoal Contrasts</h2>
-<p>I did not find much literature that deduces the meaning of the <strong>B</strong> matrix and explains the relationship between <strong>B</strong> and <strong>C</strong> except <span class="citation">Venables (2018)</span>. Maybe because it is obvious for everyone except for me. But maybe because people are taught to use either standard schemes (like dummy coding) or orthogonal contrasts. Orthogonal contrasts have the advantage that they can be interpreted using either the <strong>B</strong> or the <strong>C</strong> matrix, because they are structurally quite similar, and thus no one needs to know about or calculate an inverse:</p>
+<p>I did not find much literature that deduces the meaning of the <strong>B</strong> matrix and explains the relationship between <strong>B</strong> and <strong>C</strong> except <span class="citation">Venables (2018)</span>.
+Maybe because it is obvious for everyone except for me.
+But maybe because people are taught to use either standard schemes (like dummy coding) or orthogonal contrasts.
+Orthogonal contrasts have the advantage that they can be interpreted using either the <strong>B</strong> or the <strong>C</strong> matrix, because they are structurally quite similar, and thus no one needs to know about or calculate an inverse:</p>
 <pre class="r"><code># B matrix for Helmert coding
 contr.helmert(5)
 #&gt;   [,1] [,2] [,3] [,4]
@@ -379,7 +424,8 @@ round(t(tmp1), 2)
 #&gt; 3  0.0  0.33 -0.08 -0.05
 #&gt; 4  0.0  0.00  0.25 -0.05
 #&gt; 5  0.0  0.00  0.00  0.20</code></pre>
-<p>I don’t know of any other clear advantages of orthogonal over nonorthogonal contrasts. If you know better, I would be very happy if you could let me know.</p>
+<p>I don’t know of any other clear advantages of orthogonal over nonorthogonal contrasts.
+If you know better, I would be very happy if you could let me know.</p>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2>References</h2>

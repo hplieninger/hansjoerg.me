@@ -4,8 +4,7 @@ author: 'Hansjörg Plieninger'
 date: '2018-04-23'
 slug: rasch-in-r-tutorial
 summary: 'Recently, I wrote a summary of some illustrative IRT analyses for my students. Quickly, I realized that this might be of interest to others as well, and I am posting here a tutorial for the Rasch model and the 2PL model in R. It is meant for people with a basic understanding of these models who have heard terms like ICC or item difficulty before and who would like to see a practical, worked example. Possibly, the code may be copied and applied to your own data.'
-categories:
-  - R
+categories: [statistics]
 tags:
   - IRT
   - psychometrics
