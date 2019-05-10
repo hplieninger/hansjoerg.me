@@ -1,0 +1,802 @@
+---
+title: Regression Modeling With Proportion Data (Part 1)
+author: Hansjörg Plieninger
+date: '2019-05-10'
+slug: regression-modeling-with-proportion-data-part-1
+draft: true
+categories: [Modeling]
+tags:
+  - R
+  - data-science
+  - beta-regression
+  - logistic
+  - regression
+  - generalized-linear-model
+subtitle: 'Predicting Attendance in the German Handball-Bundesliga'
+share: true
+image: /post/2019-05-10-regression-modeling-with-proportion-data-part-1_files/figure-html/beta-regression-1.png
+description: "Tutorial on modeling proportions/ratios in R using data from the German Handball-Bundesliga. Includes tidyverse, plots, residuals, model comparisons, holdout."
+summary: "As a data scientist, one often encounters dependent variables that are proportions, for example, the attendance rate of public events. Modeling and predicting such variables in a regression framework is possible, but one has to go beyond the standard linear model. In this blog post, I will compare different models that are available for proportions and illustrate them to predict the attendance rate of matches of the German Handball-Bundesliga."
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
+
+<div id="TOC">
+<ul>
+<li><a href="#modeling-proportion-data">Modeling Proportion Data</a></li>
+<li><a href="#application-handball-bundesliga">Application: Handball-Bundesliga</a><ul>
+<li><a href="#setup">Setup</a></li>
+<li><a href="#selected-variables">Selected Variables</a></li>
+</ul></li>
+<li><a href="#initial-results-for-beta-regression">Initial Results for Beta Regression</a><ul>
+<li><a href="#illustrative-plot-of-estimates">Illustrative Plot of Estimates</a></li>
+<li><a href="#residuals">Residuals</a></li>
+</ul></li>
+<li><a href="#model-comparisons">Model Comparisons</a><ul>
+<li><a href="#models-considered">Models Considered</a></li>
+<li><a href="#model-performance">Model Performance</a></li>
+</ul></li>
+<li><a href="#prediction-of-future-matches">Prediction of Future Matches</a></li>
+<li><a href="#resources">Resources</a></li>
+</ul>
+</div>
+
+<p>As a data scientist, one often encounters dependent variables that are proportions: for example, the number of successes divided by the number of attempts, party vote, proportion of money spent for something, or the attendance rate of public events. Modeling and predicting such variables in a regression framework is possible, but one has to go beyond the standard linear model, because the data are restricted to the range between 0 and 1. Popular logistic regression is not suitable either, because it permits only 0s and 1s, but not an attendance rate of .80 or 80 %. In this blog post, I will compare different models that are available for proportions and illustrate them to predict the attendance rate of matches of the German Handball-Bundesliga.</p>
+<div id="modeling-proportion-data" class="section level2">
+<h2>Modeling Proportion Data</h2>
+<p>As a starting point, a <strong>linear regression</strong> model without a link function may be considered to get one started. The model is obviously wrong, because it will easily make predictions smaller than 0 or larger than 1. Nevertheless, it may work okay especially for intermediate proportions.</p>
+<p>A second option is a binomial or <strong>quasi-binomial model</strong>. Therein, the proportion is conceived of as the outcome of multiple binomial trials. A good example are the shots of a basketball player, where one may either model each individual shot using a logistic model for outcomes of 0 and 1. Or one may aggregate all attempts in a match and model the proportion of successful shots, which is a value in the interval of [0, 1], using a (quasi-)binomial model.</p>
+<p>A related option is a <strong>Poisson model</strong> for count data that, for example, may be used to model the number of occurrences of a specific symptom per week or month. However, the model is not quite the right choice if the count variable may take on values of several thousand spectators of a sport event. More importantly, it can fail to capture, for example, the difference between 1,000 spectators in a stadium with a capacity of 1,000 (i.e., 100 %) and 2,000 spectators in a stadium of 5,000 (i.e., 40 %).</p>
+<p>The third option considered is <strong>beta regression</strong> which assumes that the dependent variable is beta-distributed. This model is very flexible and ideally suited for original proportions or rates. However, it should be noted that it assumes values in the interval (0, 1), that is, 0 and 1 are excluded. There are two variants of beta regression: One predicts only the mean of the dependent variable whereas the second variant models also the dispersion parameter phi. This sounds attractive for the current problem, because handball teams like Flensburg almost always have attendance rates of over 90 % (small variance) while the attendance rates in other stadiums may show more variability.</p>
+</div>
+<div id="application-handball-bundesliga" class="section level2">
+<h2>Application: Handball-Bundesliga</h2>
+<p>Data from the German Handball-Bundesliga were obtained for the current and the last two seasons from <a href="https://www.dkb-handball-bundesliga.de" class="uri">https://www.dkb-handball-bundesliga.de</a>. The data needed some wrangling and cleansing and are not perfectly valid (e.g., some entries exhibit attendance rate larger than 100 %), but will suffice for the present purpose. You can find the respective R code on my <a href="https://github.com/hplieninger/hansjoerg.me/tree/master/static/uploads/handball-data.md">Github</a>.</p>
+<div id="setup" class="section level3">
+<h3>Setup</h3>
+<pre class="r"><code>library(&quot;conflicted&quot;)
+suppressPackageStartupMessages(library(&quot;tidyverse&quot;))
+conflict_prefer(&quot;filter&quot;, &quot;dplyr&quot;)
+#&gt; [conflicted] Will prefer dplyr::filter over any other package
+library(&quot;betareg&quot;)
+library(&quot;broom&quot;)
+library(&quot;kableExtra&quot;)
+ggplot2::theme_set(ggthemes::theme_igray())
+
+# Function to transform attendance rates for beta regression because values of 0
+# and/or 1 may occur
+transform_perc &lt;- function(percentage_vec) {
+    # See Cribari-Neto &amp; Zeileis (2010)
+    (percentage_vec * (length(percentage_vec) - 1) + 0.5)/length(percentage_vec)
+}</code></pre>
+</div>
+<div id="selected-variables" class="section level3">
+<h3>Selected Variables</h3>
+<p>Dependent variable:</p>
+<ul>
+<li>Beta regression: Attendance rate; values were transformed to the interval (0, 1) using <code>transform_perc()</code></li>
+<li>Quasi-binomial regression: Attendance rate in the interval [0, 1]</li>
+<li>Linear regression: Attendance (i.e., count)</li>
+<li>In all cases, entries where the attendance was larger than the capacity were replaced with the maximum capacity.</li>
+</ul>
+<p>Independent variables:</p>
+<ul>
+<li>Home team: Different teams have different average attendance rates and/or stadium capacities. For the beta model, home team was also used to predict the dispersion parameter phi.</li>
+<li>Away team: Generally, more successful away teams like Kiel attract more spectators.</li>
+<li>Year/season: Used to capture potential differences across the three seasons.</li>
+<li>Weekday: Matches on weekends probably attract more spectators.</li>
+<li>All variables are categorical variables and appropriate <a href="/2018/07/10/contrasts-in-anova-and-regression/">coding schemes</a> (i.e., dummy or effect coding where chosen).</li>
+</ul>
+</div>
+</div>
+<div id="initial-results-for-beta-regression" class="section level2">
+<h2>Initial Results for Beta Regression</h2>
+<pre class="r"><code># Use data from 2016/17 and 2017/18
+df21 &lt;- filter(df1, season_id != 55149) %&gt;%
+    mutate(year = droplevels(year),
+           home_team = droplevels(home_team),
+           away_team = droplevels(away_team)) %&gt;%
+    mutate(y = transform_perc(perc))
+
+# Use effect coding, contr.sum(), for teams so that intercept corresponds to
+# average across all teams
+contrasts(df21$home_team) &lt;- contr.sum(levels(df21$home_team))
+colnames(contrasts(df21$home_team)) &lt;- head(levels(df21$home_team), -1)
+contrasts(df21$away_team) &lt;- contr.sum(levels(df21$away_team))
+colnames(contrasts(df21$away_team)) &lt;- head(levels(df21$away_team), -1)
+
+# Dummy coding
+contrasts(df21$weekday) &lt;- contr.treatment(7, base = 6)</code></pre>
+<p>The first model I want to show is a beta regression model. As you can see below, the intercept is equal to 2.08 on the logit scale. Thus, the model predicts an average attendance rate of 89 % (<code>plogis(2.08)</code>). Average here means averaged across all teams (since effect coding was used) and predicted for a match on Saturday in the season 2016/17 (dummy coding used for weekday and year).</p>
+<p>Furthermore, there are huge differences across teams. For example, the predicted value for a home match of Flensburg is 2.08 + 1.42 corresponding to an attendance rate of 97 % (<code>plogis(3.5)</code>) but only 84 % (<code>plogis(2.08 - 0.42)</code>) for Lemgo or 63 % for Lübbecke. Likewise, the attendance rate differs by away team, where, for example, matches against Kiel are more attractive than matches against Erlangen.</p>
+<p>Apart from that, the precision or variability of the predicted mean also varies as a function of home team. For example, the precision is larger (and variability lower) for Flensburg than for Lemgo.</p>
+<pre class="r"><code>m1 &lt;- betareg(y ~ home_team + away_team + weekday + year
+              | home_team, data = df21)
+m1_est &lt;- tidy(m1)
+
+# Print some estimates
+slice(m1_est, 1, 49, seq(2, 69, 8))
+#&gt; # A tibble: 11 x 6
+#&gt;    component term                    estimate std.error statistic   p.value
+#&gt;    &lt;chr&gt;     &lt;chr&gt;                      &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+#&gt;  1 mean      (Intercept)               2.08      0.0815    25.5   2.54e-143
+#&gt;  2 precision (Intercept)               2.40      0.0643    37.4   2.44e-305
+#&gt;  3 mean      home_teamSG Flensburg-~   1.42      0.193      7.39  1.48e- 13
+#&gt;  4 mean      home_teamTBV Lemgo Lip~  -0.422     0.125     -3.38  7.23e-  4
+#&gt;  5 mean      home_teamTuS N-Lübbecke  -1.53      0.168     -9.08  1.07e- 19
+#&gt;  6 mean      away_teamTHW Kiel         0.728     0.123      5.94  2.78e-  9
+#&gt;  7 mean      away_teamHC Erlangen     -0.161     0.119     -1.35  1.77e-  1
+#&gt;  8 mean      weekday1                  0.291     0.257      1.13  2.57e-  1
+#&gt;  9 precision home_teamSG Flensburg-~   0.491     0.270      1.82  6.85e-  2
+#&gt; 10 precision home_teamTBV Lemgo Lip~   0.0346    0.235      0.147 8.83e-  1
+#&gt; 11 precision home_teamTuS N-Lübbecke  -0.374     0.313     -1.19  2.32e-  1</code></pre>
+<div id="illustrative-plot-of-estimates" class="section level3">
+<h3>Illustrative Plot of Estimates</h3>
+<p>The model estimates can also be illustrated graphically. The parameters mean (mu) and precision (phi) from above correspond to a beta distribution, which is specific to each home team in the fitted model. To calculate the densities of the beta distribution using <code>dbeta()</code>, I first have to transform the estimates from the model.</p>
+<pre class="r"><code># Function to calculate a and b parameter of beta distribution from mu and phi
+# used in betareg with link function logit for mu and log for phi
+calc_ab &lt;- function(mu, phi) {
+    mu &lt;- plogis(mu)
+    phi &lt;- exp(phi)
+    b &lt;- phi - mu*phi
+    a &lt;- phi - b
+    return(cbind(a = a, b = b)[, 1:2])
+}
+
+# Calculate predicted beta distributions for Flensburg and Lemgo
+preds1 &lt;- 
+    # Estimates of mu and phi from above
+    calc_ab(2.08 + c(1.42, -.42), 2.4 + c(.49, .03)) %&gt;%
+    asplit(1) %&gt;%
+    setNames(c(&quot;SG Flensburg-Handewitt&quot;, &quot;TBV Lemgo Lippe&quot;)) %&gt;%
+    # Calculate densities via dbeta()
+    lapply(function(y) data.frame(x = seq(0, 1, .001),
+                                  y = dbeta(seq(0, 1, .001), y[1], y[2]))) %&gt;%
+    enframe(&quot;home_team&quot;) %&gt;% 
+    unnest(value)
+
+# Print some values
+slice(preds1, seq(701, by = 100, length.out = 4))
+#&gt; # A tibble: 4 x 3
+#&gt;   home_team                  x        y
+#&gt;   &lt;chr&gt;                  &lt;dbl&gt;    &lt;dbl&gt;
+#&gt; 1 SG Flensburg-Handewitt   0.7   0.0133
+#&gt; 2 SG Flensburg-Handewitt   0.8   0.145 
+#&gt; 3 SG Flensburg-Handewitt   0.9   1.40  
+#&gt; 4 SG Flensburg-Handewitt   1   Inf</code></pre>
+<p>Below, I plotted the model-implied beta distributions for the two teams, which are illustrated using the green lines. Furthermore, the plot shows the predicted means (green point on the x-axis), the raw densities calculated by <code>geom_density()</code> across the 34 matches per team, as well as the observed attendance rate for each match (placed below the densities by <code>geom_rug()</code>).</p>
+<p>In summary, the plot nicely illustrates the estimates from above, namely, very high and homogeneous attendance rates for Flensburg and lower and more varied attendance rates for Lemgo. This aligns quite well with the observed data. Note also that I picked these two teams more or less at random, but estimates are of course available for all teams in the data set.</p>
+<pre class="r"><code># Plot observed data using densities and rugs
+p1 &lt;- df21 %&gt;%
+    filter(home_team %in% c(&quot;SG Flensburg-Handewitt&quot;, &quot;TBV Lemgo Lippe&quot;)) %&gt;%
+    ggplot(aes(x = perc, fill = home_team)) +
+    geom_density(trim = TRUE) +
+    geom_rug() +
+    facet_wrap(~ home_team) +
+    coord_cartesian(xlim = c(.5, 1), ylim = c(0, 12)) +
+    scale_fill_viridis_d() +
+    labs(y = &quot;Density&quot;, x = &quot;Attendance Rate&quot;, fill = NULL,
+         title = &quot;Beta Regression: Observed and Fitted Attendance Rates&quot;) +
+    theme(legend.position = &quot;none&quot;)
+
+# Add lines corresponding to estimated distributions
+p1 &lt;- p1 + 
+    geom_line(data = preds1, aes(x = x, y = y),
+              inherit.aes = FALSE, size = 1,
+              color = rgb(0, 155, 149, maxColorValue = 255))
+
+# Add predicted means
+p1 &lt;- p1 + 
+    geom_point(data = data.frame(y = 0,
+                                 x = plogis(2.01 + c(1.49, -.35)),
+                                 home_team = c(&quot;SG Flensburg-Handewitt&quot;, &quot;TBV Lemgo Lippe&quot;)),
+               aes(x = x, y = y), show.legend = FALSE, size = 3,
+               color = rgb(0, 155, 149, maxColorValue = 255))
+p1</code></pre>
+<p><img src="/post/2019-05-10-regression-modeling-with-proportion-data-part-1_files/figure-html/beta-regression-1.png" width="80%" /></p>
+</div>
+<div id="residuals" class="section level3">
+<h3>Residuals</h3>
+<p>Finally, I want to have a quick look at the residuals (which are on the logit scale). I decided to plot them chronologically, that is, against match day. As you see, residuals tend to get higher across the course of a season indicating that attendance rates near the end of the season are slightly higher than predicted. Thus, it seems useful to add variables to the model that can capture this effect (see below).</p>
+<pre class="r"><code>m1_res &lt;- augment(m1, data = df21)
+
+ggplot(m1_res, aes(x = round_number, y = .resid)) +
+        geom_point() +
+        stat_smooth(method = &quot;loess&quot;, formula = &quot;y ~ x&quot;) +
+        facet_wrap(~ year) +
+        labs(y = &quot;Residuals&quot;, x = &quot;Match Day&quot;,
+             title = &quot;Residuals as a Function of Match Day&quot;)</code></pre>
+<p><img src="/post/2019-05-10-regression-modeling-with-proportion-data-part-1_files/figure-html/beta-regression-residuals-1.png" width="80%" /></p>
+</div>
+</div>
+<div id="model-comparisons" class="section level2">
+<h2>Model Comparisons</h2>
+<div id="models-considered" class="section level3">
+<h3>Models Considered</h3>
+<p>In the following, I will compare different models:</p>
+<ul>
+<li>The models will either model the variable matchday using a linear trend. Or the trend over time will be captured by the categorical variable month (thus allowing different attendance rates in each month). More information about the coding for variable month is provided in <a href="/2019/05/13/regression-modeling-with-proportion-data-part-2">part 2</a>.</li>
+<li>Furthermore, I will compare different different link functions or forms:
+<ul>
+<li>Linear model (lm)</li>
+<li>Quasi-binomial model (binomial)</li>
+<li>Beta regression (beta)</li>
+<li>Beta regression with dispersion parameter and logit link (beta+ logit)</li>
+<li>Beta regression with dispersion parameter and loglog link (beta+ loglog)</li>
+</ul></li>
+</ul>
+<p>The performance of the models will be evaluated relative to the training data set from above (season 2016/17 and 2017/18) and to a holdout or cross-validation data set (season 2018/19). Furthermore, I will compare the models relative to simply predicting the average attendance rate of the home team.</p>
+<pre class="r"><code>res11 &lt;- list()
+
+### Average ###
+
+# This &quot;model&quot; simply predicts for each match the yearly average attendance rate
+# of the home team
+res11$average_no &lt;- 
+  glm(perc ~ home_team*year, data = df21,
+        family = quasibinomial(logit), weights = capacity)
+
+### beta+dispersion (logit) ###
+
+res11$betaDsplogit_lin &lt;-
+    betareg(y ~ home_team + away_team + weekday + year + half2 + 
+                matchday | home_team, data = df21)
+res11$betaDsplogit_mon &lt;-
+    betareg(y ~ home_team + away_team + weekday + year + half2 + 
+                Oct + Nov + Dec + Mar + Apr + May | home_team, data = df21)
+
+### beta+dispersion (loglog) ###
+
+res11$betaDsploglog_lin &lt;-
+    update(res11$betaDsplogit_lin, link = &quot;loglog&quot;)
+res11$betaDsploglog_mon &lt;-
+    update(res11$betaDsplogit_mon, link = &quot;loglog&quot;)
+
+### beta (logit) ###
+
+res11$beta_lin &lt;-
+    betareg(y ~ home_team + away_team + weekday + year + half2 + 
+                matchday, data = df21)
+res11$beta_mon &lt;-
+    betareg(y ~ home_team + away_team + weekday + year + half2 + 
+                Oct + Nov + Dec + Mar + Apr + May, data = df21)
+
+### lm - linear model ###
+
+res11$lm_lin &lt;-
+    lm(attendance ~ home_team + away_team + weekday + year + half2 + 
+           matchday, data = df21)
+res11$lm_mon &lt;-
+    lm(attendance ~ home_team + away_team + weekday + year + half2 + 
+           Oct + Nov + Dec + Mar + Apr + May, data = df21)
+
+### quasi-binomial ###
+
+res11$quasibinomial_lin &lt;-
+    glm(perc ~ home_team + away_team + weekday + year + half2 + 
+            matchday, data = df21,
+        family = quasibinomial(logit), weights = capacity)
+res11$quasibinomial_mon &lt;-
+    glm(perc ~ home_team + away_team + weekday + year + half2 + 
+            Oct + Nov + Dec + Mar + Apr + May, data = df21,
+        family = quasibinomial(logit), weights = capacity)
+
+res12 &lt;- enframe(res11)
+
+res12
+#&gt; # A tibble: 11 x 2
+#&gt;    name              value        
+#&gt;    &lt;chr&gt;             &lt;list&gt;       
+#&gt;  1 average_no        &lt;S3: glm&gt;    
+#&gt;  2 betaDsplogit_lin  &lt;S3: betareg&gt;
+#&gt;  3 betaDsplogit_mon  &lt;S3: betareg&gt;
+#&gt;  4 betaDsploglog_lin &lt;S3: betareg&gt;
+#&gt;  5 betaDsploglog_mon &lt;S3: betareg&gt;
+#&gt;  6 beta_lin          &lt;S3: betareg&gt;
+#&gt;  7 beta_mon          &lt;S3: betareg&gt;
+#&gt;  8 lm_lin            &lt;S3: lm&gt;     
+#&gt;  9 lm_mon            &lt;S3: lm&gt;     
+#&gt; 10 quasibinomial_lin &lt;S3: glm&gt;    
+#&gt; 11 quasibinomial_mon &lt;S3: glm&gt;</code></pre>
+</div>
+<div id="model-performance" class="section level3">
+<h3>Model Performance</h3>
+<p>For all models stored in <code>res12</code>, I will make predictions for the training data <code>df21</code> and for the holdout data <code>df22</code>. I will then compare these predictions with the actual observations using the following three metrics:</p>
+<ul>
+<li>Mean absolute error (MAE)</li>
+<li>Root mean squared error (RMSE)</li>
+<li>R squared (R2)</li>
+</ul>
+<p>R2 should be high, and MAE and RMSE should be relatively low. These latter two measures are provided in the metric of the original attendance values, that is an MAE of 500 means that the predictions are on average off by a value of 500 spectators.</p>
+<pre class="r"><code># Holdout data
+df22 &lt;- filter(df1, season_id == 55149) %&gt;%
+    filter(!home_team %in% c(&quot;SG BBM Bietigheim&quot;)) %&gt;%
+    filter(!away_team %in% c(&quot;SG BBM Bietigheim&quot;)) %&gt;%
+    mutate(year = &quot;17/18&quot;) %&gt;%
+    filter(date &lt; as.Date(&quot;2019-02-01&quot;))
+
+### Make predictions ###
+
+res13 &lt;- res12 %&gt;%
+    separate(name, into = c(&quot;mod&quot;, &quot;matchday&quot;)) %&gt;%
+    mutate(matchday = factor(matchday)) %&gt;%
+    # Make &quot;predictions&quot; for data set used
+    mutate(olddata = map(value, ~augment(.x, data = df21, type.predict = &quot;resp&quot;))) %&gt;%
+    # Make predictions for data from 2018/19 (cross validation)
+    mutate(newdata = map(value, ~augment(.x, newdata = df22, type.predict = &quot;resp&quot;))) %&gt;%
+    # Calcuate predictions and residuals for actual attendance number rather
+    # than attendance rate
+    mutate(olddata = map(olddata, function(x = .x){
+        if (x$.fitted[1] &gt; 1) {
+            x$.pred &lt;- round(x$.fitted)
+        } else {
+            x$.pred &lt;- round(x$.fitted*x$capacity)
+        }
+        x$.res &lt;- x$attendance - x$.pred
+        return(x)
+    })) %&gt;%
+    mutate(newdata = map(newdata, function(x = .x){
+        if (x$.fitted[1] &gt; 1) {
+            x$.pred &lt;- round(x$.fitted)
+        } else {
+            x$.pred &lt;- round(x$.fitted*x$capacity)
+        }
+        x$.res &lt;- x$attendance - x$.pred
+        return(x)
+    }))
+
+### Performance measures (yardstick package) ###
+
+res14 &lt;- res13 %&gt;% 
+    mutate(old = map(olddata, ~yardstick::metrics(.x, attendance, .pred))) %&gt;%
+    mutate(new = map(newdata, ~yardstick::metrics(.x, attendance, .pred))) %&gt;%
+    # Wrangle into long format
+    select(-value, -olddata, -newdata) %&gt;% 
+    unnest(c(old, new), names_sep = &quot;_&quot;) %&gt;% 
+    select(-old_.estimator, -new_.estimator) %&gt;%
+    pivot_longer(c(old_.metric, old_.estimate, new_.metric, new_.estimate),
+                 names_sep = &quot;_&quot;, names_to = c(&quot;data&quot;, &quot;.value&quot;))
+
+tail(res14)
+#&gt; # A tibble: 6 x 5
+#&gt;   mod           matchday data  .metric .estimate
+#&gt;   &lt;chr&gt;         &lt;fct&gt;    &lt;chr&gt; &lt;chr&gt;       &lt;dbl&gt;
+#&gt; 1 quasibinomial mon      old   rmse      652.   
+#&gt; 2 quasibinomial mon      new   rmse      995.   
+#&gt; 3 quasibinomial mon      old   rsq         0.926
+#&gt; 4 quasibinomial mon      new   rsq         0.842
+#&gt; 5 quasibinomial mon      old   mae       419.   
+#&gt; 6 quasibinomial mon      new   mae       538.
+
+### Polish labels etc ###
+
+res15 &lt;- res14 %&gt;%
+    mutate(matchday = fct_recode(matchday, Linear = &quot;lin&quot;, Month = &quot;mon&quot;),
+           data = fct_rev(fct_recode(data, &quot;Holdout Data&quot; = &quot;new&quot;, &quot;Training Data&quot; = &quot;old&quot;)),
+           .metric = fct_recode(.metric,
+                                RMSE = &quot;rmse&quot;, R2 = &quot;rsq&quot;, MAE = &quot;mae&quot;),
+           mod = sub(&quot;Dsp(.*)&quot;, &quot;+ (\\1)&quot;, mod),
+           mod = factor(mod, 
+                        levels = c(&quot;average&quot;, &quot;lm&quot;, &quot;quasibinomial&quot;, &quot;beta&quot;, &quot;beta+ (logit)&quot;,
+                                   &quot;beta+ (loglog)&quot;)))</code></pre>
+<p>As shown in the plot below, the quasi-binomial model shows the best performance in the training data set. The beta models perform slightly worse but outperforms the quasi-binomial with respect to R2 in the holdout data set. The linear model performs worst (with the exception for RMSE in the holdout data), even worse than predicting just averages without a real model. When comparing the different variants of the beta model, the enhanced models (beta+), which also model the precision in addition to the mean, perform slightly better, especially in the holdout data set. The difference between the logit and the loglog link is tiny and I would prefer the logit model here because it is more common and thus easier to communicate.</p>
+<p>The time effect is slightly better captured by the categorical predictor months compared to a linear trend, more on that in <a href="/2019/05/13/regression-modeling-with-proportion-data-part-2">part 2</a>.</p>
+<p>In summary, both the quasi-binomial and the beta model are able to capture the relevant aspects of the attendance rates of matches of the German Handball-Bundesliga. The beta model, however, has the advantage that it can provided prediction intervals if desired whereas the intervals of the quasi-binomial model are way too narrow with data of several thousand spectators (not shown herein).</p>
+<pre class="r"><code>ggplot(res15, aes(y = .estimate, x = mod, color = matchday)) +
+    geom_point(position = position_dodge(width = .5), size = 3) +
+    facet_wrap(data ~.metric, scales = &quot;free_y&quot;) +
+    scale_color_viridis_d(begin = .2) +
+    labs(x = &quot;Model&quot;, y = &quot;&quot;, color = &quot;Time\nTrend&quot;,
+         title = &quot;Comparison of Different Models for Proportion Data&quot;) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))</code></pre>
+<p><img src="/post/2019-05-10-regression-modeling-with-proportion-data-part-1_files/figure-html/regression-models-for-proportion-data-1.png" width="80%" /></p>
+</div>
+</div>
+<div id="prediction-of-future-matches" class="section level2">
+<h2>Prediction of Future Matches</h2>
+<p>Last, I want to make some real predictions, that is, predict the attendance of future matches.</p>
+<pre class="r"><code>### Model: Beta and Quasibinomial ###
+
+df31 &lt;- filter(df1, date &lt; &quot;2019-05-01&quot;) %&gt;%
+    mutate(y = transform_perc(perc))
+
+contrasts(df31$home_team) &lt;- contr.sum(levels(df31$home_team))
+contrasts(df31$away_team) &lt;- contr.sum(levels(df31$away_team))
+
+res31 &lt;- betareg(y ~ home_team + away_team + weekday + half2*year + 
+                   Oct + Nov + Dec + Mar + Apr + May | home_team, data = df31)
+res32 &lt;- glm(perc ~ home_team + away_team + weekday + half2*year + 
+                   Oct + Nov + Dec + Mar + Apr + May, data = df31,
+             family = quasibinomial(logit), weights = capacity)
+
+# newdata
+df32 &lt;- df1 %&gt;% 
+  filter(season_id == 55149) %&gt;% 
+  group_by(home_team) %&gt;% 
+  mutate(avg = round(mean(ifelse(attendance == 0, NA, attendance), na.rm = TRUE), -1)) %&gt;% 
+  filter(round_number %in% 30:31 &amp; date &gt; as.Date(&quot;2019-05-10&quot;))
+
+### Make predictions ###
+
+tab3 &lt;- enframe(list(beta = res31, binomial = res32), &quot;Model&quot;) %&gt;% 
+  mutate(pred = map(value, ~augment(.x, newdata = df32,
+                                    type.predict = &quot;resp&quot;))) %&gt;% 
+  select(-value) %&gt;% 
+  unnest(pred) %&gt;% 
+  mutate(prediction = round(.fitted*capacity, -1)) %&gt;% 
+  select(Model, home_team, away_team, date, capacity, .fitted, prediction, avg) %&gt;% 
+  pivot_wider(names_from = Model, values_from = .fitted:prediction)
+
+### Prediction interval for beta regression ###
+
+# predict(res31, 
+#         newdata = filter(df1, season_id == 55149 &amp; round_number == 31),
+#         type = &quot;quantile&quot;, at = c(.025, .975))
+
+### Make table ###
+
+tab3 %&gt;% 
+    mutate_at(vars(home_team, away_team), 
+              ~sub(&quot;(-Handewitt)|(Die Eulen )|(FRISCH AUF! )&quot;, &quot;&quot;, .)) %&gt;%
+    mutate_at(vars(home_team, away_team), ~sub(&quot;^(\\w{2,4}\\s)+[0-9]*\\s*&quot;, &quot;&quot;, .)) %&gt;%
+    mutate_at(vars(home_team, away_team), ~sub(&quot;Burgdorf&quot;, &quot;B.&quot;, .)) %&gt;%
+    mutate_at(vars(home_team, away_team), ~sub(&quot;Rhein-Neckar&quot;, &quot;R.-N.&quot;, .)) %&gt;%
+    arrange(date, avg) %&gt;% 
+    mutate(home_team = sub(&quot;(Die Eulen )|(([A-Z]{2,3}\\s)+[0-9]*\\s*)&quot;, &quot;&quot;, home_team)) %&gt;%
+    mutate(away_team = sub(&quot;(Die Eulen )|(([A-Z]{2,3}\\s)+[0-9]*\\s*)&quot;, &quot;&quot;, away_team)) %&gt;%
+    select(-.fitted_beta, -.fitted_binomial) %&gt;% 
+    knitr::kable(digits = 2,
+                 col.names = c(&quot;Home Team&quot;, &quot;Away Team&quot;, &quot;Date&quot;, &quot;Capacity&quot;,
+                               &quot;Average&quot;, &quot;Beta&quot;, &quot;Quasi-B.&quot;)) %&gt;% 
+    kable_styling(bootstrap_options = c(&quot;striped&quot;, &quot;hover&quot;, &quot;condensed&quot;, &quot;responsive&quot;)) %&gt;% 
+    add_header_above(c(&quot; &quot; = 5, &quot;Predicted Attendance&quot; = 2))</code></pre>
+<table class="table table-striped table-hover table-condensed table-responsive" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="border-bottom:hidden" colspan="5">
+</th>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Predicted Attendance
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:left;">
+Home Team
+</th>
+<th style="text-align:left;">
+Away Team
+</th>
+<th style="text-align:left;">
+Date
+</th>
+<th style="text-align:right;">
+Capacity
+</th>
+<th style="text-align:right;">
+Average
+</th>
+<th style="text-align:right;">
+Beta
+</th>
+<th style="text-align:right;">
+Quasi-B.
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Gummersbach
+</td>
+<td style="text-align:left;">
+Lemgo Lippe
+</td>
+<td style="text-align:left;">
+2019-05-11
+</td>
+<td style="text-align:right;">
+4050
+</td>
+<td style="text-align:right;">
+3150
+</td>
+<td style="text-align:right;">
+3770
+</td>
+<td style="text-align:right;">
+3760
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Leipzig
+</td>
+<td style="text-align:left;">
+Bergischer HC
+</td>
+<td style="text-align:left;">
+2019-05-11
+</td>
+<td style="text-align:right;">
+6500
+</td>
+<td style="text-align:right;">
+4250
+</td>
+<td style="text-align:right;">
+5100
+</td>
+<td style="text-align:right;">
+4940
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Melsungen
+</td>
+<td style="text-align:left;">
+R.-N. Löwen
+</td>
+<td style="text-align:left;">
+2019-05-12
+</td>
+<td style="text-align:right;">
+4300
+</td>
+<td style="text-align:right;">
+3910
+</td>
+<td style="text-align:right;">
+4190
+</td>
+<td style="text-align:right;">
+4200
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Magdeburg
+</td>
+<td style="text-align:left;">
+Wetzlar
+</td>
+<td style="text-align:left;">
+2019-05-12
+</td>
+<td style="text-align:right;">
+7221
+</td>
+<td style="text-align:right;">
+6410
+</td>
+<td style="text-align:right;">
+6550
+</td>
+<td style="text-align:right;">
+6600
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Füchse Berlin
+</td>
+<td style="text-align:left;">
+Ludwigshafen
+</td>
+<td style="text-align:left;">
+2019-05-12
+</td>
+<td style="text-align:right;">
+9000
+</td>
+<td style="text-align:right;">
+7470
+</td>
+<td style="text-align:right;">
+7900
+</td>
+<td style="text-align:right;">
+7920
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Kiel
+</td>
+<td style="text-align:left;">
+Flensburg
+</td>
+<td style="text-align:left;">
+2019-05-12
+</td>
+<td style="text-align:right;">
+10285
+</td>
+<td style="text-align:right;">
+10280
+</td>
+<td style="text-align:right;">
+10280
+</td>
+<td style="text-align:right;">
+10280
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Hannover-B.
+</td>
+<td style="text-align:left;">
+Gummersbach
+</td>
+<td style="text-align:left;">
+2019-05-14
+</td>
+<td style="text-align:right;">
+10000
+</td>
+<td style="text-align:right;">
+5400
+</td>
+<td style="text-align:right;">
+8570
+</td>
+<td style="text-align:right;">
+8140
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Ludwigshafen
+</td>
+<td style="text-align:left;">
+Stuttgart
+</td>
+<td style="text-align:left;">
+2019-05-15
+</td>
+<td style="text-align:right;">
+2268
+</td>
+<td style="text-align:right;">
+2160
+</td>
+<td style="text-align:right;">
+2160
+</td>
+<td style="text-align:right;">
+2160
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Minden
+</td>
+<td style="text-align:left;">
+Leipzig
+</td>
+<td style="text-align:left;">
+2019-05-15
+</td>
+<td style="text-align:right;">
+4059
+</td>
+<td style="text-align:right;">
+2730
+</td>
+<td style="text-align:right;">
+3070
+</td>
+<td style="text-align:right;">
+3110
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Lemgo Lippe
+</td>
+<td style="text-align:left;">
+Magdeburg
+</td>
+<td style="text-align:left;">
+2019-05-15
+</td>
+<td style="text-align:right;">
+4861
+</td>
+<td style="text-align:right;">
+3640
+</td>
+<td style="text-align:right;">
+4260
+</td>
+<td style="text-align:right;">
+4180
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Erlangen
+</td>
+<td style="text-align:left;">
+Bietigheim
+</td>
+<td style="text-align:left;">
+2019-05-16
+</td>
+<td style="text-align:right;">
+7850
+</td>
+<td style="text-align:right;">
+4330
+</td>
+<td style="text-align:right;">
+4500
+</td>
+<td style="text-align:right;">
+3630
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Flensburg
+</td>
+<td style="text-align:left;">
+Melsungen
+</td>
+<td style="text-align:left;">
+2019-05-16
+</td>
+<td style="text-align:right;">
+6300
+</td>
+<td style="text-align:right;">
+6030
+</td>
+<td style="text-align:right;">
+6090
+</td>
+<td style="text-align:right;">
+6110
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+R.-N. Löwen
+</td>
+<td style="text-align:left;">
+Göppingen
+</td>
+<td style="text-align:left;">
+2019-05-23
+</td>
+<td style="text-align:right;">
+13200
+</td>
+<td style="text-align:right;">
+7940
+</td>
+<td style="text-align:right;">
+8680
+</td>
+<td style="text-align:right;">
+7980
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="resources" class="section level2">
+<h2>Resources</h2>
+<ul>
+<li>Cribari-Neto, F., &amp; Zeileis, A. (2010). Beta regression in R. <em>Journal of Statistical Software</em>, <em>34(2)</em>, 1–24. doi: <a href="https://dx.doi.org/10.18637/jss.v034.i02">10.18637/jss.v034.i02</a></li>
+<li>Cross Validated: <a href="https://stats.stackexchange.com/q/26762/27276">How to do logistic regression in R when outcome is fractional (a ratio of two counts)?</a></li>
+<li>Cross Validated: <a href="https://stats.stackexchange.com/q/91724/27276">What is quasi-binomial distribution (in the context of GLM)?</a></li>
+<li>There is lot’s of interesting discussion on Cross Validated on whether it makes sense to compute prediction intervals for logistic or binomial regression; see also <a href="https://www.fromthebottomoftheheap.net/2017/05/01/glm-prediction-intervals-i/">Prediction intervals for GLMs</a>.</li>
+</ul>
+</div>
