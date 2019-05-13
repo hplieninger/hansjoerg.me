@@ -1,0 +1,250 @@
+---
+title: Regression Modeling With Proportion Data (Part 2)
+author: Hansjörg Plieninger
+date: '2019-05-13'
+slug: regression-modeling-with-proportion-data-part-2
+categories: [Modeling]
+tags:
+  - R
+  - data-science
+  - beta-regression
+  - logistic
+  - regression
+  - generalized-linear-model
+subtitle: 'Attendance in Handball-Bundesliga Rose By 7 % After World Championship'
+share: true
+image: /post/2019-05-13-regression-modeling-with-proportion-data-part-2_files/figure-html/championship-effect-on-handball-bundesliga-attendance-1.png
+description: "This tutorial on modeling proportions/ratios in R reveals that attendance in the Handball-Bundesliga rose by 7 % after the world championship. Includes generalized linear models, tidyverse, plots."
+summary: "In the first part of this post, I demonstrated how beta and quasi-binomial regression can be used with dependent variables that are proportions or ratios such as the attendance rates of the German Handball-Bundesliga. In the second part, I want to investigate whether attendance increased after the World Championship that took place in January 2019 in Denmark and Germany."
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#data">Data</a></li>
+<li><a href="#analyses-beta-and-quasi-binomial-regression">Analyses: Beta and Quasi-Binomial Regression</a></li>
+<li><a href="#results">Results</a><ul>
+<li><a href="#plot">Plot</a></li>
+<li><a href="#model-comparison">Model Comparison</a></li>
+<li><a href="#effect-size">Effect Size</a></li>
+</ul></li>
+</ul>
+</div>
+
+<p>In the <a href="/2019/05/10/regression-modeling-with-proportion-data-part-1">first part</a> of this post, I demonstrated how beta and quasi-binomial regression can be used with dependent variables that are proportions or ratios. I applied these models to attendance rates of the German Handball-Bundesliga. In the second part, I want to investigate whether attendance increased after the World Championship that took place in January 2019 in Denmark and Germany (with a <a href="https://en.wikipedia.org/wiki/2019_World_Men&#39;s_Handball_Championship">new spectator record</a>). It is often suggested that such tournaments have an impact beyond the event itself, and the following analyses are aimed to shed light on this for the present example.</p>
+<pre class="r"><code>library(&quot;conflicted&quot;)
+suppressPackageStartupMessages(library(&quot;tidyverse&quot;))
+conflict_prefer(&quot;filter&quot;, &quot;dplyr&quot;)
+#&gt; [conflicted] Will prefer dplyr::filter over any other package
+library(&quot;betareg&quot;)
+library(&quot;broom&quot;)
+ggplot2::theme_set(ggthemes::theme_igray())
+
+transform_perc &lt;- function(percentage_vec) {
+    # See Cribari-Neto &amp; Zeileis (2010)
+    (percentage_vec * (length(percentage_vec) - 1) + 0.5)/length(percentage_vec)
+}</code></pre>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<p>Data were obtained for the current and the last two seasons from <a href="https://www.dkb-handball-bundesliga.de" class="uri">https://www.dkb-handball-bundesliga.de</a>, and the R code for wrangling and cleansing the data is available on my <a href="https://github.com/hplieninger/hansjoerg.me/tree/master/static/uploads/handball-data.md">Github</a>.</p>
+<pre class="r"><code># Show some data
+select(df1, rowid, year, Date, home_team, away_team, attendance, capacity, perc) %&gt;% 
+    sample_n(5)
+#&gt; # A tibble: 5 x 8
+#&gt;   rowid year  Date       home_team     away_team  attendance capacity  perc
+#&gt;   &lt;int&gt; &lt;fct&gt; &lt;date&gt;     &lt;fct&gt;         &lt;fct&gt;           &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;
+#&gt; 1   165 16/17 2017-02-11 FRISCH AUF! ~ TSV GWD M~       4100     5600 0.732
+#&gt; 2   147 16/17 2016-12-21 TSV Hannover~ VfL Gumme~       7102    10000 0.710
+#&gt; 3   502 17/18 2018-02-22 TSV Hannover~ THW Kiel         9163    10000 0.916
+#&gt; 4   749 18/19 2018-12-06 Rhein-Neckar~ SC Magdeb~       8210    13200 0.622
+#&gt; 5   616 18/19 2018-08-26 Rhein-Neckar~ TBV Lemgo~       7098    13200 0.538</code></pre>
+<p>First, let’s compare the attendance rates in the first half of the season (Sep–Dec) with those from the second half (Feb–Jun) descriptively. As seen below, the attendance rates are always a little bit higher in the second half, but the difference is much more pronounced in the current season. Before the World Championship, the average attendance rate was 76 % which rose to 84 % after the World Championship.</p>
+<p>Even though this looks like there was some effect, these descriptive values should be treated with caution because several variables need to be controlled for in an appropriate statistical model as done below.</p>
+<pre class="r"><code>df1 %&gt;% 
+  filter(date &lt; &quot;2019-05-01&quot;) %&gt;% 
+  group_by(year, half2) %&gt;% 
+  summarize(M = round(mean(perc), 2))
+#&gt; # A tibble: 6 x 3
+#&gt; # Groups:   year [3]
+#&gt;   year  half2     M
+#&gt;   &lt;fct&gt; &lt;dbl&gt; &lt;dbl&gt;
+#&gt; 1 16/17     0  0.8 
+#&gt; 2 16/17     1  0.81
+#&gt; 3 17/18     0  0.78
+#&gt; 4 17/18     1  0.81
+#&gt; 5 18/19     0  0.76
+#&gt; 6 18/19     1  0.84</code></pre>
+<p>In the models, I will control for a bunch of variables that are all categorical, and I use <a href="/2018/07/10/contrasts-in-anova-and-regression/">coding schemes</a> tailored to my hypotheses and analyses as defined in the following</p>
+<pre class="r"><code>df2 &lt;- filter(df1, date &lt; &quot;2019-05-01&quot;) %&gt;%
+  # Calculate average attendance per round for plotting
+  group_by(year, round_number) %&gt;%
+  mutate(avg = mean(perc)) %&gt;% 
+  ungroup %&gt;%
+  mutate(y = transform_perc(perc),
+         # Helmert coding of &#39;year&#39;
+         year2 = as.numeric(recode(year, &quot;16/17&quot; = -.5, &quot;17/18&quot; = .5, &quot;18/19&quot; = 0)),
+         year3 = as.numeric(recode(year, &quot;18/19&quot; = 2/3, .default = -1/3)),
+         # Interaction effects of year X 2nd-half-of-the-season
+         ix1 = half2*year2,
+         ix2 = half2*year3)
+
+# Effect coding
+contrasts(df2$home_team) &lt;- contr.sum(levels(df2$home_team))
+contrasts(df2$away_team) &lt;- contr.sum(levels(df2$away_team))
+
+# Dummy coding
+contrasts(df2$weekday) &lt;- contr.treatment(7, base = 6)</code></pre>
+</div>
+<div id="analyses-beta-and-quasi-binomial-regression" class="section level2">
+<h2>Analyses: Beta and Quasi-Binomial Regression</h2>
+<p>The analyses reported in the <a href="/2019/05/10/regression-modeling-with-proportion-data-part-1">first post</a> revealed that a quasi-binomial and a beta model fit the data best. (The beta was slightly inferior but it has the advantage that prediction intervals—if desired—can be obtained.) In the following, I fit these two models and include, among other predictors, the following terms:</p>
+<ul>
+<li><code>half2</code> captures differences between the first half of the season (Oct–Dec) and the second half (Feb-Jun) across all three seasons.</li>
+<li><code>year2</code> captures differences between the second (2017/18) and the first (2016/17) season, and <code>ix1</code> is the interaction of <code>half2</code> and <code>year2</code>.</li>
+<li><code>year3</code> captures differences between the third season (2018/19) on the one hand and the earlier two seasons on the other hand via Helmert coding. <code>ix2</code> is the interaction of <code>half2</code> and <code>year3</code>.</li>
+<li>The variables <code>Oct</code>, <code>Nov</code>, etc. control differences between months within a half and are of secondary importance (see also my <a href="https://github.com/hplieninger/hansjoerg.me/tree/master/static/uploads/handball-data.md">R code for data wrangling</a>).</li>
+</ul>
+<p><strong>Thus, a sizable, positive effect of <code>ix2</code> indicates that the attendance rate after the World Championship in 2019 was larger compared to the attendance rates in the same time period in the two seasons before.</strong></p>
+<pre class="r"><code>res1 &lt;- list()
+res1$Beta &lt;- 
+    betareg(y ~ home_team + away_team + weekday + Oct + Nov + Dec + Mar + Apr + May + 
+                half2 + year2 + year3 + ix1 + ix2 | home_team, data = df2)
+
+res1$Quasibinomial &lt;- 
+    glm(perc ~ home_team + away_team + weekday +
+            Oct + Nov + Dec + Mar + Apr + May + 
+            half2 + year2 + year3 + ix1 + ix2, data = df2,
+        family = quasibinomial(logit), weights = capacity)</code></pre>
+</div>
+<div id="results" class="section level2">
+<h2>Results</h2>
+<p>The coefficients from both models shown below indicate that attendance rates are larger in the second half of the season (by a value of ca. 0.3 logits). Furthermore, attendance rates were largest in 2016/17 and then slightly decreased (as indicated by the negative signs for <code>year2</code> and <code>year3</code>). <strong>Most importantly, there is a positive interaction effect <code>ix2</code> indicating that attendance after January was higher in 2019 compared to the years before. It seems reasonable to conclude that this increase is due to the World Championship that took place in January 2019.</strong> The effect is larger in the quasi-binomial model than in the beta model. Furthermore, note that p-values are of secondary importance here, because the data are in fact population data (i.e., no sampling error).</p>
+<pre class="r"><code>tidy(res1$Beta) %&gt;% mutate_if(is.numeric, round, 3) %&gt;% slice(1, 56:60)
+#&gt; # A tibble: 6 x 6
+#&gt;   component term        estimate std.error statistic p.value
+#&gt;   &lt;chr&gt;     &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+#&gt; 1 mean      (Intercept)    1.85      0.084    22.1     0    
+#&gt; 2 mean      half2          0.306     0.054     5.71    0    
+#&gt; 3 mean      year2         -0.018     0.1      -0.184   0.854
+#&gt; 4 mean      year3         -0.082     0.074    -1.12    0.263
+#&gt; 5 mean      ix1           -0.246     0.12     -2.05    0.04 
+#&gt; 6 mean      ix2            0.235     0.122     1.92    0.055
+tidy(res1$Quasibinomial) %&gt;% mutate_if(is.numeric, round, 3) %&gt;% slice(1, 56:60)
+#&gt; # A tibble: 6 x 5
+#&gt;   term        estimate std.error statistic p.value
+#&gt;   &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+#&gt; 1 (Intercept)    1.75      0.085    20.4     0    
+#&gt; 2 half2          0.28      0.053     5.31    0    
+#&gt; 3 year2         -0.159     0.098    -1.62    0.105
+#&gt; 4 year3         -0.212     0.071    -2.99    0.003
+#&gt; 5 ix1           -0.001     0.119    -0.011   0.991
+#&gt; 6 ix2            0.37      0.119     3.10    0.002
+
+(res1 &lt;- enframe(res1, &quot;model&quot;))
+#&gt; # A tibble: 2 x 2
+#&gt;   model         value        
+#&gt;   &lt;chr&gt;         &lt;list&gt;       
+#&gt; 1 Beta          &lt;S3: betareg&gt;
+#&gt; 2 Quasibinomial &lt;S3: glm&gt;</code></pre>
+<div id="plot" class="section level3">
+<h3>Plot</h3>
+<p>To visualize the effect, I calculate the fitted values (i.e., the model predictions) for the actual data <code>df2</code>. Furthermore, I calculate these values for imaginary data (<code>newdata</code>) assuming there was no championship effect in the current season. Thus, these predictions for <code>newdata</code> are the attendance rates that were expected for the second half of the current season based on the data from the years before.</p>
+<pre class="r"><code>newdata &lt;- df2
+newdata[newdata$half2 == 1, &quot;ix2&quot;] &lt;- -1/3
+
+res2 &lt;- res1 %&gt;% 
+    # Calculate fitted/predicted values
+    mutate(fttd1 = map(value, ~augment(.x, data = df2, type.predict = &quot;response&quot;)),
+           fttd1 = map(fttd1, ~mutate(.x, count = round(.fitted*capacity))),
+           fttd0 = map(value, ~augment(.x, newdata = newdata,
+                                       type.predict = &quot;response&quot;)),
+           fttd0 = map(fttd0, ~mutate(.x, count = round(.fitted*capacity))),) %&gt;% 
+    # Summarize fitted values per month and combine into one tibble per model
+    mutate(fttd1M = map(fttd1, ~summarize(group_by(.x, year, Month),
+                                          pperc_Observed = mean(.fitted),
+                                          pcount_Observed = mean(count))),
+           fttd0M = map(fttd0, ~summarize(group_by(.x, year, Month),
+                                          pperc_Expected = mean(.fitted),
+                                          pcount_Expected = mean(count))),
+           fttd   = map2(fttd1M, fttd0M, left_join, by = c(&quot;year&quot;, &quot;Month&quot;)),
+           fitted = map2(fttd1, fttd, left_join, by = c(&quot;year&quot;, &quot;Month&quot;)))
+
+# Combine results for beta and binomial into one tibble
+res3 &lt;- res2 %&gt;% 
+    transmute(model = model,
+              res = map(fitted, 
+                      ~pivot_longer(.x, cols = c(pperc_Observed:pcount_Expected),
+                                    names_sep = &quot;_&quot;,
+                                    names_to = c(&quot;.value&quot;, &quot;newdata&quot;)))) %&gt;% 
+    mutate(res = map2(res, model, ~mutate(.x, model = .y))) %&gt;% 
+    {bind_rows(.$res)} %&gt;% 
+    mutate(model = factor(model, levels = c(&quot;Quasibinomial&quot;, &quot;Beta&quot;),
+                          labels = paste(c(&quot;Quasibinomial&quot;, &quot;Beta&quot;), &quot;Regression&quot;)))
+
+# Show some data
+select(res3, rowid, year, half2, home_team, attendance = perc, newdata, pperc, pcount) %&gt;% 
+    slice(1:2, 3443:3444)
+#&gt; # A tibble: 4 x 8
+#&gt;   rowid year  half2 home_team          attendance newdata  pperc pcount
+#&gt;   &lt;int&gt; &lt;fct&gt; &lt;dbl&gt; &lt;fct&gt;                   &lt;dbl&gt; &lt;chr&gt;    &lt;dbl&gt;  &lt;dbl&gt;
+#&gt; 1     1 16/17     0 HSG Wetzlar             0.925 Observed 0.753  4448.
+#&gt; 2     1 16/17     0 HSG Wetzlar             0.925 Expected 0.753  4448.
+#&gt; 3   864 18/19     1 TVB 1898 Stuttgart      1     Observed 0.836  4776.
+#&gt; 4   864 18/19     1 TVB 1898 Stuttgart      1     Expected 0.791  4499.</code></pre>
+<p>The plot nicely illustrates the championship effect. The green lines represent the predictions for the <em>Observed</em> data, whereas the blue lines represent the predictions that were <em>Expected</em> for these matches based on the data from 2016/17 and 2017/18. As you can see, we expected a decline in February 2019 (blue line), since such a pattern was consistently observed in 2017 and 2018. However, attendance stayed stable in 2019 (green line). Thus, the yellow area indicates the relative increase in attendance after the World Championship in January 2019.</p>
+<pre class="r"><code>ggplot(res3, aes(x = Date, y = pperc, color = newdata)) +
+    facet_grid(model~year, scales = &quot;free_x&quot;, switch = &quot;y&quot;) +
+    # yellow area
+    geom_ribbon(data = pivot_wider(res3, id_cols = c(rowid, Date, model, year),
+                                   names_from = newdata, values_from = pperc),
+                mapping = aes(x = Date, ymax = Observed, ymin = Expected),
+                inherit.aes = F, fill = &quot;#FDE725FF&quot;) +
+    # point for each match
+    geom_jitter(aes(y = perc), col = &quot;gray&quot;, alpha = .5, height = 0,
+                shape = 21, fill = &quot;gray95&quot;) +
+    # lines corresponding to fitted values, i.e., model-implied predictions
+    geom_line(size = 1) +
+    scale_color_viridis_d(begin = .3, end = .7) +
+    labs(y = &quot;Attendance Rate&quot;, color = NULL,
+         title = &quot;Increased Attendance Rate in Handball-Bundesliga&quot;,
+         subtitle = &quot;After World Championship in January 2019&quot;) +
+    scale_y_continuous(trans = &quot;exp&quot;, sec.axis = dup_axis(name = NULL)) +
+    scale_x_date(date_breaks = &quot;2 months&quot;, date_labels = &quot;%b&quot;) +
+    guides(color = guide_legend(reverse = TRUE))</code></pre>
+<p><img src="/post/2019-05-13-regression-modeling-with-proportion-data-part-2_files/figure-html/championship-effect-on-handball-bundesliga-attendance-1.png" width="80%" /></p>
+</div>
+<div id="model-comparison" class="section level3">
+<h3>Model Comparison</h3>
+<p>The analyses in the <a href="/2019/05/10/regression-modeling-with-proportion-data-part-1">first post</a> already revealed that the quasi-binomial model may describe the data better than the beta model. Herein, I compare these models again for the present data. The results below confirm the finding from the first post: RMSE and MAE are lower and R squared is higher for the quasi-binomial model.</p>
+<pre class="r"><code>res2 %&gt;% 
+    mutate(perf = map(fttd1, ~yardstick::metrics(.x, attendance, count))) %&gt;%
+    select(model, perf) %&gt;% 
+    unnest(perf) %&gt;% 
+    pivot_wider(model, names_from = .metric, values_from = .estimate)
+#&gt; # A tibble: 2 x 4
+#&gt;   model          rmse   rsq   mae
+#&gt;   &lt;chr&gt;         &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+#&gt; 1 Beta           787. 0.895  476.
+#&gt; 2 Quasibinomial  692. 0.916  433.</code></pre>
+</div>
+<div id="effect-size" class="section level3">
+<h3>Effect Size</h3>
+<p>To quantify the championship effect, I average over all matches after January 2019 and compare the green and the blue line in the plot (i.e., predictions for observed data compared to expected data if no effect was present). As seen below, the results depends to some extent on the model even though it is a sizable effect for both. According to the beta regression model, the attendance rate per match increased by 4 % after the championship and by 7 % according to the quasi-binomial model. This corresponds to an average of 184 and 315, respectively, additional spectators per match.</p>
+<pre class="r"><code>res3 %&gt;% 
+    filter(half2 == 1 &amp; year == &quot;18/19&quot;) %&gt;% 
+    group_by(model, rowid) %&gt;% 
+    summarize(D = diff(rev(pcount)),
+              P = (function(x) x[1]/x[2])(pcount)) %&gt;% 
+    group_by(model) %&gt;% 
+    summarize(d = mean(D),
+              p = mean(P))
+#&gt; # A tibble: 2 x 3
+#&gt;   model                        d     p
+#&gt;   &lt;fct&gt;                    &lt;dbl&gt; &lt;dbl&gt;
+#&gt; 1 Quasibinomial Regression  315.  1.07
+#&gt; 2 Beta Regression           184.  1.04</code></pre>
+</div>
+</div>
