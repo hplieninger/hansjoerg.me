@@ -29,7 +29,9 @@ I always wanted to try out web scraping and this was the opportunity to do so.</
 As you will see below, the <a href="#results">Results</a> confirmed my impression: World cups got fairer in recent years, and this year was the cup with the lowest number of red cards since 1974.</p>
 <pre class="r"><code>library(rvest)
 library(magrittr)
-library(ggplot2)</code></pre>
+library(ggplot2)
+theme_set(theme_light(base_size = 12))
+theme_update(panel.grid.minor = element_blank())</code></pre>
 <div id="scraping-data-for-one-year" class="section level2">
 <h2>Scraping Data for One Year</h2>
 <p>I will use the <a href="https://github.com/hadley/rvest">rvest</a> package here, which makes it pretty easy to get the data from <a href="http://www.thesoccerworldcups.com" class="uri">http://www.thesoccerworldcups.com</a>.
@@ -48,25 +50,26 @@ tmp3 &lt;- html_table(tmp2, header = TRUE, fill = TRUE)
 
 tmp4 &lt;- tmp3[[1]]
 
-tmp4[28:32, 3:7]</code></pre>
-<pre><code>##                 Player Yellow Cards Red Cards (SRC / 2YC) Games
-## 28      Blaise Matuidi            2         -           -     5
-## 29       Kylian Mbappé            2         -           -     7
-## 30              Player Yellow Cards Red Cards (SRC / 2YC) Games
-## 31      Thomas Meunier            2         -           -     5
-## 32 Aleksandar Mitrovic            2         -           -     3</code></pre>
-<pre class="r"><code>str(tmp4, 2)</code></pre>
-<pre><code>## &#39;data.frame&#39;:    192 obs. of  10 variables:
-##  $              : chr  &quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...
-##  $              : chr  &quot;Carlos Sánchez&quot; &quot;Jérôme Boateng&quot; &quot;Michael Lang&quot; &quot;Igor Smolnikov&quot; ...
-##  $ Player       : chr  &quot;Carlos Sánchez&quot; &quot;Jérôme Boateng&quot; &quot;Michael Lang&quot; &quot;Igor Smolnikov&quot; ...
-##  $ Yellow Cards : chr  &quot;1&quot; &quot;-&quot; &quot;-&quot; &quot;-&quot; ...
-##  $ Red Cards    : chr  &quot;1&quot; &quot;1&quot; &quot;1&quot; &quot;1&quot; ...
-##  $ (SRC / 2YC)  : chr  &quot;( 1   \r\n\t\t\t/\r\n\t\t\t -\t\t\t)&quot; &quot;( -   \r\n\t\t\t/\r\n\t\t\t 1\t\t\t)&quot; &quot;( 1   \r\n\t\t\t/\r\n\t\t\t -\t\t\t)&quot; &quot;( -   \r\n\t\t\t/\r\n\t\t\t 1\t\t\t)&quot; ...
-##  $ Games        : chr  &quot;3&quot; &quot;2&quot; &quot;3&quot; &quot;1&quot; ...
-##  $ National Team: chr  &quot;Colombia&quot; &quot;Germany&quot; &quot;Switzerland&quot; &quot;Russia&quot; ...
-##  $ NA           : logi  NA NA NA NA NA NA ...
-##  $ NA           : logi  NA NA NA NA NA NA ...</code></pre>
+tmp4[28:32, 3:7]
+#&gt;                 Player Yellow Cards Red Cards (SRC / 2YC) Games
+#&gt; 28      Blaise Matuidi            2         -           -     5
+#&gt; 29       Kylian Mbappé            2         -           -     7
+#&gt; 30              Player Yellow Cards Red Cards (SRC / 2YC) Games
+#&gt; 31      Thomas Meunier            2         -           -     5
+#&gt; 32 Aleksandar Mitrovic            2         -           -     3
+
+str(tmp4, 2)
+#&gt; &#39;data.frame&#39;:    192 obs. of  10 variables:
+#&gt;  $              : chr  &quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...
+#&gt;  $              : chr  &quot;Carlos Sánchez&quot; &quot;Jérôme Boateng&quot; &quot;Michael Lang&quot; &quot;Igor Smolnikov&quot; ...
+#&gt;  $ Player       : chr  &quot;Carlos Sánchez&quot; &quot;Jérôme Boateng&quot; &quot;Michael Lang&quot; &quot;Igor Smolnikov&quot; ...
+#&gt;  $ Yellow Cards : chr  &quot;1&quot; &quot;-&quot; &quot;-&quot; &quot;-&quot; ...
+#&gt;  $ Red Cards    : chr  &quot;1&quot; &quot;1&quot; &quot;1&quot; &quot;1&quot; ...
+#&gt;  $ (SRC / 2YC)  : chr  &quot;( 1   \r\n\t\t\t/\r\n\t\t\t -\t\t\t)&quot; &quot;( -   \r\n\t\t\t/\r\n\t\t\t 1\t\t\t)&quot; &quot;( 1   \r\n\t\t\t/\r\n\t\t\t -\t\t\t)&quot; &quot;( -   \r\n\t\t\t/\r\n\t\t\t 1\t\t\t)&quot; ...
+#&gt;  $ Games        : chr  &quot;3&quot; &quot;2&quot; &quot;3&quot; &quot;1&quot; ...
+#&gt;  $ National Team: chr  &quot;Colombia&quot; &quot;Germany&quot; &quot;Switzerland&quot; &quot;Russia&quot; ...
+#&gt;  $ NA           : logi  NA NA NA NA NA NA ...
+#&gt;  $ NA           : logi  NA NA NA NA NA NA ...</code></pre>
 <p>As you see, we actually managed to retrieve the relevant information using only three function calls.
 Furthermore, the data is stored in a data frame that looks very similar to the one on thesoccerworldcups.com.
 We have a tidy data frame with a column for every variable and a row for every player.
@@ -93,18 +96,19 @@ tmp5$X.SRC...2YC. &lt;- gsub(&quot;\\s*|[(]|[)]&quot;, &quot;&quot;, tmp5$X.SRC.
 tmp6 &lt;- tidyr::separate(tmp5, X.SRC...2YC., c(&quot;SRC&quot;, &quot;2YC&quot;),
                         convert = TRUE, fill = &quot;right&quot;)
 
-psych::headTail(tmp6[, 3:9])</code></pre>
-<pre><code>##             Player Yellow.Cards Red.Cards  SRC X2YC Games National.Team
-## 1   Carlos Sánchez            1         1    1 &lt;NA&gt;     3      Colombia
-## 2   Jérôme Boateng         &lt;NA&gt;         1 &lt;NA&gt;    1     2       Germany
-## 3     Michael Lang         &lt;NA&gt;         1    1 &lt;NA&gt;     3   Switzerland
-## 4   Igor Smolnikov         &lt;NA&gt;         1 &lt;NA&gt;    1     1        Russia
-## ...           &lt;NA&gt;          ...       ...  ...  ...   ...          &lt;NA&gt;
-## 183  Denis Zakaria            1      &lt;NA&gt; &lt;NA&gt; &lt;NA&gt;     2   Switzerland
-## 184   Roman Zobnin            1      &lt;NA&gt; &lt;NA&gt; &lt;NA&gt;     5        Russia
-## 185                        &lt;NA&gt;      &lt;NA&gt; &lt;NA&gt; &lt;NA&gt;  &lt;NA&gt;              
-## 186        Totals:          219         4    2    2  &lt;NA&gt;</code></pre>
-<pre class="r"><code>dat1 &lt;- tmp6[1:(nrow(tmp6)-2), ]
+psych::headTail(tmp6[, 3:9])
+#&gt;             Player Yellow.Cards Red.Cards  SRC X2YC Games National.Team
+#&gt; 1   Carlos Sánchez            1         1    1 &lt;NA&gt;     3      Colombia
+#&gt; 2   Jérôme Boateng         &lt;NA&gt;         1 &lt;NA&gt;    1     2       Germany
+#&gt; 3     Michael Lang         &lt;NA&gt;         1    1 &lt;NA&gt;     3   Switzerland
+#&gt; 4   Igor Smolnikov         &lt;NA&gt;         1 &lt;NA&gt;    1     1        Russia
+#&gt; ...           &lt;NA&gt;          ...       ...  ...  ...   ...          &lt;NA&gt;
+#&gt; 183  Denis Zakaria            1      &lt;NA&gt; &lt;NA&gt; &lt;NA&gt;     2   Switzerland
+#&gt; 184   Roman Zobnin            1      &lt;NA&gt; &lt;NA&gt; &lt;NA&gt;     5        Russia
+#&gt; 185                        &lt;NA&gt;      &lt;NA&gt; &lt;NA&gt; &lt;NA&gt;  &lt;NA&gt;              
+#&gt; 186        Totals:          219         4    2    2  &lt;NA&gt;
+    
+dat1 &lt;- tmp6[1:(nrow(tmp6)-2), ]
 
 dat2 &lt;- tmp6[nrow(tmp6), ]</code></pre>
 <p>Now, all information about yellow and red cards are available for one year.
@@ -223,16 +227,16 @@ This holds for both straight red cards (SRC) and two yellow cards (2YC).</p>
          title = &quot;Number of Red Cards per Match is Steadily Declining&quot;,
          subtitle = &quot;FIFA World Cups from 1966 to 2018&quot;
          # , caption = &quot;Data from http://www.thesoccerworldcups.com/&quot;
-         ) +
-    ggthemes::theme_igray()</code></pre>
-<p><img src="/post/2018-07-17-web-scraping-world-cup-data_files/figure-html/red-cards-soccer-world-cup-1.png" width="672" /></p>
+         )</code></pre>
+<p><img src="/post/2018-07-17-web-scraping-world-cup-data_files/figure-html/red-cards-soccer-world-cup-1.png" width="90%" /></p>
 <p>And this holds also within teams: Similar patterns are observed for the eight most successful teams compared to all other teams as shown below.</p>
 <p>For yellow cards, the pattern is less clear.
 There were fewer yellow cards compared to 1994–2010, but more than in 2014.</p>
 <p>While my gut feeling about the decline of red cards was right, I have no final explanation.
 Players are maybe less emotional and more focused these days.
 But habits of referees or rules and other things may have changed as well.</p>
-<pre class="r"><code>topteams &lt;- c(&quot;Brazil&quot;, &quot;Germany&quot;, &quot;Italy&quot;, &quot;Argentina&quot;,
+<pre class="r"><code>
+topteams &lt;- c(&quot;Brazil&quot;, &quot;Germany&quot;, &quot;Italy&quot;, &quot;Argentina&quot;,
               &quot;France&quot;, &quot;England&quot;, &quot;Spain&quot;, &quot;Holland&quot;)
 
 data_teams$Team &lt;- forcats::fct_other(data_teams$National.Team, keep = topteams)
@@ -253,7 +257,6 @@ ggplot(datax, aes(x = Year, y = CardsPerTeam, col = Team)) +
          col = &quot;Average&quot;,
          title = &quot;Number of Cards per Team is in Decline&quot;,
          subtitle = &quot;FIFA World Cups from 1966 to 2018&quot;,
-         caption = paste(&quot;Topteams:&quot;, paste(topteams, collapse = &quot;, &quot;))) +
-    ggthemes::theme_igray()</code></pre>
-<p><img src="/post/2018-07-17-web-scraping-world-cup-data_files/figure-html/red-yellow-cards-soccer-world-cup-1.png" width="672" /></p>
+         caption = paste(&quot;Topteams:&quot;, paste(topteams, collapse = &quot;, &quot;)))</code></pre>
+<p><img src="/post/2018-07-17-web-scraping-world-cup-data_files/figure-html/red-yellow-cards-soccer-world-cup-1.png" width="90%" /></p>
 </div>

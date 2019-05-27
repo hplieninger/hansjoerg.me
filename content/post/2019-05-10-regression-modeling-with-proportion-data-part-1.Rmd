@@ -117,7 +117,8 @@ conflict_prefer("filter", "dplyr")
 library("betareg")
 library("broom")
 library("kableExtra")
-ggplot2::theme_set(ggthemes::theme_igray())
+theme_set(theme_light(base_size = 12))
+theme_update(panel.grid.minor = element_blank())
 
 # Function to transform attendance rates for beta regression because values of 0
 # and/or 1 may occur
@@ -439,7 +440,7 @@ The time effect is slightly better captured by the categorical predictor months 
 In summary, both the quasi-binomial and the beta model are able to capture the relevant aspects of the attendance rates of matches of the German Handball-Bundesliga.
 The beta model, however, has the advantage that it can provided prediction intervals if desired whereas the intervals of the quasi-binomial model are way too narrow with data of several thousand spectators (not shown herein).
 
-```{r regression-models-for-proportion-data}
+```{r regression-models-for-proportion-data, out.width = "100%", fig.width = 8.75}
 ggplot(res15, aes(y = .estimate, x = mod, color = matchday)) +
     geom_point(position = position_dodge(width = .5), size = 3) +
     facet_wrap(data ~.metric, scales = "free_y") +

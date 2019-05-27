@@ -9,6 +9,11 @@ tags:
 subtitle: 'The shape palette can deal with a maximum of 6 discrete values because more than 6 becomes difficult to discriminate'
 ---
 
+```{r include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", out.width = "90%")
+```
+
+
 ggplot2 is a great R package and I use it almost everyday.
 When plotting data for different groups, one has different options to identify them, for example, by means of different colors or different shapes.
 However, with many groups, it often becomes very difficult or even impossible to discriminate between the groups.
@@ -19,14 +24,15 @@ Herein, I plot the mpg data, and the groups are different classes of cars.
 As you can see, it is quite easy to identify the SUVs.
 But can you spot the 2-seaters?
 
-```{r geom_jitter-color}
+```{r geom_jitter-color, message = FALSE}
 library(ggplot2)
 
 p1 <- ggplot(mpg, aes(x = displ, y = cty)) +
     scale_color_viridis_d() +
     labs(color = "Class", shape = "Class", x = "Engine Displacement",
          y = "Miles per Gallon") +
-    theme_gray()
+    theme_light(base_size = 12) +
+    theme(panel.grid.minor = element_blank())
 
 jit <- position_jitter(seed = 123)
 
@@ -54,15 +60,19 @@ p1 + geom_jitter(aes(shape = class, color = class), size = 3, position = jit) +
 The combination of color and shape is especially useful if you have to print your plots in grayscale.
 While its almost impossible to identify most groups in the left plot, it is much better even though not perfect in the plot on the right.
 
-```{r plot_grid, message = FALSE}
+```{r plot_grid, message = FALSE, fig.width = 7.5}
 library(cowplot)
 
 p2 <- p1 + geom_jitter(aes(color = class), size = 3, position = jit) + 
-        scale_color_grey()
+    scale_color_grey(guide = guide_legend(nrow = 3)) +
+    theme(legend.position = "bottom")
+    
 
 p3 <- p1 + geom_jitter(aes(shape = class, color = class), size = 3, position = jit) +
-    scale_shape_manual(values = rep(15:17, len = 7)) + 
-    scale_color_grey()
+    scale_shape_manual(values = rep(15:17, len = 7),
+                       guide = guide_legend(nrow = 3)) + 
+    scale_color_grey() +
+    theme(legend.position = "bottom")
 
 plot_grid(p2, p3)
 ```

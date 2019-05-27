@@ -147,7 +147,9 @@ table(dat$Film)
 
 ggplot(dat, aes(y = PA2, x = Film)) + 
     stat_summary(fun.data = "mean_cl_normal") +
-    labs(y = "Positive Affect ('PA2')")
+    labs(y = "Positive Affect ('PA2')") +
+    theme_light(base_size = 12) +
+    theme(panel.grid.minor = element_blank())
 ```
 
 

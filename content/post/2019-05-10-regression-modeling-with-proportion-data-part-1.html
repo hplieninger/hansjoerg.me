@@ -44,17 +44,33 @@ output:
 </ul>
 </div>
 
-<p>As a data scientist, one often encounters dependent variables that are proportions: for example, the number of successes divided by the number of attempts, party vote, proportion of money spent for something, or the attendance rate of public events. Modeling and predicting such variables in a regression framework is possible, but one has to go beyond the standard linear model, because the data are restricted to the range between 0 and 1. Popular logistic regression is not suitable either, because it permits only 0s and 1s, but not an attendance rate of .80 or 80 %. In this blog post, I will compare different models that are available for proportions and illustrate them to predict the attendance rate of matches of the German Handball-Bundesliga.</p>
+<p>As a data scientist, one often encounters dependent variables that are proportions: for example, the number of successes divided by the number of attempts, party vote, proportion of money spent for something, or the attendance rate of public events.
+Modeling and predicting such variables in a regression framework is possible, but one has to go beyond the standard linear model, because the data are restricted to the range between 0 and 1.
+Popular logistic regression is not suitable either, because it permits only 0s and 1s, but not an attendance rate of .80 or 80 %.
+In this blog post, I will compare different models that are available for proportions and illustrate them to predict the attendance rate of matches of the German Handball-Bundesliga.</p>
 <div id="modeling-proportion-data" class="section level2">
 <h2>Modeling Proportion Data</h2>
-<p>As a starting point, a <strong>linear regression</strong> model without a link function may be considered to get one started. The model is obviously wrong, because it will easily make predictions smaller than 0 or larger than 1. Nevertheless, it may work okay especially for intermediate proportions.</p>
-<p>A second option is a binomial or <strong>quasi-binomial model</strong>. Therein, the proportion is conceived of as the outcome of multiple binomial trials. A good example are the shots of a basketball player, where one may either model each individual shot using a logistic model for outcomes of 0 and 1. Or one may aggregate all attempts in a match and model the proportion of successful shots, which is a value in the interval of [0, 1], using a (quasi-)binomial model.</p>
-<p>A related option is a <strong>Poisson model</strong> for count data that, for example, may be used to model the number of occurrences of a specific symptom per week or month. However, the model is not quite the right choice if the count variable may take on values of several thousand spectators of a sport event. More importantly, it can fail to capture, for example, the difference between 1,000 spectators in a stadium with a capacity of 1,000 (i.e., 100 %) and 2,000 spectators in a stadium of 5,000 (i.e., 40 %).</p>
-<p>The third option considered is <strong>beta regression</strong> which assumes that the dependent variable is beta-distributed. This model is very flexible and ideally suited for original proportions or rates. However, it should be noted that it assumes values in the interval (0, 1), that is, 0 and 1 are excluded. There are two variants of beta regression: One predicts only the mean of the dependent variable whereas the second variant models also the dispersion parameter phi. This sounds attractive for the current problem, because handball teams like Flensburg almost always have attendance rates of over 90 % (small variance) while the attendance rates in other stadiums may show more variability.</p>
+<p>As a starting point, a <strong>linear regression</strong> model without a link function may be considered to get one started.
+The model is obviously wrong, because it will easily make predictions smaller than 0 or larger than 1.
+Nevertheless, it may work okay especially for intermediate proportions.</p>
+<p>A second option is a binomial or <strong>quasi-binomial model</strong>.
+Therein, the proportion is conceived of as the outcome of multiple binomial trials.
+A good example are the shots of a basketball player, where one may either model each individual shot using a logistic model for outcomes of 0 and 1. Or one may aggregate all attempts in a match and model the proportion of successful shots, which is a value in the interval of [0, 1], using a (quasi-)binomial model.</p>
+<p>A related option is a <strong>Poisson model</strong> for count data that, for example, may be used to model the number of occurrences of a specific symptom per week or month.
+However, the model is not quite the right choice if the count variable may take on values of several thousand spectators of a sport event.
+More importantly, it can fail to capture, for example, the difference between 1,000 spectators in a stadium with a capacity of 1,000 (i.e., 100 %) and 2,000 spectators in a stadium of 5,000 (i.e., 40 %).</p>
+<p>The third option considered is <strong>beta regression</strong> which assumes that the dependent variable is beta-distributed.
+This model is very flexible and ideally suited for original proportions or rates.
+However, it should be noted that it assumes values in the interval (0, 1), that is, 0 and 1 are excluded.
+There are two variants of beta regression:
+One predicts only the mean of the dependent variable whereas the second variant models also the dispersion parameter phi.
+This sounds attractive for the current problem, because handball teams like Flensburg almost always have attendance rates of over 90 % (small variance) while the attendance rates in other stadiums may show more variability.</p>
 </div>
 <div id="application-handball-bundesliga" class="section level2">
 <h2>Application: Handball-Bundesliga</h2>
-<p>Data from the German Handball-Bundesliga were obtained for the current and the last two seasons from <a href="https://www.dkb-handball-bundesliga.de" class="uri">https://www.dkb-handball-bundesliga.de</a>. The data needed some wrangling and cleansing and are not perfectly valid (e.g., some entries exhibit attendance rate larger than 100 %), but will suffice for the present purpose. You can find the respective R code on my <a href="https://github.com/hplieninger/hansjoerg.me/tree/master/static/uploads/handball-data.md">Github</a>.</p>
+<p>Data from the German Handball-Bundesliga were obtained for the current and the last two seasons from <a href="https://www.dkb-handball-bundesliga.de" class="uri">https://www.dkb-handball-bundesliga.de</a>.
+The data needed some wrangling and cleansing and are not perfectly valid (e.g., some entries exhibit attendance rate larger than 100 %), but will suffice for the present purpose.
+You can find the respective R code on my <a href="https://github.com/hplieninger/hansjoerg.me/tree/master/static/uploads/handball-data.md">Github</a>.</p>
 <div id="setup" class="section level3">
 <h3>Setup</h3>
 <pre class="r"><code>library(&quot;conflicted&quot;)
@@ -64,7 +80,8 @@ conflict_prefer(&quot;filter&quot;, &quot;dplyr&quot;)
 library(&quot;betareg&quot;)
 library(&quot;broom&quot;)
 library(&quot;kableExtra&quot;)
-ggplot2::theme_set(ggthemes::theme_igray())
+theme_set(theme_light(base_size = 12))
+theme_update(panel.grid.minor = element_blank())
 
 # Function to transform attendance rates for beta regression because values of 0
 # and/or 1 may occur
@@ -84,7 +101,8 @@ transform_perc &lt;- function(percentage_vec) {
 </ul>
 <p>Independent variables:</p>
 <ul>
-<li>Home team: Different teams have different average attendance rates and/or stadium capacities. For the beta model, home team was also used to predict the dispersion parameter phi.</li>
+<li>Home team: Different teams have different average attendance rates and/or stadium capacities.
+For the beta model, home team was also used to predict the dispersion parameter phi.</li>
 <li>Away team: Generally, more successful away teams like Kiel attract more spectators.</li>
 <li>Year/season: Used to capture potential differences across the three seasons.</li>
 <li>Weekday: Matches on weekends probably attract more spectators.</li>
@@ -110,9 +128,15 @@ colnames(contrasts(df21$away_team)) &lt;- head(levels(df21$away_team), -1)
 
 # Dummy coding
 contrasts(df21$weekday) &lt;- contr.treatment(7, base = 6)</code></pre>
-<p>The first model I want to show is a beta regression model. As you can see below, the intercept is equal to 2.08 on the logit scale. Thus, the model predicts an average attendance rate of 89 % (<code>plogis(2.08)</code>). Average here means averaged across all teams (since effect coding was used) and predicted for a match on Saturday in the season 2016/17 (dummy coding used for weekday and year).</p>
-<p>Furthermore, there are huge differences across teams. For example, the predicted value for a home match of Flensburg is 2.08 + 1.42 corresponding to an attendance rate of 97 % (<code>plogis(3.5)</code>) but only 84 % (<code>plogis(2.08 - 0.42)</code>) for Lemgo or 63 % for Lübbecke. Likewise, the attendance rate differs by away team, where, for example, matches against Kiel are more attractive than matches against Erlangen.</p>
-<p>Apart from that, the precision or variability of the predicted mean also varies as a function of home team. For example, the precision is larger (and variability lower) for Flensburg than for Lemgo.</p>
+<p>The first model I want to show is a beta regression model.
+As you can see below, the intercept is equal to 2.08 on the logit scale.
+Thus, the model predicts an average attendance rate of 89 % (<code>plogis(2.08)</code>).
+Average here means averaged across all teams (since effect coding was used) and predicted for a match on Saturday in the season 2016/17 (dummy coding used for weekday and year).</p>
+<p>Furthermore, there are huge differences across teams.
+For example, the predicted value for a home match of Flensburg is 2.08 + 1.42 corresponding to an attendance rate of 97 % (<code>plogis(3.5)</code>) but only 84 % (<code>plogis(2.08 - 0.42)</code>) for Lemgo or 63 % for Lübbecke.
+Likewise, the attendance rate differs by away team, where, for example, matches against Kiel are more attractive than matches against Erlangen.</p>
+<p>Apart from that, the precision or variability of the predicted mean also varies as a function of home team.
+For example, the precision is larger (and variability lower) for Flensburg than for Lemgo.</p>
 <pre class="r"><code>m1 &lt;- betareg(y ~ home_team + away_team + weekday + year
               | home_team, data = df21)
 m1_est &lt;- tidy(m1)
@@ -135,7 +159,9 @@ slice(m1_est, 1, 49, seq(2, 69, 8))
 #&gt; 11 precision home_teamTuS N-Lübbecke  -0.374     0.313     -1.19  2.32e-  1</code></pre>
 <div id="illustrative-plot-of-estimates" class="section level3">
 <h3>Illustrative Plot of Estimates</h3>
-<p>The model estimates can also be illustrated graphically. The parameters mean (mu) and precision (phi) from above correspond to a beta distribution, which is specific to each home team in the fitted model. To calculate the densities of the beta distribution using <code>dbeta()</code>, I first have to transform the estimates from the model.</p>
+<p>The model estimates can also be illustrated graphically.
+The parameters mean (mu) and precision (phi) from above correspond to a beta distribution, which is specific to each home team in the fitted model.
+To calculate the densities of the beta distribution using <code>dbeta()</code>, I first have to transform the estimates from the model.</p>
 <pre class="r"><code># Function to calculate a and b parameter of beta distribution from mu and phi
 # used in betareg with link function logit for mu and log for phi
 calc_ab &lt;- function(mu, phi) {
@@ -167,8 +193,11 @@ slice(preds1, seq(701, by = 100, length.out = 4))
 #&gt; 2 SG Flensburg-Handewitt   0.8   0.145 
 #&gt; 3 SG Flensburg-Handewitt   0.9   1.40  
 #&gt; 4 SG Flensburg-Handewitt   1   Inf</code></pre>
-<p>Below, I plotted the model-implied beta distributions for the two teams, which are illustrated using the green lines. Furthermore, the plot shows the predicted means (green point on the x-axis), the raw densities calculated by <code>geom_density()</code> across the 34 matches per team, as well as the observed attendance rate for each match (placed below the densities by <code>geom_rug()</code>).</p>
-<p>In summary, the plot nicely illustrates the estimates from above, namely, very high and homogeneous attendance rates for Flensburg and lower and more varied attendance rates for Lemgo. This aligns quite well with the observed data. Note also that I picked these two teams more or less at random, but estimates are of course available for all teams in the data set.</p>
+<p>Below, I plotted the model-implied beta distributions for the two teams, which are illustrated using the green lines.
+Furthermore, the plot shows the predicted means (green point on the x-axis), the raw densities calculated by <code>geom_density()</code> across the 34 matches per team, as well as the observed attendance rate for each match (placed below the densities by <code>geom_rug()</code>).</p>
+<p>In summary, the plot nicely illustrates the estimates from above, namely, very high and homogeneous attendance rates for Flensburg and lower and more varied attendance rates for Lemgo.
+This aligns quite well with the observed data.
+Note also that I picked these two teams more or less at random, but estimates are of course available for all teams in the data set.</p>
 <pre class="r"><code># Plot observed data using densities and rugs
 p1 &lt;- df21 %&gt;%
     filter(home_team %in% c(&quot;SG Flensburg-Handewitt&quot;, &quot;TBV Lemgo Lippe&quot;)) %&gt;%
@@ -200,7 +229,10 @@ p1</code></pre>
 </div>
 <div id="residuals" class="section level3">
 <h3>Residuals</h3>
-<p>Finally, I want to have a quick look at the residuals (which are on the logit scale). I decided to plot them chronologically, that is, against match day. As you see, residuals tend to get higher across the course of a season indicating that attendance rates near the end of the season are slightly higher than predicted. Thus, it seems useful to add variables to the model that can capture this effect (see below).</p>
+<p>Finally, I want to have a quick look at the residuals (which are on the logit scale).
+I decided to plot them chronologically, that is, against match day.
+As you see, residuals tend to get higher across the course of a season indicating that attendance rates near the end of the season are slightly higher than predicted.
+Thus, it seems useful to add variables to the model that can capture this effect (see below).</p>
 <pre class="r"><code>m1_res &lt;- augment(m1, data = df21)
 
 ggplot(m1_res, aes(x = round_number, y = .resid)) +
@@ -288,23 +320,24 @@ res12 &lt;- enframe(res11)
 
 res12
 #&gt; # A tibble: 11 x 2
-#&gt;    name              value        
-#&gt;    &lt;chr&gt;             &lt;list&gt;       
-#&gt;  1 average_no        &lt;S3: glm&gt;    
-#&gt;  2 betaDsplogit_lin  &lt;S3: betareg&gt;
-#&gt;  3 betaDsplogit_mon  &lt;S3: betareg&gt;
-#&gt;  4 betaDsploglog_lin &lt;S3: betareg&gt;
-#&gt;  5 betaDsploglog_mon &lt;S3: betareg&gt;
-#&gt;  6 beta_lin          &lt;S3: betareg&gt;
-#&gt;  7 beta_mon          &lt;S3: betareg&gt;
-#&gt;  8 lm_lin            &lt;S3: lm&gt;     
-#&gt;  9 lm_mon            &lt;S3: lm&gt;     
-#&gt; 10 quasibinomial_lin &lt;S3: glm&gt;    
-#&gt; 11 quasibinomial_mon &lt;S3: glm&gt;</code></pre>
+#&gt;    name              value    
+#&gt;    &lt;chr&gt;             &lt;list&gt;   
+#&gt;  1 average_no        &lt;glm&gt;    
+#&gt;  2 betaDsplogit_lin  &lt;betareg&gt;
+#&gt;  3 betaDsplogit_mon  &lt;betareg&gt;
+#&gt;  4 betaDsploglog_lin &lt;betareg&gt;
+#&gt;  5 betaDsploglog_mon &lt;betareg&gt;
+#&gt;  6 beta_lin          &lt;betareg&gt;
+#&gt;  7 beta_mon          &lt;betareg&gt;
+#&gt;  8 lm_lin            &lt;lm&gt;     
+#&gt;  9 lm_mon            &lt;lm&gt;     
+#&gt; 10 quasibinomial_lin &lt;glm&gt;    
+#&gt; 11 quasibinomial_mon &lt;glm&gt;</code></pre>
 </div>
 <div id="model-performance" class="section level3">
 <h3>Model Performance</h3>
-<p>For all models stored in <code>res12</code>, I will make predictions for the training data <code>df21</code> and for the holdout data <code>df22</code>. I will then compare these predictions with the actual observations using the following three metrics:</p>
+<p>For all models stored in <code>res12</code>, I will make predictions for the training data <code>df21</code> and for the holdout data <code>df22</code>.
+I will then compare these predictions with the actual observations using the following three metrics:</p>
 <ul>
 <li>Mean absolute error (MAE)</li>
 <li>Root mean squared error (RMSE)</li>
@@ -382,9 +415,14 @@ res15 &lt;- res14 %&gt;%
            mod = factor(mod, 
                         levels = c(&quot;average&quot;, &quot;lm&quot;, &quot;quasibinomial&quot;, &quot;beta&quot;, &quot;beta+ (logit)&quot;,
                                    &quot;beta+ (loglog)&quot;)))</code></pre>
-<p>As shown in the plot below, the quasi-binomial model shows the best performance in the training data set. The beta models perform slightly worse but outperforms the quasi-binomial with respect to R2 in the holdout data set. The linear model performs worst (with the exception for RMSE in the holdout data), even worse than predicting just averages without a real model. When comparing the different variants of the beta model, the enhanced models (beta+), which also model the precision in addition to the mean, perform slightly better, especially in the holdout data set. The difference between the logit and the loglog link is tiny and I would prefer the logit model here because it is more common and thus easier to communicate.</p>
+<p>As shown in the plot below, the quasi-binomial model shows the best performance in the training data set.
+The beta models perform slightly worse but outperforms the quasi-binomial with respect to R2 in the holdout data set.
+The linear model performs worst (with the exception for RMSE in the holdout data), even worse than predicting just averages without a real model.
+When comparing the different variants of the beta model, the enhanced models (beta+), which also model the precision in addition to the mean, perform slightly better, especially in the holdout data set.
+The difference between the logit and the loglog link is tiny and I would prefer the logit model here because it is more common and thus easier to communicate.</p>
 <p>The time effect is slightly better captured by the categorical predictor months compared to a linear trend, more on that in <a href="/2019/05/13/regression-modeling-with-proportion-data-part-2">part 2</a>.</p>
-<p>In summary, both the quasi-binomial and the beta model are able to capture the relevant aspects of the attendance rates of matches of the German Handball-Bundesliga. The beta model, however, has the advantage that it can provided prediction intervals if desired whereas the intervals of the quasi-binomial model are way too narrow with data of several thousand spectators (not shown herein).</p>
+<p>In summary, both the quasi-binomial and the beta model are able to capture the relevant aspects of the attendance rates of matches of the German Handball-Bundesliga.
+The beta model, however, has the advantage that it can provided prediction intervals if desired whereas the intervals of the quasi-binomial model are way too narrow with data of several thousand spectators (not shown herein).</p>
 <pre class="r"><code>ggplot(res15, aes(y = .estimate, x = mod, color = matchday)) +
     geom_point(position = position_dodge(width = .5), size = 3) +
     facet_wrap(data ~.metric, scales = &quot;free_y&quot;) +
@@ -392,7 +430,7 @@ res15 &lt;- res14 %&gt;%
     labs(x = &quot;Model&quot;, y = &quot;&quot;, color = &quot;Time\nTrend&quot;,
          title = &quot;Comparison of Different Models for Proportion Data&quot;) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))</code></pre>
-<p><img src="/post/2019-05-10-regression-modeling-with-proportion-data-part-1_files/figure-html/regression-models-for-proportion-data-1.png" width="80%" /></p>
+<p><img src="/post/2019-05-10-regression-modeling-with-proportion-data-part-1_files/figure-html/regression-models-for-proportion-data-1.png" width="100%" /></p>
 </div>
 </div>
 <div id="prediction-of-future-matches" class="section level2">

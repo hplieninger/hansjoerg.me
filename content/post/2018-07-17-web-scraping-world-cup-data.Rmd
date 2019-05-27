@@ -34,6 +34,8 @@ As you will see below, the [Results] confirmed my impression: World cups got fai
 library(rvest)
 library(magrittr)
 library(ggplot2)
+theme_set(theme_light(base_size = 12))
+theme_update(panel.grid.minor = element_blank())
 ```
 
 ## Scraping Data for One Year
@@ -224,8 +226,7 @@ data_wc %>%
          title = "Number of Red Cards per Match is Steadily Declining",
          subtitle = "FIFA World Cups from 1966 to 2018"
          # , caption = "Data from http://www.thesoccerworldcups.com/"
-         ) +
-    ggthemes::theme_igray()
+         )
 ```
 
 And this holds also within teams: Similar patterns are observed for the eight most successful teams compared to all other teams as shown below.
@@ -260,8 +261,7 @@ ggplot(datax, aes(x = Year, y = CardsPerTeam, col = Team)) +
          col = "Average",
          title = "Number of Cards per Team is in Decline",
          subtitle = "FIFA World Cups from 1966 to 2018",
-         caption = paste("Topteams:", paste(topteams, collapse = ", "))) +
-    ggthemes::theme_igray()
+         caption = paste("Topteams:", paste(topteams, collapse = ", ")))
 ```
 
 ```{r, include = FALSE, echo = FALSE}
@@ -279,6 +279,6 @@ ggplot(datax, aes(x = Year, y = CardsPerTeam, col = Team, fill = Team, group = T
          col = "Average", fill = "Average",
          title = "Number of Cards per Team is in Decline",
          subtitle = "FIFA World Cups from 1966 to 2018",
-         caption = paste("Topteams:", paste(topteams, collapse = ", "))) +
-    ggthemes::theme_igray()
+         caption = paste("Topteams:", paste(topteams, collapse = ", ")))
+    # ggthemes::theme_igray()
 ```
