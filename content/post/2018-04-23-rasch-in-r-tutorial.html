@@ -4,11 +4,11 @@ author: 'Hansjörg Plieninger'
 date: '2018-04-23'
 slug: rasch-in-r-tutorial
 summary: 'Recently, I wrote a summary of some illustrative IRT analyses for my students. Quickly, I realized that this might be of interest to others as well, and I am posting here a tutorial for the Rasch model and the 2PL model in R. It is meant for people with a basic understanding of these models who have heard terms like ICC or item difficulty before and who would like to see a practical, worked example. Possibly, the code may be copied and applied to your own data.'
-categories: [statistics]
+categories: [modeling]
 tags:
-  - IRT
+  - irt
   - psychometrics
-  - R
+  - r
   - tutorial
 bibliography: ../../misc/lib.bib
 csl: ../../misc/apa.csl
@@ -242,7 +242,7 @@ res_rm_2
 <h2>2PL Model</h2>
 <p>A 2PL model cannot be estimated with <strong>eRm</strong>, but with the package <strong>ltm</strong>, for example.</p>
 <p>The estimated difficulty parameters (Dffclt) seem roughly comparable to those from the Rasch model. The discrimination parameters (Dscrmn), which were all equal in the Rasch model, show some but not massive heterogeneity. This is also evident from the plot of the ICCs.</p>
-<p>Note that <code>res_2pl_1</code> and <code>res_rm_1</code> were estimated using two different packages. Thus, the structure of these objects is completely different and also the output if they are printed or the functions you may use with them (e.g., <code>plot()</code> vs. <code>plotICC()</code>).</p>
+<p>Note that <code>res_2pl_1</code> and <code>res_rm_1</code> were estimated using two different packages. Thus, the structure of these objects is completely different and also the output if they are printed or the functions you may use with them (e.g., <code>plot()</code> vs. <code>plotICC()</code>).</p>
 <pre class="r"><code># ltm() takes a formula with a tilde (~) as its first argument. The left-hand side
 # must be the data and the right-hand side are the latent variables (only one
 # here).
@@ -615,7 +615,7 @@ cor(pp_map$score.dat$z1, pp_2pl$score.dat$z1)
 </div>
 <div id="item-and-test-information" class="section level2">
 <h2>Item and Test Information</h2>
-<p>Item information curves (IICs) are available in both the <strong>eRm</strong> (<code>plotINFO()</code>) and <strong>ltm</strong> (<code>plot(type = &quot;IIC&quot;)</code>) package. Those curves are an illustration of the difficulty and discrimination parameters. Therefore, it is expected that maximum information is highest for the items with the highest discrimination parameter (e.g., item 14 S1DoScold). It is interesting to see that the do-items show generally larger discrimination parameters, which is often interpreted as being a closer or better measure of the latent variable.</p>
+<p>Item information curves (IICs) are available in both the <strong>eRm</strong> (<code>plotINFO()</code>) and <strong>ltm</strong> (<code>plot(type = "IIC")</code>) package. Those curves are an illustration of the difficulty and discrimination parameters. Therefore, it is expected that maximum information is highest for the items with the highest discrimination parameter (e.g., item 14 S1DoScold). It is interesting to see that the do-items show generally larger discrimination parameters, which is often interpreted as being a closer or better measure of the latent variable.</p>
 <pre class="r"><code>res_2pl_1
 #&gt; 
 #&gt; Call:
@@ -661,19 +661,19 @@ plot(res_2pl_1, items =  1:12, type = &quot;IIC&quot;, ylim = c(0, 1.3))</code><
 <h2>References</h2>
 <div id="refs" class="references">
 <div id="ref-andersen_goodness_1973">
-<p>Andersen, E. B. (1973). A goodness of fit test for the Rasch model. <em>Psychometrika</em>, <em>38</em>, 123–140. <a href="https://doi.org/10.1007/BF02291180" class="uri">https://doi.org/10.1007/BF02291180</a></p>
+<p>Andersen, E. B. (1973). A goodness of fit test for the Rasch model. <em>Psychometrika</em>, <em>38</em>, 123–140. <a href="https://doi.org/10.1007/BF02291180">https://doi.org/10.1007/BF02291180</a></p>
 </div>
 <div id="ref-magis_general_2010">
-<p>Magis, D., Béland, S., Tuerlinckx, F., &amp; De Boeck, P. (2010). A general framework and an R package for the detection of dichotomous differential item functioning. <em>Behavior Research Methods</em>, <em>42</em>, 847–862. <a href="https://doi.org/10.3758/BRM.42.3.847" class="uri">https://doi.org/10.3758/BRM.42.3.847</a></p>
+<p>Magis, D., Béland, S., Tuerlinckx, F., &amp; De Boeck, P. (2010). A general framework and an R package for the detection of dichotomous differential item functioning. <em>Behavior Research Methods</em>, <em>42</em>, 847–862. <a href="https://doi.org/10.3758/BRM.42.3.847">https://doi.org/10.3758/BRM.42.3.847</a></p>
 </div>
 <div id="ref-mair_extended_2007">
-<p>Mair, P., &amp; Hatzinger, R. (2007). Extended Rasch modeling: The eRm package for the application of IRT models in R. <em>Journal of Statistical Software</em>, <em>20</em>(9), 1–20. <a href="https://doi.org/10.18637/jss.v020.i09" class="uri">https://doi.org/10.18637/jss.v020.i09</a></p>
+<p>Mair, P., &amp; Hatzinger, R. (2007). Extended Rasch modeling: The eRm package for the application of IRT models in R. <em>Journal of Statistical Software</em>, <em>20</em>(9), 1–20. <a href="https://doi.org/10.18637/jss.v020.i09">https://doi.org/10.18637/jss.v020.i09</a></p>
 </div>
 <div id="ref-rizopoulos_ltm_2006">
-<p>Rizopoulos, D. (2006). ltm: An R package for latent variable modelling and item response theory analyses. <em>Journal of Statistical Software</em>, <em>17</em>(5), 1–25. Retrieved from <a href="http://www.jstatsoft.org/v17/i05/" class="uri">http://www.jstatsoft.org/v17/i05/</a></p>
+<p>Rizopoulos, D. (2006). ltm: An R package for latent variable modelling and item response theory analyses. <em>Journal of Statistical Software</em>, <em>17</em>(5), 1–25. Retrieved from <a href="http://www.jstatsoft.org/v17/i05/">http://www.jstatsoft.org/v17/i05/</a></p>
 </div>
 <div id="ref-wright_reasonable_1994">
-<p>Wright, B. D., &amp; Linacre, J. M. (1994). Reasonable mean-square fit values. <em>Rasch Measurement Transactions</em>, <em>8</em>, 370. Retrieved from <a href="https://www.rasch.org/rmt/rmt83b.htm" class="uri">https://www.rasch.org/rmt/rmt83b.htm</a></p>
+<p>Wright, B. D., &amp; Linacre, J. M. (1994). Reasonable mean-square fit values. <em>Rasch Measurement Transactions</em>, <em>8</em>, 370. Retrieved from <a href="https://www.rasch.org/rmt/rmt83b.htm">https://www.rasch.org/rmt/rmt83b.htm</a></p>
 </div>
 </div>
 </div>

@@ -7,8 +7,8 @@ slug: font-embedding-for-latex-and-r-users
 summary: 'Recently, I sent my dissertation as a PDF file to a copy shop and got an email back that I had not embedded all fonts and that they won''t print it for me. What? So instead of celebrating the submission, I had to search online for "pdf latex font embedding", and this blog post is a summary of that afternoon.'
 categories: []
 tags:
-  - R
-  - LaTeX
+  - r
+  - latex
   - pdf
   - note-to-myself
 output:
@@ -56,7 +56,7 @@ dev.off()</code></pre>
 <li>Do not produce vector graphics via <code>pdf()</code> but images via <code>png()</code>, for example. This is probably not the desired solution because of quality, but it circumvents the problem of font embedding.</li>
 <li>Produce vector graphics not via <code>pdf()</code> but via <code>cairo_pdf()</code>. This will embed the fonts automatically, and LaTeX will subsequently embed these fonts, too. This is the workflow that I recommend.</li>
 <li>Postscript may also be an alternative (e.g., <code>cairo_ps()</code>), but I don’t know much about postscript.</li>
-<li>You may also embed fonts post hoc. R has a function <code>embedFonts()</code>, and the package <strong>extrafont</strong> provides a wrapper, for example, <code>extrafont::embed_fonts(&quot;f1.pdf&quot;, outfile=&quot;f1_embedded.pdf&quot;)</code>.<br />
+<li>You may also embed fonts post hoc. R has a function <code>embedFonts()</code>, and the package <strong>extrafont</strong> provides a wrapper, for example, <code>extrafont::embed_fonts("f1.pdf", outfile="f1_embedded.pdf")</code>.<br />
 BTW: You may use any font (available on your system) in any R plot with the <strong>extrafont</strong> package.</li>
 </ul>
 </div>

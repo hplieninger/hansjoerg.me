@@ -8,13 +8,17 @@ draft: no
 description: 'Web Scraping FIFA World Cup Data With R'
 categories: [web scraping]
 tags:
-  - R
+  - r
   - data-science
   - web-scraping
   - ggplot
 share: true
 image: /post/2018-07-17-web-scraping-world-cup-data_files/figure-html/red-cards-soccer-world-cup-1.png
 ---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", out.width = "90%")
+```
 
 While watching a FIFA World Cup game, I suddenly had the impression that games got fairer over the years.
 Everybody remembers the headbutt of Zinedine Zidane, but I haven't seen similar things in 2018.

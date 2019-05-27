@@ -57,13 +57,13 @@ copyright = "Hansjörg Plieninger"
 #   facebook = "username"
 #   googleplus = "+username" # or xxxxxxxxxxxxxxxxxxxxx
   github = "hplieninger"
+  stackoverflow = "users/2563804/hplieninger"
 #   gitlab = "username"
 #   bitbucket = "username"
 #   twitter = "username"
 #   reddit = "username"
-#   linkedin = "username"
-#   xing = "username"
-  stackoverflow = "users/2563804/hplieninger"
+  linkedin = "hansjörg-plieninger-9a2635171"
+  xing = "Hansjoerg_Plieninger"
 #   snapchat = "username"
 #   instagram = "username"
 #   youtube = "user/username" # or channel/channelname
@@ -84,19 +84,19 @@ copyright = "Hansjörg Plieninger"
 #     identifier = "samples"
 #     name = "Samples"
 #     weight = 2
-# 
+#
 # [[menu.main]]
 #     parent = "samples"
 #     name = "Big Image Sample"
 #     url = "post/2017-03-07-bigimg-sample"
 #     weight = 1
-# 
+#
 # [[menu.main]]
 #     parent = "samples"
 #     name = "Math Sample"
 #     url = "post/2017-03-05-math-sample"
 #     weight = 2
-# 
+#
 # [[menu.main]]
 #     parent = "samples"
 #     name = "Code Sample"
@@ -107,12 +107,12 @@ copyright = "Hansjörg Plieninger"
     name = "Tags"
     url = "tags"
     weight = 2
-    
+
 [[menu.main]]
     name = "Portfolio"
     url = "categories"
     weight = 3
-    
+
 [[menu.main]]
     name = "Publications"
     url = "page/publications"
