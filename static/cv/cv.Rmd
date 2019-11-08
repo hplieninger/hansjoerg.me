@@ -1,0 +1,307 @@
+---
+title: "About me"
+# subtitle: "\u2694 <br/>with xaringan and xaringanthemer"  
+author: "Hansjörg Plieninger"
+date: '`r Sys.Date()`'
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: xaringan-themer.css
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      # beforeInit: "https://platform.twitter.com/widgets.js"
+      # ratio: "16:9"
+---
+background-image: url("h.jpg")
+background-size: 100px
+background-position: 90% 8%
+
+# Hi, my name is Hansjörg
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+```{r xaringan-themer, include=FALSE}
+library("xaringanthemer")
+solarized_light(
+  code_font_family = "Fira Code",
+  code_font_url    = "https://cdn.rawgit.com/tonsky/FiraCode/1.204/distr/fira_code.css",
+  extra_css =  list("body" = list("line-height" = "165%"),
+                    "pre" = list("line-height" = "120%"),
+                    "pre" = list("font-size" = "0.8em"))
+)
+```
+
+<ul class="fa-ul">
+  <li><span class="fa-li"><i class="fas fa-user-graduate"></i></span><p>Bachelor, Master, and PhD in Psychology</p></li>
+
+  <li><span class="fa-li"><i class="fas fa-briefcase"></i></span><p>Currently working as a postdoctoral researcher at the University of Mannheim</p></li>
+  
+  <li><span class="fa-li"><i class="fas fa-heart"></i></span><p>Passion for data science and visualization</p></li>
+  
+  <li><span class="fa-li"><i class="fas fa-home"></i></span><p>Husband and father of three wonderful kids</p></li>
+  
+  <li><span class="fa-li"><i class="fas fa-search"></i></span><p>Looking for a full-time position as a data scientist or data analyst</p></li>
+</ul>
+
+---
+
+# Projects and Achievements
+
+- My **academic work** is concerned with the development and application of statistical models for questionnaire data. My research was [published](https://scholar.google.de/citations?hl=de&user=ywhQbsEAAAAJ) in scientific journals such as *Multivariate Behavior Research*, and I received **awards** such as the [Bojanovsky Award](https://www.uni-mannheim.de/newsroom/presse/pressemitteilungen/2019/juli/absolventenfeier-sowi/) in 2019.
+
+- I developed the **R packages** [mpt2irt](https://github.com/hplieninger/mpt2irt) and [ItemResponseTrees](https://github.com/hplieninger/ItemResponseTrees) that implement specific statistical models for questionnaire data.
+
+- I tought Bachelor and Master courses on statistics and questionnaire design and built a [shiny app](https://hplieninger.shinyapps.io/ShinyICCs/) for teaching item response theory.
+
+- I conducted internal **R workshops** for colleagues and served as a consultant for fellow academics with statistical questions.
+
+- I have a **blog** with 200 visits per week, where I post tutorials and analyses from time to time: https://hansjoerg.me.
+
+- I work as a **freelance data analyst** and have been a statistical consultant for a study with patients suffering from dementia.
+
+---
+
+# Methods
+
+Psychologists mostly work either with survey data or experimental data. Therefore, I am trained and experienced in the following methods:
+
+- **Study design** of experimental and non-experimental studies  
+  (e.g., A/B testing)
+
+- **Questionnaire design**, item development, test construction
+
+<!-- - [Web scraping](https://hansjoerg.me/2018/07/17/web-scraping-world-cup/) -->
+
+<!-- - Simulation studies -->
+
+<br>
+
+After data collection, typical projects of mine involve the following tasks:
+
+- **Wrangling**: Bringing raw data into a format suitable for subsequent analyses ([example](https://github.com/hplieninger/hansjoerg.me/tree/master/static/uploads/handball-data.md))
+
+- **Reporting** using presentations, blog posts, dashboards, etc.
+
+- **Visualization** and **modeling**
+
+<!-- --- -->
+
+<!-- # Data Wrangling -->
+
+<!-- - I am accustomed to import data in various formats using mainly R but also SQL. -->
+
+<!-- - Even though many people complain about it, I actually like data wrangling. I use tidyverse packages for tasks such as cleansing, filtering, extracting, joining, aggregating, and summarizing. -->
+
+<!-- - Last year, I made a small [blog post](https://hansjoerg.me/2018/07/17/web-scraping-world-cup/) about red cards in soccer. Therein, I scraped data from the internet and transformed it into an appropriate form that I could then use for plotting. -->
+
+---
+
+# Data Visualization
+
+I mostly use ggplot2 for visualizations. Here is an example, where I use the gganimate package to plot the increase in Wikipedia articles over time.
+
+--
+
+```{r gganimate, cache = TRUE, out.width = "100%", echo = FALSE}
+library("ggplot2")
+library("gganimate")
+
+load(here::here("static/data/wiki_data.rda"))
+
+p1 <- ggplot(wiki_data, aes(month, total.total, col = Language, group = Language)) +
+    transition_reveal(month) +
+    geom_line(size = 1, show.legend = FALSE) +
+    geom_point(size = 2, show.legend = FALSE) +
+    geom_segment(aes(xend = max(wiki_data$month) + 60^2*24*31*15, yend = total.total),
+                 linetype = 2, colour = 'grey', show.legend = FALSE) +
+    geom_text(aes(x = max(wiki_data$month) + 60^2*24*31*20, label = Language),
+              hjust = 0, show.legend = FALSE) +
+    scale_color_viridis_d(end = .8) +
+    scale_y_continuous(labels = scales::comma) +
+    coord_cartesian(clip = 'off') +
+    labs(title = 'Impressive Growth of Wikipedia from 2001 to 2019',
+         subtitle = "Year: {lubridate::year(frame_along)}",
+         y = "Number of Articles", x = "Year", 
+         caption = "Source: https://stats.wikimedia.org/v2/") +
+    theme_minimal() +
+    theme(plot.margin = margin(5.5, 40, 5.5, 5.5), 
+          plot.caption = element_text(color = "grey"),
+          plot.background = element_rect(fill = "#fdf6e3", color = "#fdf6e3"), 
+          panel.background = element_rect(fill = "#fdf6e3", color = "#fdf6e3"))
+
+animate(p1, nframes = 50, fps = 6, width = 700, height = 400, res = 100)
+```
+
+<!-- --- -->
+
+<!-- # Data Reports -->
+
+<!-- - I like to tell stories from data using presentations, blog posts, dashboards, reports, or simply personal communication. -->
+
+<!-- - I use R Markdown for all of these. -->
+
+<!-- - For example, this presentation including all the plots  was generated from a single R Markdown document using R/RStudio and the xaringan package. -->
+
+<!-- - I've also built [shiny apps](https://hplieninger.shinyapps.io/ShinyICCs/), for example, for teaching item response theory. -->
+
+---
+
+# Modeling / Machine Learning
+
+- From Bachelor to PhD, I received extensive training in statistics.
+
+- I have routine in using the following models and techniques:
+
+### Models
+
+- **Regression** (e.g., [linear](https://hansjoerg.me/2018/07/10/contrasts-in-anova-and-regression/), Poisson, [Beta](https://hansjoerg.me/2019/05/10/regression-modeling-with-proportion-data-part-1/), random-effects)
+
+- **Classification** (e.g., logistic regression, discriminant analysis, SVM)
+
+- **Unsupervised learning** (e.g., factor analysis, PCA, [item response theory](https://hansjoerg.me/2018/04/23/rasch-in-r-tutorial/), structural equation modeling, k-Means clustering)
+
+### Techniques
+
+- [Cross-validation](https://hansjoerg.me/2019/05/10/regression-modeling-with-proportion-data-part-1/), bootstrap, multiple imputation, feature selection
+
+- Bayesian and frequentist inference
+
+---
+background-image: url("techstack.png")
+background-size: contain
+
+# My Tech Stack
+
+---
+
+# What about Python?
+
+<ul class="fa-ul">
+  <li><span class="fa-li"><i class="fab fa-python"></i></span><p>I know hardly any Python, but I am open to learning more.</p></li>
+
+  <li><span class="fa-li"><i class="fab fa-r-project"></i></span><p>Did you know that R and Python work well together? For example, I can execute the following Python code within this R Markdown document and even see it's output (on the next slide).</p></li>
+</ul>
+
+<!-- - I know hardly any Python, but I am open to learning more. -->
+
+<!-- - Did you know that R and Python work well together? For example, I can execute the following Python code within this R Markdown document and even see it's output (on the next slide). -->
+
+```{r py_setup, include = FALSE}
+library("reticulate")
+py_run_string("import os as os")
+py_run_string("os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = 'C:/Users/plieninger/AppData/Local/conda/conda/envs/r-reticulate/Library/plugins/platforms/'")
+```
+
+```{python py_data, fig.height = 4, dpi = 100}
+import pandas
+import matplotlib.pyplot as plt
+
+wik = pandas.read_csv("../data/wiki-data.csv",
+                      parse_dates = ["date"])
+
+plt.plot("date", "French", data = wik, label = "French")
+plt.plot("date", "Spanish", data = wik, label = "Spanish")
+plt.plot("date", "German", data = wik, label = "German")
+plt.legend()
+plt.ylabel("Number of Articles")
+plt.title("Impressive Growth of Wikipedia from 2001 to 2019")
+plt.tight_layout()
+```
+
+---
+
+# What about Python? (continued)
+
+```{python py_plot, out.width = "100%", fig.height = 4, dpi = 100}
+plt.show()
+```
+
+---
+
+# Soft Skills
+
+<ul class="fa-ul">
+  <li><span class="fa-li"><i class="fas fa-microscope"></i></span><p><strong>Motivation</strong>: I enjoy to dive deeply into data projects and to uncover trends and relationships by means of critical thinking, software, and teamwork.</p></li>
+
+  <li><span class="fa-li"><i class="fas fa-university"></i></span><p>Furthermore, I am accustomed to <strong>learn</strong> new techniques as I progress through a project, for example, in my PhD or as a freelancer.</p></li>
+
+  <!-- <li><span class="fa-li"><i class="fas fa-comment"></i></span><p><strong>Communication</strong>: I am trained to concisely communicate my insights in written, visual, or verbal form.</p></li> -->
+  
+  <li><span class="fa-li"><i class="fas fa-thumbtack"></i></span><p>Moreover, I am said to be very trustworthy and <strong>conscientious</strong>, and I approach difficult problems in a persevering and optimistic way.</p></li>
+</ul>
+
+<!-- - INDUSTRIOUS TYPE (Low E, High C) -->
+<!-- Industrious Types are businesslike, self-disciplined, orderly workers who prefer to achieve on their own effort than as part of a team. They have great respect for rules and social conventions, and can be counted on to work productively without close supervision. They are described by others with terms such as learned, conscientious, persevering, tactful, cooperative, conservative, reserved, and predictable. -->
+
+
+
+<!-- <blockquote class="twitter-tweet"><p lang="en" dir="ltr">If your data is data about people, hire someone with a PhD called a psychologist <a href="https://t.co/36TI5iuMfT">https://t.co/36TI5iuMfT</a></p>&mdash; Sanjay Srivastava (@hardsci) <a href="https://twitter.com/hardsci/status/1186690696364691456?ref_src=twsrc%5Etfw">October 22, 2019</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> -->
+
+---
+
+# Willingness to Travel
+
+<ul class="fa-ul">
+  <li><span class="fa-li"><i class="fas fa-train"></i></span><p>I am looking for a job in commuting distance to Mannheim.</p></li>
+
+  <li><span class="fa-li"><i class="fas fa-utensils"></i></span><p>I am willing to commute, to travel, and to work remotely.<br>However, I do not only love data science, I also love my wife and kids and want to take part in most family dinners.</p></li>
+  
+  <li><span class="fa-li"><i class="fas fa-map"></i></span><p>You can find an interactive map of reachable places on the next slide.</p></li>
+</ul>
+
+<!-- - I am looking for a job in commuting distance to Mannheim. -->
+
+<!-- - I am willing to commute and willing to travel. But I do not only love data science, I also love my wife and kids and want to take part in most family dinners. -->
+
+<!-- - You can find an interactive map of reachable places on the next slide. -->
+
+---
+
+# Willingness to Travel (continued)
+
+```{r, include = FALSE}
+load(here::here("static/data/cities.rda"))
+hp <- "Hansjörg Plieninger<br>Schwetzinger Straße 92"
+```
+
+```{r leaflet, out.width='100%', fig.height=4.5}
+library("leaflet")
+leaflet(cities) %>% addTiles() %>%
+    setView(lng = 008.48, lat = 049.57, zoom = 8) %>%
+    addCircles(lng = ~lng, lat = ~lat, weight = 1, popup = ~city,
+               radius = c(30e3, rep(10e3, 4)), fillOpacity = .1) %>%
+    addMarkers(lng = 008.47809, lat = 049.47778, popup = hp)
+```
+
+---
+
+# What about you?
+
+- You are looking for a motivated talent and a reliable team member?
+
+- You have data and questions but need insights and answers?
+
+- You are a modern, tech-savvy company?
+
+- I am looking forward to learning more about the position you are offering.
+
+---
+
+class: inverse, center, middle
+
+# Curious? Questions? 
+
+Get in touch!
+
+[`r icon::fa("at")`](mailto:mail@hansjoerg.me)
+[`r icon::fa("home")`](https://hansjoerg.me/)
+[`r icon::fa("twitter")`](https://twitter.com/hansjoerg_me)
+[`r icon::fa("github")`](https://github.com/hplieninger)
+[`r icon::fa("stack-overflow")`](https://stackoverflow.com/story/hplieninger)
+[`r icon::fa("linkedin")`](https://linkedin.com/in/hansj%c3%b6rg-plieninger-9a2635171)
+
+

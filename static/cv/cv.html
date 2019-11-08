@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>About me</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Hansjörg Plieninger" />
+    <meta name="date" content="2019-11-08" />
+    <script src="libs/htmlwidgets/htmlwidgets.js"></script>
+    <script src="libs/jquery/jquery.min.js"></script>
+    <link href="libs/leaflet/leaflet.css" rel="stylesheet" />
+    <script src="libs/leaflet/leaflet.js"></script>
+    <link href="libs/leafletfix/leafletfix.css" rel="stylesheet" />
+    <script src="libs/Proj4Leaflet/proj4-compressed.js"></script>
+    <script src="libs/Proj4Leaflet/proj4leaflet.js"></script>
+    <link href="libs/rstudio_leaflet/rstudio_leaflet.css" rel="stylesheet" />
+    <script src="libs/leaflet-binding/leaflet.js"></script>
+    <link href="libs/font-awesome/css/fontawesome-all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# About me
+### Hansjörg Plieninger
+### 2019-11-08
+
+---
+
+background-image: url("h.jpg")
+background-size: 100px
+background-position: 90% 8%
+
+# Hi, my name is Hansjörg
+
+
+
+
+
+&lt;ul class="fa-ul"&gt;
+  &lt;li&gt;&lt;span class="fa-li"&gt;&lt;i class="fas fa-user-graduate"&gt;&lt;/i&gt;&lt;/span&gt;&lt;p&gt;Bachelor, Master, and PhD in Psychology&lt;/p&gt;&lt;/li&gt;
+
+  &lt;li&gt;&lt;span class="fa-li"&gt;&lt;i class="fas fa-briefcase"&gt;&lt;/i&gt;&lt;/span&gt;&lt;p&gt;Currently working as a postdoctoral researcher at the University of Mannheim&lt;/p&gt;&lt;/li&gt;
+  
+  &lt;li&gt;&lt;span class="fa-li"&gt;&lt;i class="fas fa-heart"&gt;&lt;/i&gt;&lt;/span&gt;&lt;p&gt;Passion for data science and visualization&lt;/p&gt;&lt;/li&gt;
+  
+  &lt;li&gt;&lt;span class="fa-li"&gt;&lt;i class="fas fa-home"&gt;&lt;/i&gt;&lt;/span&gt;&lt;p&gt;Husband and father of three wonderful kids&lt;/p&gt;&lt;/li&gt;
+  
+  &lt;li&gt;&lt;span class="fa-li"&gt;&lt;i class="fas fa-search"&gt;&lt;/i&gt;&lt;/span&gt;&lt;p&gt;Looking for a full-time position as a data scientist or data analyst&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+---
+
+# Projects and Achievements
+
+- My **academic work** is concerned with the development and application of statistical models for questionnaire data. My research was [published](https://scholar.google.de/citations?hl=de&amp;user=ywhQbsEAAAAJ) in scientific journals such as *Multivariate Behavior Research*, and I received **awards** such as the [Bojanovsky Award](https://www.uni-mannheim.de/newsroom/presse/pressemitteilungen/2019/juli/absolventenfeier-sowi/) in 2019.
+
+- I developed the **R packages** [mpt2irt](https://github.com/hplieninger/mpt2irt) and [ItemResponseTrees](https://github.com/hplieninger/ItemResponseTrees) that implement specific statistical models for questionnaire data.
+
+- I tought Bachelor and Master courses on statistics and questionnaire design and built a [shiny app](https://hplieninger.shinyapps.io/ShinyICCs/) for teaching item response theory.
+
+- I conducted internal **R workshops** for colleagues and served as a consultant for fellow academics with statistical questions.
+
+- I have a **blog** with 200 visits per week, where I post tutorials and analyses from time to time: https://hansjoerg.me.
+
+- I work as a **freelance data analyst** and have been a statistical consultant for a study with patients suffering from dementia.
+
+---
+
+# Methods
+
+Psychologists mostly work either with survey data or experimental data. Therefore, I am trained and experienced in the following methods:
+
+- **Study design** of experimental and non-experimental studies  
+  (e.g., A/B testing)
+
+- **Questionnaire design**, item development, test construction
+
+&lt;!-- - [Web scraping](https://hansjoerg.me/2018/07/17/web-scraping-world-cup/) --&gt;
+
+&lt;!-- - Simulation studies --&gt;
+
+&lt;br&gt;
+
+After data collection, typical projects of mine involve the following tasks:
+
+- **Wrangling**: Bringing raw data into a format suitable for subsequent analyses ([example](https://github.com/hplieninger/hansjoerg.me/tree/master/static/uploads/handball-data.md))
+
+- **Reporting** using presentations, blog posts, dashboards, etc.
+
+- **Visualization** and **modeling**
+
+&lt;!-- --- --&gt;
+
+&lt;!-- # Data Wrangling --&gt;
+
+&lt;!-- - I am accustomed to import data in various formats using mainly R but also SQL. --&gt;
+
+&lt;!-- - Even though many people complain about it, I actually like data wrangling. I use tidyverse packages for tasks such as cleansing, filtering, extracting, joining, aggregating, and summarizing. --&gt;
+
+&lt;!-- - Last year, I made a small [blog post](https://hansjoerg.me/2018/07/17/web-scraping-world-cup/) about red cards in soccer. Therein, I scraped data from the internet and transformed it into an appropriate form that I could then use for plotting. --&gt;
+
+---
+
+# Data Visualization
+
+I mostly use ggplot2 for visualizations. Here is an example, where I use the gganimate package to plot the increase in Wikipedia articles over time.
+
+--
+
+&lt;img src="cv_files/figure-html/gganimate-1.gif" width="100%" /&gt;
+
+&lt;!-- --- --&gt;
+
+&lt;!-- # Data Reports --&gt;
+
+&lt;!-- - I like to tell stories from data using presentations, blog posts, dashboards, reports, or simply personal communication. --&gt;
+
+&lt;!-- - I use R Markdown for all of these. --&gt;
+
+&lt;!-- - For example, this presentation including all the plots  was generated from a single R Markdown document using R/RStudio and the xaringan package. --&gt;
+
+&lt;!-- - I've also built [shiny apps](https://hplieninger.shinyapps.io/ShinyICCs/), for example, for teaching item response theory. --&gt;
+
+---
+
+# Modeling / Machine Learning
+
+- From Bachelor to PhD, I received extensive training in statistics.
+
+- I have routine in using the following models and techniques:
+
+### Models
+
+- **Regression** (e.g., [linear](https://hansjoerg.me/2018/07/10/contrasts-in-anova-and-regression/), Poisson, [Beta](https://hansjoerg.me/2019/05/10/regression-modeling-with-proportion-data-part-1/), random-effects)
+
+- **Classification** (e.g., logistic regression, discriminant analysis, SVM)
+
+- **Unsupervised learning** (e.g., factor analysis, PCA, [item response theory](https://hansjoerg.me/2018/04/23/rasch-in-r-tutorial/), structural equation modeling, k-Means clustering)
+
+### Techniques
+
+- [Cross-validation](https://hansjoerg.me/2019/05/10/regression-modeling-with-proportion-data-part-1/), bootstrap, multiple imputation, feature selection
+
+- Bayesian and frequentist inference
+
+---
+background-image: url("techstack.png")
+background-size: contain
+
+# My Tech Stack
+
+---
+
+# What about Python?
+
+&lt;ul class="fa-ul"&gt;
+  &lt;li&gt;&lt;span class="fa-li"&gt;&lt;i class="fab fa-python"&gt;&lt;/i&gt;&lt;/span&gt;&lt;p&gt;I know hardly any Python, but I am open to learning more.&lt;/p&gt;&lt;/li&gt;
+
+  &lt;li&gt;&lt;span class="fa-li"&gt;&lt;i class="fab fa-r-project"&gt;&lt;/i&gt;&lt;/span&gt;&lt;p&gt;Did you know that R and Python work well together? For example, I can execute the following Python code within this R Markdown document and even see it's output (on the next slide).&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;!-- - I know hardly any Python, but I am open to learning more. --&gt;
+
+&lt;!-- - Did you know that R and Python work well together? For example, I can execute the following Python code within this R Markdown document and even see it's output (on the next slide). --&gt;
+
+
+
+
+```python
+import pandas
+import matplotlib.pyplot as plt
+
+wik = pandas.read_csv("../data/wiki-data.csv",
+                      parse_dates = ["date"])
+
+plt.plot("date", "French", data = wik, label = "French")
+plt.plot("date", "Spanish", data = wik, label = "Spanish")
+plt.plot("date", "German", data = wik, label = "German")
+plt.legend()
+plt.ylabel("Number of Articles")
+plt.title("Impressive Growth of Wikipedia from 2001 to 2019")
+plt.tight_layout()
+```
+
+---
+
+# What about Python? (continued)
+
+
+```python
+plt.show()
+```
+
+&lt;img src="cv_files/figure-html/py_plot-1.png" width="100%" /&gt;
+
+---
+
+# Soft Skills
+
+&lt;ul class="fa-ul"&gt;
+  &lt;li&gt;&lt;span class="fa-li"&gt;&lt;i class="fas fa-microscope"&gt;&lt;/i&gt;&lt;/span&gt;&lt;p&gt;&lt;strong&gt;Motivation&lt;/strong&gt;: I enjoy to dive deeply into data projects and to uncover trends and relationships by means of critical thinking, software, and teamwork.&lt;/p&gt;&lt;/li&gt;
+
+  &lt;li&gt;&lt;span class="fa-li"&gt;&lt;i class="fas fa-university"&gt;&lt;/i&gt;&lt;/span&gt;&lt;p&gt;Furthermore, I am accustomed to &lt;strong&gt;learn&lt;/strong&gt; new techniques as I progress through a project, for example, in my PhD or as a freelancer.&lt;/p&gt;&lt;/li&gt;
+
+  &lt;!-- &lt;li&gt;&lt;span class="fa-li"&gt;&lt;i class="fas fa-comment"&gt;&lt;/i&gt;&lt;/span&gt;&lt;p&gt;&lt;strong&gt;Communication&lt;/strong&gt;: I am trained to concisely communicate my insights in written, visual, or verbal form.&lt;/p&gt;&lt;/li&gt; --&gt;
+  
+  &lt;li&gt;&lt;span class="fa-li"&gt;&lt;i class="fas fa-thumbtack"&gt;&lt;/i&gt;&lt;/span&gt;&lt;p&gt;Moreover, I am said to be very trustworthy and &lt;strong&gt;conscientious&lt;/strong&gt;, and I approach difficult problems in a persevering and optimistic way.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;!-- - INDUSTRIOUS TYPE (Low E, High C) --&gt;
+&lt;!-- Industrious Types are businesslike, self-disciplined, orderly workers who prefer to achieve on their own effort than as part of a team. They have great respect for rules and social conventions, and can be counted on to work productively without close supervision. They are described by others with terms such as learned, conscientious, persevering, tactful, cooperative, conservative, reserved, and predictable. --&gt;
+
+
+
+&lt;!-- &lt;blockquote class="twitter-tweet"&gt;&lt;p lang="en" dir="ltr"&gt;If your data is data about people, hire someone with a PhD called a psychologist &lt;a href="https://t.co/36TI5iuMfT"&gt;https://t.co/36TI5iuMfT&lt;/a&gt;&lt;/p&gt;&amp;mdash; Sanjay Srivastava (@hardsci) &lt;a href="https://twitter.com/hardsci/status/1186690696364691456?ref_src=twsrc%5Etfw"&gt;October 22, 2019&lt;/a&gt;&lt;/blockquote&gt; &lt;script async src="https://platform.twitter.com/widgets.js" charset="utf-8"&gt;&lt;/script&gt; --&gt;
+
+---
+
+# Willingness to Travel
+
+&lt;ul class="fa-ul"&gt;
+  &lt;li&gt;&lt;span class="fa-li"&gt;&lt;i class="fas fa-train"&gt;&lt;/i&gt;&lt;/span&gt;&lt;p&gt;I am looking for a job in commuting distance to Mannheim.&lt;/p&gt;&lt;/li&gt;
+
+  &lt;li&gt;&lt;span class="fa-li"&gt;&lt;i class="fas fa-utensils"&gt;&lt;/i&gt;&lt;/span&gt;&lt;p&gt;I am willing to commute, to travel, and to work remotely.&lt;br&gt;However, I do not only love data science, I also love my wife and kids and want to take part in most family dinners.&lt;/p&gt;&lt;/li&gt;
+  
+  &lt;li&gt;&lt;span class="fa-li"&gt;&lt;i class="fas fa-map"&gt;&lt;/i&gt;&lt;/span&gt;&lt;p&gt;You can find an interactive map of reachable places on the next slide.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;!-- - I am looking for a job in commuting distance to Mannheim. --&gt;
+
+&lt;!-- - I am willing to commute and willing to travel. But I do not only love data science, I also love my wife and kids and want to take part in most family dinners. --&gt;
+
+&lt;!-- - You can find an interactive map of reachable places on the next slide. --&gt;
+
+---
+
+# Willingness to Travel (continued)
+
+
+
+
+```r
+library("leaflet")
+leaflet(cities) %&gt;% addTiles() %&gt;%
+    setView(lng = 008.48, lat = 049.57, zoom = 8) %&gt;%
+    addCircles(lng = ~lng, lat = ~lat, weight = 1, popup = ~city,
+               radius = c(30e3, rep(10e3, 4)), fillOpacity = .1) %&gt;%
+    addMarkers(lng = 008.47809, lat = 049.47778, popup = hp)
+```
+
+<div id="htmlwidget-d41341166d0342d23525" style="width:100%;height:324px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-d41341166d0342d23525">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"http://openstreetmap.org\">OpenStreetMap<\/a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA<\/a>"}]},{"method":"addCircles","args":[[49.496706,50.11552,49.009365,49.984188,49.871674],[8.479547,8.684167,8.40444,8.279096,8.650271],[30000,10000,10000,10000,10000],null,null,{"interactive":true,"className":"","stroke":true,"color":"#03F","weight":1,"opacity":0.5,"fill":true,"fillColor":"#03F","fillOpacity":0.1},["Mannheim","Frankfurt","Karlsruhe","Mainz","Darmstadt"],null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null,null]},{"method":"addMarkers","args":[49.47778,8.47809,null,null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},"Hansjörg Plieninger<br>Schwetzinger Straße 92",null,null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"setView":[[49.57,8.48],8,[]],"limits":{"lat":[49.009365,50.11552],"lng":[8.279096,8.684167]}},"evals":[],"jsHooks":[]}</script>
+
+---
+
+# What about you?
+
+- You are looking for a motivated talent and a reliable team member?
+
+- You have data and questions but need insights and answers?
+
+- You are a modern, tech-savvy company?
+
+- I am looking forward to learning more about the position you are offering.
+
+---
+
+class: inverse, center, middle
+
+# Curious? Questions? 
+
+Get in touch!
+
+[<i class="fas  fa-at "></i>](mailto:mail@hansjoerg.me)
+[<i class="fas  fa-home "></i>](https://hansjoerg.me/)
+[<i class="fab  fa-twitter "></i>](https://twitter.com/hansjoerg_me)
+[<i class="fab  fa-github "></i>](https://github.com/hplieninger)
+[<i class="fab  fa-stack-overflow "></i>](https://stackoverflow.com/story/hplieninger)
+[<i class="fab  fa-linkedin "></i>](https://linkedin.com/in/hansj%c3%b6rg-plieninger-9a2635171)
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
