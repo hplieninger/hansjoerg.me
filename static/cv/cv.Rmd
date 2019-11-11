@@ -82,7 +82,7 @@ Psychologists mostly work either with survey data or experimental data. Therefor
 
 After data collection, typical projects of mine involve the following tasks:
 
-- **Wrangling**: Bringing raw data into a format suitable for subsequent analyses ([example](https://github.com/hplieninger/hansjoerg.me/tree/master/static/uploads/handball-data.md))
+- **Data wrangling**: Bringing raw data into a format suitable for subsequent analyses ([example](https://github.com/hplieninger/hansjoerg.me/tree/master/static/uploads/handball-data.md))
 
 - **Reporting** using presentations, blog posts, dashboards, etc.
 
