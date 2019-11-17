@@ -2,7 +2,7 @@
 title: "About me"
 # subtitle: "\u2694 <br/>with xaringan and xaringanthemer"  
 author: "Hansjörg Plieninger"
-date: '`r Sys.Date()`'
+# date: '`r Sys.Date()`'
 output:
   xaringan::moon_reader:
     lib_dir: libs
