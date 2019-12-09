@@ -150,19 +150,21 @@ animate(p1, nframes = 50, fps = 6, width = 700, height = 400, res = 100)
 
 ---
 
-# Modeling / Machine Learning
+# Machine Learning
 
 - From Bachelor to PhD, I received extensive training in statistics.
+
+- I [completed](https://datacamp.com/profile/hansjoerg) the DataCamp skills track *Machine Learning Toolbox with R*.
 
 - I have routine in using the following models and techniques:
 
 ### Models
 
-- **Regression** (e.g., [linear](https://hansjoerg.me/2018/07/10/contrasts-in-anova-and-regression/), Poisson, [Beta](https://hansjoerg.me/2019/05/10/regression-modeling-with-proportion-data-part-1/), random-effects)
+- **Regression** (e.g., [linear](https://hansjoerg.me/2018/07/10/contrasts-in-anova-and-regression/), Poisson, [Beta](https://hansjoerg.me/2019/05/10/regression-modeling-with-proportion-data-part-1/), random-effects, tree-based models)
 
-- **Classification** (e.g., logistic regression, discriminant analysis, SVM)
+- **Classification** (e.g., logistic regression, KNN, SVM, random forests)
 
-- **Unsupervised learning** (e.g., factor analysis, PCA, [item response theory](https://hansjoerg.me/2018/04/23/rasch-in-r-tutorial/), structural equation modeling, k-Means clustering)
+- **Unsupervised learning** (e.g., PCA, k-Means, [item response theory](https://hansjoerg.me/2018/04/23/rasch-in-r-tutorial/))
 
 ### Techniques
 
