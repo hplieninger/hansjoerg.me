@@ -1,0 +1,554 @@
+---
+title: Tutorial on tidymodels for Machine Learning
+author: Hansjörg Plieninger
+date: '2020-02-09'
+slug: tidymodels-for-machine-learning
+categories:
+  - modeling
+tags:
+  - data-science
+  - r
+  - tutorial
+  - machine-learning
+subtitle: ''
+share: true
+image: /post/2020-02-09-tidymodels-for-machine-learning_files/figure-html/scatter-carat-price-1.png
+description: "This tutorial on machine learning introduces R users to the tidymodels ecosystem using packages such as recipes, parsnip, and tune."
+summary: "This tutorial introduces R users to the tidymodels ecosystem. Similar to the tidyverse, tidymodels is a meta package that bundles together modular packages that work hand in hand to make the live of data scientists easier. Herein, the recipes package is used for data pre-processing, parsnip for model fitting, tune for hyperparameter tuning, and much more. For illustration, a random forest model is fit to the diamonds data set."
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#set-up">Set Up</a></li>
+<li><a href="#data-set-diamonds">Data Set: Diamonds</a></li>
+<li><a href="#separating-testing-and-training-data-rsample">Separating Testing and Training Data: <strong>rsample</strong></a></li>
+<li><a href="#data-pre-processing-and-feature-engineering-recipes">Data Pre-Processing and Feature Engineering: <strong>recipes</strong></a></li>
+<li><a href="#defining-and-fitting-models-parsnip">Defining and Fitting Models: <strong>parsnip</strong></a></li>
+<li><a href="#summarizing-fitted-models-broom">Summarizing Fitted Models: <strong>broom</strong></a></li>
+<li><a href="#evaluating-model-performance-yardstick">Evaluating Model Performance: <strong>yardstick</strong></a></li>
+<li><a href="#tuning-model-parameters-tune-and-dials">Tuning Model Parameters: <strong>tune</strong> and <strong>dials</strong></a><ul>
+<li><a href="#preparing-a-parsnip-model-for-tuning">Preparing a <strong>parsnip</strong> Model for Tuning</a></li>
+<li><a href="#preparing-data-for-tuning-recipes">Preparing Data for Tuning: <strong>recipes</strong></a></li>
+<li><a href="#combine-everything-workflows">Combine Everything: <strong>workflows</strong></a></li>
+<li><a href="#selecting-the-best-model-to-make-the-final-predictions">Selecting the Best Model to Make the Final Predictions</a></li>
+</ul></li>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#further-resources">Further Resources</a></li>
+</ul>
+</div>
+
+<p>caret is a well known R package for machine learning, which includes almost everything from data pre-processing to cross-validation.
+The unofficial successor of caret is tidymodels, which has a modular approach meaning that specific, smaller packages are designed to work hand in hand.
+Thus, tidymodels is to modeling what the tidyverse is to data wrangling.
+Herein, I will walk through a machine learning example from start to end and explain how to use the appropriate tidymodels packages at each place.</p>
+<div id="set-up" class="section level2">
+<h2>Set Up</h2>
+<p>Loading the <strong>tidymodels</strong> package loads a bunch of packages for modeling and also a few others from the tidyverse like <strong>ggplot2</strong> and <strong>dplyr</strong>.
+Furthermore, we’ll need <strong>tune</strong> and <strong>workflows</strong>, which are also part of the tidymodels ecosystem but are not attached by <code>library("tidymodels")</code>.</p>
+<pre class="r"><code>library(&quot;conflicted&quot;)
+library(&quot;tidymodels&quot;)
+#&gt; -- Attaching packages ------------------------------------------------ tidymodels 0.0.3 --
+#&gt; v broom     0.5.4     v purrr     0.3.3
+#&gt; v dials     0.0.4     v recipes   0.1.9
+#&gt; v dplyr     0.8.3     v rsample   0.0.5
+#&gt; v ggplot2   3.2.1     v tibble    2.1.3
+#&gt; v infer     0.5.1     v yardstick 0.0.5
+#&gt; v parsnip   0.0.5
+library(&quot;tune&quot;)
+library(&quot;workflows&quot;)
+
+# Additional packages for dataviz etc.
+library(&quot;ggrepel&quot;)     # for geom_label_repel()
+library(&quot;corrplot&quot;)    # for corrplot()
+#&gt; corrplot 0.84 loaded
+
+conflict_prefer(&quot;filter&quot;, &quot;dplyr&quot;)
+#&gt; [conflicted] Will prefer dplyr::filter over any other package
+
+ggplot2::theme_set(theme_light())</code></pre>
+</div>
+<div id="data-set-diamonds" class="section level2">
+<h2>Data Set: Diamonds</h2>
+<p>With <strong>ggplot2</strong> comes the diamonds data set, which has information on the size and quality of diamonds.
+Herein, we’ll use these features to predict the price of a diamond.</p>
+<pre class="r"><code>data(&quot;diamonds&quot;)
+diamonds %&gt;%
+    sample_n(2000) %&gt;% 
+    mutate_if(is.factor, as.numeric) %&gt;%
+    select(price, everything()) %&gt;%
+    cor %&gt;%
+    {.[order(abs(.[, 1]), decreasing = TRUE), 
+       order(abs(.[, 1]), decreasing = TRUE)]} %&gt;%
+    corrplot(method = &quot;number&quot;, type = &quot;upper&quot;, mar = c(0, 0, 1.5, 0),
+             title = &quot;Correlations between price and various features of diamonds&quot;)</code></pre>
+<p><img src="/post/2020-02-09-tidymodels-for-machine-learning_files/figure-html/corrplot-diamonds-1.png" width="672" /></p>
+</div>
+<div id="separating-testing-and-training-data-rsample" class="section level2">
+<h2>Separating Testing and Training Data: <strong>rsample</strong></h2>
+<p>First of all, we want to extract a data set for testing the predictions in the end.
+We’ll only use a small proportion for training (only to speed things up a little).
+Furthermore, the training data set will be prepared for 3-fold cross-validation (using three here to speed things up).
+All this is accomplished using the <strong>rsample</strong> package:</p>
+<pre class="r"><code>set.seed(1243)
+
+dia_split &lt;- initial_split(diamonds, prop = .1, strata = price)
+
+dia_train &lt;- training(dia_split)
+dia_test  &lt;- testing(dia_split)
+
+dim(dia_train)
+#&gt; [1] 5395   10
+dim(dia_test)
+#&gt; [1] 48545    10
+
+dia_vfold &lt;- vfold_cv(dia_train, v = 3, repeats = 1, strata = price)
+dia_vfold %&gt;% 
+  mutate(df_ana = map(splits, analysis),
+         df_ass = map(splits, assessment))
+#&gt; #  3-fold cross-validation using stratification 
+#&gt; # A tibble: 3 x 4
+#&gt;   splits              id    df_ana                df_ass               
+#&gt; * &lt;named list&gt;        &lt;chr&gt; &lt;named list&gt;          &lt;named list&gt;         
+#&gt; 1 &lt;split [3.6K/1.8K]&gt; Fold1 &lt;tibble [3,596 x 10]&gt; &lt;tibble [1,799 x 10]&gt;
+#&gt; 2 &lt;split [3.6K/1.8K]&gt; Fold2 &lt;tibble [3,596 x 10]&gt; &lt;tibble [1,799 x 10]&gt;
+#&gt; 3 &lt;split [3.6K/1.8K]&gt; Fold3 &lt;tibble [3,598 x 10]&gt; &lt;tibble [1,797 x 10]&gt;</code></pre>
+</div>
+<div id="data-pre-processing-and-feature-engineering-recipes" class="section level2">
+<h2>Data Pre-Processing and Feature Engineering: <strong>recipes</strong></h2>
+<p>The <strong>recipes</strong> package can be used to prepare a data set (for modeling) using different <code>step_*()</code> functions.
+For example, the plot below indicates that there may be a nonlinear relationship between price and carat, and I want to address that using higher-order terms.</p>
+<pre class="r"><code>qplot(carat, price, data = dia_train) +
+    scale_y_continuous(trans = log_trans(), labels = function(x) round(x, -2)) +
+    geom_smooth(method = &quot;lm&quot;, formula = &quot;y ~ poly(x, 4)&quot;) +
+    labs(title = &quot;Nonlinear relationship between price and carat of diamonds&quot;,
+         subtitle = &quot;The degree of the polynomial is a potential tuning parameter&quot;)</code></pre>
+<p><img src="/post/2020-02-09-tidymodels-for-machine-learning_files/figure-html/scatter-carat-price-1.png" width="672" /></p>
+<p>The <code>recipe()</code> takes a formula and a data set, and then the different steps are added using the appropriate <code>step_*()</code> functions.
+The <strong>recipes</strong> package comes with a ton of useful step functions (see, e.g., <code>vignette("Simple_Example", package = "recipes")</code>).</p>
+<p>Herein, I want to log transform price (<code>step_log()</code>), I want to center and scale all numeric predictors (<code>step_normalize()</code>), and the categorical predictors should be dummy coded (<code>step_dummy()</code>).
+Furthermore, a quadratic effect of carat is added using <code>step_poly()</code>.</p>
+<pre class="r"><code>dia_rec &lt;-
+    recipe(price ~ ., data = dia_train) %&gt;%
+    step_log(all_outcomes()) %&gt;%
+    step_normalize(all_predictors(), -all_nominal()) %&gt;%
+    step_dummy(all_nominal()) %&gt;%
+    step_poly(carat, degree = 2) %&gt;% 
+    prep() 
+
+dia_rec
+#&gt; Data Recipe
+#&gt; 
+#&gt; Inputs:
+#&gt; 
+#&gt;       role #variables
+#&gt;    outcome          1
+#&gt;  predictor          9
+#&gt; 
+#&gt; Training data contained 5395 data points and no missing data.
+#&gt; 
+#&gt; Operations:
+#&gt; 
+#&gt; Log transformation on price [trained]
+#&gt; Centering and scaling for carat, depth, table, x, y, z [trained]
+#&gt; Dummy variables from cut, color, clarity [trained]
+#&gt; Orthogonal polynomials on carat [trained]</code></pre>
+<p>Calling <code>prep()</code> on a recipe applies all the steps.
+You can now call <code>juice()</code> to extract the transformed data set or call <code>bake()</code> on a new data set.</p>
+<pre class="r"><code># Note the linear and quadratic term for carat and the dummies for e.g. color
+dia_juiced &lt;- juice(dia_rec)
+dim(dia_juiced)
+#&gt; [1] 5395   25
+names(dia_juiced)
+#&gt;  [1] &quot;depth&quot;        &quot;table&quot;        &quot;x&quot;            &quot;y&quot;            &quot;z&quot;           
+#&gt;  [6] &quot;price&quot;        &quot;cut_1&quot;        &quot;cut_2&quot;        &quot;cut_3&quot;        &quot;cut_4&quot;       
+#&gt; [11] &quot;color_1&quot;      &quot;color_2&quot;      &quot;color_3&quot;      &quot;color_4&quot;      &quot;color_5&quot;     
+#&gt; [16] &quot;color_6&quot;      &quot;clarity_1&quot;    &quot;clarity_2&quot;    &quot;clarity_3&quot;    &quot;clarity_4&quot;   
+#&gt; [21] &quot;clarity_5&quot;    &quot;clarity_6&quot;    &quot;clarity_7&quot;    &quot;carat_poly_1&quot; &quot;carat_poly_2&quot;</code></pre>
+</div>
+<div id="defining-and-fitting-models-parsnip" class="section level2">
+<h2>Defining and Fitting Models: <strong>parsnip</strong></h2>
+<p>The <strong>parsnip</strong> package has wrappers around many<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> popular machine learning algorithms, and you can fit them using a unified interface.
+This is extremely helpful, since you have to remember only one rather then dozens of interfaces.</p>
+<p>The models are separated into two modes/categories, namely, regression and classification (<code>set_mode()</code>).
+The model is defined using a function specific to each algorithm (e.g., <code>linear_reg()</code>, <code>rand_forest()</code>).
+Finally, the backend/engine/implementation is selected using <code>set_engine()</code>.</p>
+<p>Herein, I will start with a basic linear regression model as implemented in <code>stats::lm()</code>.</p>
+<pre class="r"><code>lm_model &lt;-
+    linear_reg() %&gt;%
+    set_mode(&quot;regression&quot;) %&gt;%
+    set_engine(&quot;lm&quot;)</code></pre>
+<p>Furthermore, take the example of a random forest model.
+This could be fit using packages <strong>ranger</strong> or <strong>randomForest</strong>.
+Both have different interfaces (e.g., argument <code>ntree</code> vs. <code>num.trees</code>), and <strong>parsnip</strong> removes the hassle of remembering both interfaces.
+More general arguments pertaining to the algorithm are specified in the algorithm function (e.g., <code>rand_forest()</code>).
+Arguments specific to the engine are specified in <code>set_engine()</code>.</p>
+<pre class="r"><code>rand_forest(mtry = 3, trees = 500, min_n = 5) %&gt;%
+    set_mode(&quot;regression&quot;) %&gt;%
+    set_engine(&quot;ranger&quot;, importance = &quot;impurity_corrected&quot;)</code></pre>
+<p>Finally, we can <code>fit()</code> the model.</p>
+<pre class="r"><code>lm_fit1 &lt;- fit(lm_model, price ~ ., dia_juiced)
+lm_fit1
+#&gt; parsnip model object
+#&gt; 
+#&gt; Fit time:  20ms 
+#&gt; 
+#&gt; Call:
+#&gt; stats::lm(formula = formula, data = data)
+#&gt; 
+#&gt; Coefficients:
+#&gt;  (Intercept)         depth         table             x             y  
+#&gt;     7.711965      0.010871      0.005889      0.251155      0.054422  
+#&gt;            z         cut_1         cut_2         cut_3         cut_4  
+#&gt;     0.054196      0.106701     -0.026356      0.024207     -0.006191  
+#&gt;      color_1       color_2       color_3       color_4       color_5  
+#&gt;    -0.455831     -0.084108     -0.004810      0.009725     -0.005591  
+#&gt;      color_6     clarity_1     clarity_2     clarity_3     clarity_4  
+#&gt;    -0.009730      0.860961     -0.242698      0.132234     -0.052903  
+#&gt;    clarity_5     clarity_6     clarity_7  carat_poly_1  carat_poly_2  
+#&gt;     0.028996      0.002403      0.022235     51.663971    -17.508316</code></pre>
+<p>You can use <code>fit()</code> with a formula (e.g., <code>price ~ .</code>) or by specifying <code>x</code> and <code>y</code>.
+In both cases, I recommend keeping only the variables you need when preparing the data set, since this will prevent forgetting the new variable <code>d</code> when using <code>y ~ a + b + c</code>.
+Unnecessary variables can easily be dropped in the recipe using <code>step_rm()</code>.</p>
+</div>
+<div id="summarizing-fitted-models-broom" class="section level2">
+<h2>Summarizing Fitted Models: <strong>broom</strong></h2>
+<p>Many models have implemented <code>summary()</code> or <code>coef()</code> methods.
+However, the output of these is usually not in a tidy format, and the <strong>broom</strong> package has the aim to resolve this issue.</p>
+<p><code>glance()</code> gives us information about the whole model.
+Here, R squared is pretty high and the RMSE equals 0.154.</p>
+<pre class="r"><code>glance(lm_fit1$fit)
+#&gt; # A tibble: 1 x 11
+#&gt;   r.squared adj.r.squared sigma statistic p.value    df logLik    AIC    BIC deviance
+#&gt;       &lt;dbl&gt;         &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;
+#&gt; 1     0.977         0.977 0.154     9607.       0    25  2457. -4863. -4691.     127.
+#&gt; # ... with 1 more variable: df.residual &lt;int&gt;</code></pre>
+<p><code>tidy()</code> gives us information about the model parameters, and we see that we have a significant quadratic effect of carat.</p>
+<pre class="r"><code>tidy(lm_fit1) %&gt;% 
+  arrange(desc(abs(statistic)))
+#&gt; # A tibble: 25 x 5
+#&gt;    term         estimate std.error statistic  p.value
+#&gt;    &lt;chr&gt;           &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
+#&gt;  1 (Intercept)    7.71     0.00431   1790.   0.      
+#&gt;  2 carat_poly_2 -17.5      0.259      -67.7  0.      
+#&gt;  3 clarity_1      0.861    0.0135      64.0  0.      
+#&gt;  4 color_1       -0.456    0.00738    -61.8  0.      
+#&gt;  5 carat_poly_1  51.7      1.10        47.0  0.      
+#&gt;  6 clarity_2     -0.243    0.0127     -19.2  3.63e-79
+#&gt;  7 color_2       -0.0841   0.00665    -12.7  3.50e-36
+#&gt;  8 clarity_3      0.132    0.0107      12.3  2.51e-34
+#&gt;  9 cut_1          0.107    0.00997     10.7  1.88e-26
+#&gt; 10 clarity_4     -0.0529   0.00839     -6.30 3.15e-10
+#&gt; # ... with 15 more rows</code></pre>
+<p>Finally, <code>augment()</code> can be used to get model predictions, residuals, etc.</p>
+<pre class="r"><code>lm_predicted &lt;- augment(lm_fit1$fit, data = dia_juiced) %&gt;% 
+    rowid_to_column()
+select(lm_predicted, rowid, price, .fitted:.std.resid)
+#&gt; # A tibble: 5,395 x 9
+#&gt;    rowid price .fitted .se.fit  .resid    .hat .sigma   .cooksd .std.resid
+#&gt;    &lt;int&gt; &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;
+#&gt;  1     1  5.83    5.90 0.0133  -0.0769 0.00744  0.154 0.0000755     -0.502
+#&gt;  2     2  5.84    5.80 0.0110   0.0472 0.00507  0.154 0.0000193      0.307
+#&gt;  3     3  5.86    5.89 0.0138  -0.0286 0.00801  0.154 0.0000112     -0.187
+#&gt;  4     4  5.88    6.24 0.00988 -0.360  0.00413  0.154 0.000910      -2.34 
+#&gt;  5     5  6.00    6.24 0.0104  -0.244  0.00458  0.154 0.000467      -1.59 
+#&gt;  6     6  6.00    6.06 0.0100  -0.0615 0.00427  0.154 0.0000275     -0.401
+#&gt;  7     7  6.00    6.10 0.0111  -0.0999 0.00520  0.154 0.0000887     -0.651
+#&gt;  8     8  6.00    6.06 0.0104  -0.0566 0.00459  0.154 0.0000251     -0.369
+#&gt;  9     9  6.00    6.22 0.00895 -0.216  0.00339  0.154 0.000270      -1.41 
+#&gt; 10    10  6.32    6.55 0.00872 -0.233  0.00321  0.154 0.000297      -1.52 
+#&gt; # ... with 5,385 more rows</code></pre>
+<p>A plot of the predicted vs. actual prices shows small residuals with a few outliers, which are not well explained by the model.</p>
+<pre class="r"><code>ggplot(lm_predicted, aes(.fitted, price)) +
+    geom_point(alpha = .2) +
+    ggrepel::geom_label_repel(aes(label = rowid), 
+                              data = filter(lm_predicted, abs(.resid) &gt; 2)) +
+    labs(title = &quot;Actual vs. Predicted Price of Diamonds&quot;)</code></pre>
+<p><img src="/post/2020-02-09-tidymodels-for-machine-learning_files/figure-html/actual-vs-predicted-prices-1.png" width="672" /></p>
+</div>
+<div id="evaluating-model-performance-yardstick" class="section level2">
+<h2>Evaluating Model Performance: <strong>yardstick</strong></h2>
+<p>We already saw performance measures RMSE and R squared in the output of <code>glance()</code> above.
+The <strong>yardstick</strong> package is specifically designed for such measures for both numeric and categorical outcomes, and it plays well with multiple predictions.</p>
+<p>Let’s use <strong>rsample</strong>, <strong>parsnip</strong>, and <strong>yardstick</strong> for cross-validation to get a more accurate estimation of RMSE.</p>
+<p>In the following pipeline, the model is <code>fit()</code> separately to the three <em>analysis data</em> sets, and then the fitted models are used to <code>predict()</code> on the three corresponding <em>assessment data</em> sets (i.e., 3-fold cross-validation).
+Before that, <code>analysis()</code> and <code>assessment()</code> are used to extract the respective folds, and <code>bake()</code> is used to apply the recipe steps to these data sets.
+(Note that one could have created <code>dia_vfold</code> using the prepped rather than the raw data in the first place to get rid of these two <code>bake()</code> calls.)</p>
+<p>Herein, I use list columns to store all information about the three folds in one data frame and a combination of <code>dplyr::mutate()</code> and <code>purrr::map()</code> to “loop” across the rows of the data frame.</p>
+<pre class="r"><code>lm_fit2 &lt;- dia_vfold %&gt;% 
+    mutate(
+        df_ana = map(splits,  analysis),
+        df_ana = map(df_ana, ~bake(dia_rec, .x)),
+        df_ass = map(splits,  assessment),
+        df_ass = map(df_ass, ~bake(dia_rec, .x)),
+        model_fit  = map(df_ana, ~fit(lm_model, price ~ ., data = .x)),
+        model_pred = map2(model_fit, df_ass, ~predict(.x, new_data = .y)))
+lm_fit2
+#&gt; #  3-fold cross-validation using stratification 
+#&gt; # A tibble: 3 x 6
+#&gt;   splits         id    df_ana          df_ass         model_fit  model_pred     
+#&gt; * &lt;named list&gt;   &lt;chr&gt; &lt;named list&gt;    &lt;named list&gt;   &lt;named li&gt; &lt;named list&gt;   
+#&gt; 1 &lt;split [3.6K/~ Fold1 &lt;tibble [3,596~ &lt;tibble [1,79~ &lt;fit[+]&gt;   &lt;tibble [1,799~
+#&gt; 2 &lt;split [3.6K/~ Fold2 &lt;tibble [3,596~ &lt;tibble [1,79~ &lt;fit[+]&gt;   &lt;tibble [1,799~
+#&gt; 3 &lt;split [3.6K/~ Fold3 &lt;tibble [3,598~ &lt;tibble [1,79~ &lt;fit[+]&gt;   &lt;tibble [1,797~</code></pre>
+<p>Now, we can extract the actual prices from the assessment data and compare them to the predicted prices.
+Across the three folds, we see that the RMSE is a little higher and R squared a little smaller compared to above (see output of <code>glance(lm_fit1$fit)</code>).
+This is expected, since out-of-sample prediction is harder but also way more useful.</p>
+<pre class="r"><code>lm_fit2 %&gt;% 
+    mutate(res = map2(df_ass, model_pred, ~data.frame(price = .x$price,
+                                                      .pred = .y$.pred))) %&gt;% 
+    select(id, res) %&gt;% 
+    unnest(res) %&gt;% 
+    group_by(id) %&gt;% 
+    metrics(truth = price, estimate = .pred)
+#&gt; # A tibble: 9 x 4
+#&gt;   id    .metric .estimator .estimate
+#&gt;   &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+#&gt; 1 Fold1 rmse    standard       0.168
+#&gt; 2 Fold2 rmse    standard       0.147
+#&gt; 3 Fold3 rmse    standard       0.298
+#&gt; 4 Fold1 rsq     standard       0.973
+#&gt; 5 Fold2 rsq     standard       0.979
+#&gt; 6 Fold3 rsq     standard       0.918
+#&gt; 7 Fold1 mae     standard       0.116
+#&gt; 8 Fold2 mae     standard       0.115
+#&gt; 9 Fold3 mae     standard       0.110</code></pre>
+<p>Note that <code>yardstick::metrics()</code> has default measures for numeric and categorical outcomes, and here RMSE, R squared, and the mean absolute difference (MAE) is returned.
+You could also use one metric directly like <code>rmse</code> or define a custom set of metrics via <code>metric_set()</code>.</p>
+</div>
+<div id="tuning-model-parameters-tune-and-dials" class="section level2">
+<h2>Tuning Model Parameters: <strong>tune</strong> and <strong>dials</strong></h2>
+<p>Let’s get a little bit more involved and do some hyperparameter tuning.
+We turn to a different model, namely, a random forest model.</p>
+<p>The <strong>tune</strong> package has functions for doing the actual tuning (e.g., via grid search), while all the parameters and their defaults (e.g., <code>mtry()</code>, <code>neighbors()</code>) are implemented in <strong>dials</strong>.
+Thus, the two packages can almost only be used in combination.</p>
+<div id="preparing-a-parsnip-model-for-tuning" class="section level3">
+<h3>Preparing a <strong>parsnip</strong> Model for Tuning</h3>
+<p>First, I want to tune the <code>mtry</code> parameter of a random forest model.
+Thus, the model is defined using <strong>parsnip</strong> as above.
+However, rather than using a default value (i.e., <code>mtry = NULL</code>) or one specific value (i.e., <code>mtry = 3</code>), we use <code>tune()</code> as a placeholder and let cross-validation decide on the best value for <code>mtry</code> later on.</p>
+<p>As the output indicates, the default minimum of <code>mtry</code> is 1 and the maximum depends on the data.</p>
+<pre class="r"><code>rf_model &lt;- 
+    rand_forest(mtry = tune()) %&gt;%
+    set_mode(&quot;regression&quot;) %&gt;%
+    set_engine(&quot;ranger&quot;)
+
+parameters(rf_model)
+#&gt; Collection of 1 parameters for tuning
+#&gt; 
+#&gt;    id parameter type object class
+#&gt;  mtry           mtry    nparam[?]
+#&gt; 
+#&gt; Model parameters needing finalization:
+#&gt;    # Randomly Selected Predictors (&#39;mtry&#39;)
+#&gt; 
+#&gt; See `?dials::finalize` or `?dials::update.parameters` for more information.
+mtry()
+#&gt; # Randomly Selected Predictors  (quantitative)
+#&gt; Range: [1, ?]</code></pre>
+<p>Thus, this model is not yet ready for fitting.
+You can either specify the maximum for <code>mtry</code> yourself using <code>update()</code>, or you can use <code>finalize()</code> to let the data decide on the maximum.</p>
+<pre class="r"><code>rf_model %&gt;% 
+    parameters %&gt;% 
+    update(mtry = mtry(c(1L, 5L)))
+#&gt; Collection of 1 parameters for tuning
+#&gt; 
+#&gt;    id parameter type object class
+#&gt;  mtry           mtry    nparam[+]
+
+rf_model %&gt;% 
+    parameters %&gt;% 
+    # Here, the maximum of mtry equals the number of predictors, i.e., 24.
+    finalize(x = select(juice(dia_rec), -price)) %&gt;% 
+    magrittr::extract2(&quot;object&quot;)
+#&gt; [[1]]
+#&gt; # Randomly Selected Predictors  (quantitative)
+#&gt; Range: [1, 24]</code></pre>
+</div>
+<div id="preparing-data-for-tuning-recipes" class="section level3">
+<h3>Preparing Data for Tuning: <strong>recipes</strong></h3>
+<p>The second thing I want to tune is the degree of the polynomial for the variable carat.
+As you saw in the plot above, polynomials up to a degree of four seemed well suited for the data.
+However, a simpler model might do equally well, and we want to use cross-validation to decide on the degree that works best.</p>
+<p>Similar to tuning parameters in a model, certain aspects of a recipe can be tuned.
+Let’s define a second recipe and use <code>tune()</code> inside <code>step_poly()</code>.</p>
+<pre class="r"><code># Note that this recipe cannot be prepped (and juiced), since &quot;degree&quot; is unknown
+dia_rec2 &lt;-
+    recipe(price ~ ., data = dia_train) %&gt;%
+    step_log(all_outcomes()) %&gt;%
+    step_normalize(all_predictors(), -all_nominal()) %&gt;%
+    step_dummy(all_nominal()) %&gt;%
+    step_poly(carat, degree = tune())
+
+dia_rec2 %&gt;% 
+    parameters() %&gt;% 
+    magrittr::extract2(&quot;object&quot;)
+#&gt; [[1]]
+#&gt; Polynomial Degree  (quantitative)
+#&gt; Range: [1, 3]</code></pre>
+</div>
+<div id="combine-everything-workflows" class="section level3">
+<h3>Combine Everything: <strong>workflows</strong></h3>
+<p>The <strong>workflows</strong> package is designed to bundle together different parts of a machine learning pipeline like a recipe or a model.</p>
+<p>First, let’s create an initial workflow and add the recipe and the random forest model, both of which have a tuning parameter.</p>
+<pre class="r"><code>rf_wflow &lt;-
+    workflow() %&gt;%
+    add_model(rf_model) %&gt;%
+    add_recipe(dia_rec2)
+rf_wflow
+#&gt; == Workflow ==============================================================================
+#&gt; Preprocessor: Recipe
+#&gt; Model: rand_forest()
+#&gt; 
+#&gt; -- Preprocessor --------------------------------------------------------------------------
+#&gt; 4 Recipe Steps
+#&gt; 
+#&gt; * step_log()
+#&gt; * step_normalize()
+#&gt; * step_dummy()
+#&gt; * step_poly()
+#&gt; 
+#&gt; -- Model ---------------------------------------------------------------------------------
+#&gt; Random Forest Model Specification (regression)
+#&gt; 
+#&gt; Main Arguments:
+#&gt;   mtry = tune()
+#&gt; 
+#&gt; Computational engine: ranger</code></pre>
+<p>Second, we need to update the parameters in <code>rf_wflow</code>, because the maximum of <code>mtry</code> is not yet known and the maximum of <code>degree</code> should be four (while three is the default).</p>
+<pre class="r"><code>rf_param &lt;-
+    rf_wflow %&gt;%
+    parameters() %&gt;%
+    update(mtry = mtry(range = c(3L, 5L)),
+           degree = degree_int(range = c(2L, 4L)))
+rf_param$object
+#&gt; [[1]]
+#&gt; # Randomly Selected Predictors  (quantitative)
+#&gt; Range: [3, 5]
+#&gt; 
+#&gt; [[2]]
+#&gt; Polynomial Degree  (quantitative)
+#&gt; Range: [2, 4]</code></pre>
+<p>Third, we want to use cross-validation for tuning, that is, to select the best combination of the hyperparameters.
+Bayesian optimization (see <code>vignette("svm_classification", package = "tune")</code>) is recommended for complex tuning problems, and this can be done using <code>tune_bayes()</code>.</p>
+<p>Herein, however, grid search will suffice.
+To this end, let’s create a grid of all necessary parameter combinations.</p>
+<pre class="r"><code>rf_grid &lt;- grid_regular(rf_param, levels = 3)
+rf_grid
+#&gt; # A tibble: 9 x 2
+#&gt;    mtry degree
+#&gt;   &lt;int&gt;  &lt;int&gt;
+#&gt; 1     3      2
+#&gt; 2     4      2
+#&gt; 3     5      2
+#&gt; 4     3      3
+#&gt; 5     4      3
+#&gt; 6     5      3
+#&gt; 7     3      4
+#&gt; 8     4      4
+#&gt; 9     5      4</code></pre>
+<p>Cross-validation and hyperparameter tuning can involve fitting many models.
+Herein, for example, we have to fit 3 x 9 models (folds x parameter combinations).
+To increase speed, we can fit the models in parallel.
+This is directly supported by the <strong>tune</strong> package (see <code>vignette("optimizations", package = "tune")</code>).</p>
+<pre class="r"><code>library(&quot;doFuture&quot;)
+all_cores &lt;- parallel::detectCores(logical = FALSE)
+
+registerDoFuture()
+cl &lt;- makeCluster(all_cores)
+plan(future::cluster, workers = cl)</code></pre>
+<p>Then, we can finally start tuning.</p>
+<pre class="r"><code>rf_search &lt;- tune_grid(rf_wflow, grid = rf_grid, resamples = dia_vfold,
+                       param_info = rf_param)</code></pre>
+<p>The results can be examined using <code>autoplot()</code> and <code>show_best()</code>:</p>
+<pre class="r"><code>autoplot(rf_search, metric = &quot;rmse&quot;) +
+    labs(title = &quot;Results of Grid Search for Two Tuning Parameters of a Random Forest&quot;)</code></pre>
+<p><img src="/post/2020-02-09-tidymodels-for-machine-learning_files/figure-html/hyperparameter-tuning-in-R-1.png" width="672" /></p>
+<pre class="r"><code>show_best(rf_search, &quot;rmse&quot;, maximize = FALSE, n = 9)
+#&gt; # A tibble: 9 x 7
+#&gt;    mtry degree .metric .estimator  mean     n std_err
+#&gt;   &lt;int&gt;  &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt;
+#&gt; 1     5      2 rmse    standard   0.121     3 0.00498
+#&gt; 2     5      3 rmse    standard   0.121     3 0.00454
+#&gt; 3     4      2 rmse    standard   0.122     3 0.00463
+#&gt; 4     5      4 rmse    standard   0.122     3 0.00471
+#&gt; 5     4      3 rmse    standard   0.123     3 0.00469
+#&gt; 6     4      4 rmse    standard   0.124     3 0.00496
+#&gt; 7     3      3 rmse    standard   0.128     3 0.00502
+#&gt; 8     3      2 rmse    standard   0.128     3 0.00569
+#&gt; 9     3      4 rmse    standard   0.128     3 0.00501
+
+select_best(rf_search, metric = &quot;rmse&quot;, maximize = FALSE)
+#&gt; # A tibble: 1 x 2
+#&gt;    mtry degree
+#&gt;   &lt;int&gt;  &lt;int&gt;
+#&gt; 1     5      2
+
+select_by_one_std_err(rf_search, mtry, degree,
+                      metric = &quot;rmse&quot;, maximize = FALSE)
+#&gt; # A tibble: 1 x 9
+#&gt;    mtry degree .metric .estimator  mean     n std_err .best .bound
+#&gt;   &lt;int&gt;  &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
+#&gt; 1     4      2 rmse    standard   0.122     3 0.00463 0.121  0.126</code></pre>
+<p>With a cross-validation RMSE of ca. 0.12, the random forest model seems to outperform the linear regression from above.
+Furthermore, 0.12 is (hopefully) a realistic estimate of the out-of-sample error.</p>
+</div>
+<div id="selecting-the-best-model-to-make-the-final-predictions" class="section level3">
+<h3>Selecting the Best Model to Make the Final Predictions</h3>
+<p>We saw above that a quadratic trend was enough to get a good model.
+Furthermore, cross-validation revealed that <code>mtry = 4</code> seems to perform well.</p>
+<p>To use this combination of hyperparameters, we <code>fit()</code> the corresponding model (or workflow, more precisely) on the whole training data set <code>dia_train</code>.
+This model (or workflow) can than be used to <code>predict()</code> on data never seen before, namely, <code>dia_test</code> in the present case.</p>
+<pre class="r"><code>rf_param_final &lt;- 
+    select_by_one_std_err(rf_search, mtry, degree,
+                          metric = &quot;rmse&quot;, maximize = FALSE)
+
+rf_wflow_final &lt;- 
+    finalize_workflow(rf_wflow, rf_param_final)
+
+rf_wflow_final_fit &lt;- 
+    fit(rf_wflow_final, data = dia_train)
+
+dia_test$.pred &lt;- predict(rf_wflow_final_fit, new_data = dia_test)$.pred
+dia_test$logprice &lt;- log(dia_test$price)
+
+metrics(dia_test, truth = logprice, estimate = .pred)
+#&gt; # A tibble: 3 x 3
+#&gt;   .metric .estimator .estimate
+#&gt;   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+#&gt; 1 rmse    standard      0.113 
+#&gt; 2 rsq     standard      0.988 
+#&gt; 3 mae     standard      0.0846</code></pre>
+<p>As you can see, we get an RMSE of 0.11, which is even slightly better compared to the cross-validation RMSE.</p>
+</div>
+</div>
+<div id="summary" class="section level2">
+<h2>Summary</h2>
+<p>The tidymodels ecosystem bundles together a set of packages, that work hand in hand to solve machine-learning problems from start to end.
+Together with the data-wrangling facilities in the <strong>tidyverse</strong> and the plotting tools from <strong>ggplot2</strong>, this makes for a rich toolbox for every data scientist working with R.</p>
+<p>The only thing that is definitely missing in <strong>tidymodels</strong> is a package for combining different machine learning models (i.e., ensemble/stacking/super learner).
+We have <a href="https://cran.r-project.org/package=caretEnsemble"><strong>caretEnsemble</strong></a> for <strong>caret</strong>, and I am sure they are working on something similar for <strong>tidymodels</strong> at RStudio.
+Alex Hayes has a related <a href="https://www.alexpghayes.com/blog/implementing-the-super-learner-with-tidymodels/">blog post</a> focusing on tidymodels, for those who can’t wait.</p>
+</div>
+<div id="further-resources" class="section level2">
+<h2>Further Resources</h2>
+<ul>
+<li>For further information about each of the tidymodels packages, I recommend the vignettes/articles on the respective package homepage (e.g., <a href="https://tidymodels.github.io/recipes/" class="uri">https://tidymodels.github.io/recipes/</a> or <a href="https://tidymodels.github.io/tune/" class="uri">https://tidymodels.github.io/tune/</a>).</li>
+<li>Max Kuhn, one of the developer of tidymodels packages, was interviewed on the <a href="https://r-podcast.org/episode/028-max-kuhn/">R podcast</a> and on the <a href="https://www.datacamp.com/community/podcast/data-science-pharmaceuticals">DataFramed</a> podcast.</li>
+<li>Max Kuhn is the author of the books <a href="http://appliedpredictivemodeling.com/">Applied Predictive Modeling</a> (with Kjell Johnson) and <a href="https://topepo.github.io/caret/">The caret Package</a>.
+<!-- - For combining predictions from multiple models (i.e., ensembling, stacking), there is the [**caretEnsemble**](https://cran.r-project.org/package=caretEnsemble) package and a [blog post](https://www.alexpghayes.com/blog/implementing-the-super-learner-with-tidymodels/) focusing on tidymodels by Alex Hayes. --></li>
+<li><a href="https://r4ds.had.co.nz/">R for Data Science</a> by Hadley Wickham and Garrett Grolemund covers all the basics of data import, transformation, visualization, and modeling using tidyverse and tidymodels packages.</li>
+<li>Variable importance (plots) are provided by the package <a href="https://koalaverse.github.io/vip/">vip</a>, which works well in combination with tidymodels packages.</li>
+<li>Recipe steps for dealing with unbalanced data are provided by the <a href="https://cran.r-project.org/web/packages/themis/index.html">themis</a> package.</li>
+<li>There are a few more tidymodels packages that I did not cover herein, like <strong>infer</strong> or <strong>tidytext</strong>. Read more about these at <a href="https://tidymodels.github.io/tidymodels/" class="uri">https://tidymodels.github.io/tidymodels/</a>.</li>
+</ul>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>For a list of models available via <strong>parsnip</strong>, see <a href="https://tidymodels.github.io/parsnip/articles/articles/Models.html" class="uri">https://tidymodels.github.io/parsnip/articles/articles/Models.html</a>.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+</ol>
+</div>
