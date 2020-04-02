@@ -38,6 +38,8 @@ output:
 </ul></li>
 <li><a href="#summary">Summary</a></li>
 <li><a href="#further-resources">Further Resources</a></li>
+<li><a href="#session-info">Session Info</a></li>
+<li><a href="#updates">Updates</a></li>
 </ul>
 </div>
 
@@ -47,19 +49,17 @@ Thus, tidymodels is to modeling what the tidyverse is to data wrangling.
 Herein, I will walk through a machine learning example from start to end and explain how to use the appropriate tidymodels packages at each place.</p>
 <div id="set-up" class="section level2">
 <h2>Set Up</h2>
-<p>Loading the <strong>tidymodels</strong> package loads a bunch of packages for modeling and also a few others from the tidyverse like <strong>ggplot2</strong> and <strong>dplyr</strong>.
-Furthermore, we’ll need <strong>tune</strong> and <strong>workflows</strong>, which are also part of the tidymodels ecosystem but are not attached by <code>library("tidymodels")</code>.</p>
+<p>Loading the <strong>tidymodels</strong> package loads a bunch of packages for modeling and also a few others from the tidyverse like <strong>ggplot2</strong> and <strong>dplyr</strong>.</p>
 <pre class="r"><code>library(&quot;conflicted&quot;)
 library(&quot;tidymodels&quot;)
-#&gt; -- Attaching packages ------------------------------------------------ tidymodels 0.0.3 --
-#&gt; v broom     0.5.4     v purrr     0.3.3
-#&gt; v dials     0.0.4     v recipes   0.1.9
-#&gt; v dplyr     0.8.3     v rsample   0.0.5
-#&gt; v ggplot2   3.2.1     v tibble    2.1.3
-#&gt; v infer     0.5.1     v yardstick 0.0.5
-#&gt; v parsnip   0.0.5
-library(&quot;tune&quot;)
-library(&quot;workflows&quot;)
+#&gt; -- Attaching packages ------------------------------------------------ tidymodels 0.1.0 --
+#&gt; v broom     0.5.5      v recipes   0.1.10
+#&gt; v dials     0.0.5      v rsample   0.0.6 
+#&gt; v dplyr     0.8.5      v tibble    3.0.0 
+#&gt; v ggplot2   3.3.0      v tune      0.0.1 
+#&gt; v infer     0.5.1      v workflows 0.1.1 
+#&gt; v parsnip   0.0.5      v yardstick 0.0.6 
+#&gt; v purrr     0.3.3
 
 # Additional packages for dataviz etc.
 library(&quot;ggrepel&quot;)     # for geom_label_repel()
@@ -136,10 +136,9 @@ Furthermore, a quadratic effect of carat is added using <code>step_poly()</code>
     step_log(all_outcomes()) %&gt;%
     step_normalize(all_predictors(), -all_nominal()) %&gt;%
     step_dummy(all_nominal()) %&gt;%
-    step_poly(carat, degree = 2) %&gt;% 
-    prep() 
+    step_poly(carat, degree = 2)
 
-dia_rec
+prep(dia_rec)
 #&gt; Data Recipe
 #&gt; 
 #&gt; Inputs:
@@ -159,7 +158,7 @@ dia_rec
 <p>Calling <code>prep()</code> on a recipe applies all the steps.
 You can now call <code>juice()</code> to extract the transformed data set or call <code>bake()</code> on a new data set.</p>
 <pre class="r"><code># Note the linear and quadratic term for carat and the dummies for e.g. color
-dia_juiced &lt;- juice(dia_rec)
+dia_juiced &lt;- juice(prep(dia_rec))
 dim(dia_juiced)
 #&gt; [1] 5395   25
 names(dia_juiced)
@@ -272,38 +271,90 @@ select(lm_predicted, rowid, price, .fitted:.std.resid)
 <div id="evaluating-model-performance-yardstick" class="section level2">
 <h2>Evaluating Model Performance: <strong>yardstick</strong></h2>
 <p>We already saw performance measures RMSE and R squared in the output of <code>glance()</code> above.
-The <strong>yardstick</strong> package is specifically designed for such measures for both numeric and categorical outcomes, and it plays well with multiple predictions.</p>
+The <strong>yardstick</strong> package is specifically designed for such measures for both numeric and categorical outcomes, and it plays well with grouped predictions (e.g., from cross-validation).</p>
 <p>Let’s use <strong>rsample</strong>, <strong>parsnip</strong>, and <strong>yardstick</strong> for cross-validation to get a more accurate estimation of RMSE.</p>
-<p>In the following pipeline, the model is <code>fit()</code> separately to the three <em>analysis data</em> sets, and then the fitted models are used to <code>predict()</code> on the three corresponding <em>assessment data</em> sets (i.e., 3-fold cross-validation).
-Before that, <code>analysis()</code> and <code>assessment()</code> are used to extract the respective folds, and <code>bake()</code> is used to apply the recipe steps to these data sets.
-(Note that one could have created <code>dia_vfold</code> using the prepped rather than the raw data in the first place to get rid of these two <code>bake()</code> calls.)</p>
-<p>Herein, I use list columns to store all information about the three folds in one data frame and a combination of <code>dplyr::mutate()</code> and <code>purrr::map()</code> to “loop” across the rows of the data frame.</p>
-<pre class="r"><code>lm_fit2 &lt;- dia_vfold %&gt;% 
-    mutate(
-        df_ana = map(splits,  analysis),
-        df_ana = map(df_ana, ~bake(dia_rec, .x)),
-        df_ass = map(splits,  assessment),
-        df_ass = map(df_ass, ~bake(dia_rec, .x)),
-        model_fit  = map(df_ana, ~fit(lm_model, price ~ ., data = .x)),
-        model_pred = map2(model_fit, df_ass, ~predict(.x, new_data = .y)))
+<p>In the following pipeline, the model is <code>fit()</code> separately to the three <em>analysis data</em> sets, and then the fitted models are used to <code>predict()</code> on the three corresponding <em>assessment data</em> sets (i.e., 3-fold cross-validation).</p>
+<p>Before that, <code>analysis()</code> and <code>assessment()</code> are used to extract the respective folds from <code>dia_vfold</code>.
+Furthermore, the recipe <code>dia_rec</code> is <code>prep</code>ped (i.e., trained) using the analysis data of each fold, and this prepped recipe is then applied to the assessment data of each fold using <code>bake()</code>.
+Preparing the recipe separately for each fold (rather than once for the whole training data set <code>dia_train</code>) guards against <a href="https://machinelearningmastery.com/data-leakage-machine-learning/">data leakage</a>.</p>
+<p>The code in the following chunk makes use of list columns to store all information about the three folds in a single tibble <code>lm_fit2</code>, and a combination of <code>dplyr::mutate()</code> and <code>purrr::map()</code> is used to “loop” across the three rows of the tibble.</p>
+<pre class="r"><code># How does dia_vfold look?
+dia_vfold
+#&gt; #  3-fold cross-validation using stratification 
+#&gt; # A tibble: 3 x 2
+#&gt;   splits              id   
+#&gt;   &lt;named list&gt;        &lt;chr&gt;
+#&gt; 1 &lt;split [3.6K/1.8K]&gt; Fold1
+#&gt; 2 &lt;split [3.6K/1.8K]&gt; Fold2
+#&gt; 3 &lt;split [3.6K/1.8K]&gt; Fold3
+
+# Extract analysis/training and assessment/testing data
+lm_fit2 &lt;- mutate(dia_vfold,
+                  df_ana = map (splits,  analysis),
+                  df_ass = map (splits,  assessment))
 lm_fit2
 #&gt; #  3-fold cross-validation using stratification 
-#&gt; # A tibble: 3 x 6
-#&gt;   splits         id    df_ana          df_ass         model_fit  model_pred     
-#&gt; * &lt;named list&gt;   &lt;chr&gt; &lt;named list&gt;    &lt;named list&gt;   &lt;named li&gt; &lt;named list&gt;   
-#&gt; 1 &lt;split [3.6K/~ Fold1 &lt;tibble [3,596~ &lt;tibble [1,79~ &lt;fit[+]&gt;   &lt;tibble [1,799~
-#&gt; 2 &lt;split [3.6K/~ Fold2 &lt;tibble [3,596~ &lt;tibble [1,79~ &lt;fit[+]&gt;   &lt;tibble [1,799~
-#&gt; 3 &lt;split [3.6K/~ Fold3 &lt;tibble [3,598~ &lt;tibble [1,79~ &lt;fit[+]&gt;   &lt;tibble [1,797~</code></pre>
-<p>Now, we can extract the actual prices from the assessment data and compare them to the predicted prices.
-Across the three folds, we see that the RMSE is a little higher and R squared a little smaller compared to above (see output of <code>glance(lm_fit1$fit)</code>).
+#&gt; # A tibble: 3 x 4
+#&gt;   splits              id    df_ana                df_ass               
+#&gt; * &lt;named list&gt;        &lt;chr&gt; &lt;named list&gt;          &lt;named list&gt;         
+#&gt; 1 &lt;split [3.6K/1.8K]&gt; Fold1 &lt;tibble [3,596 x 10]&gt; &lt;tibble [1,799 x 10]&gt;
+#&gt; 2 &lt;split [3.6K/1.8K]&gt; Fold2 &lt;tibble [3,596 x 10]&gt; &lt;tibble [1,799 x 10]&gt;
+#&gt; 3 &lt;split [3.6K/1.8K]&gt; Fold3 &lt;tibble [3,598 x 10]&gt; &lt;tibble [1,797 x 10]&gt;
+
+lm_fit2 &lt;- 
+    lm_fit2 %&gt;% 
+    # prep, juice, bake
+    mutate(
+        recipe = map (df_ana, ~prep(dia_rec, training = .x)),
+        df_ana = map (recipe,  juice),
+        df_ass = map2(recipe, 
+                      df_ass, ~bake(.x, new_data = .y))) %&gt;% 
+    # fit
+    mutate(
+        model_fit  = map(df_ana, ~fit(lm_model, price ~ ., data = .x))) %&gt;% 
+    # predict
+    mutate(
+        model_pred = map2(model_fit, df_ass, ~predict(.x, new_data = .y)))
+  
+select(lm_fit2, id, recipe:model_pred)
+#&gt; # A tibble: 3 x 4
+#&gt;   id    recipe       model_fit    model_pred          
+#&gt;   &lt;chr&gt; &lt;named list&gt; &lt;named list&gt; &lt;named list&gt;        
+#&gt; 1 Fold1 &lt;recipe&gt;     &lt;fit[+]&gt;     &lt;tibble [1,799 x 1]&gt;
+#&gt; 2 Fold2 &lt;recipe&gt;     &lt;fit[+]&gt;     &lt;tibble [1,799 x 1]&gt;
+#&gt; 3 Fold3 &lt;recipe&gt;     &lt;fit[+]&gt;     &lt;tibble [1,797 x 1]&gt;</code></pre>
+<p>Note that the cross-validation code above is a bit lengthy—for didactic purposes.
+Wrapper functions (e.g., from the <strong>tune</strong> package) would lead to more concise code: <code>fit_resamples()</code> could be used here (without tuning), or <code>tune_grid()</code> and <code>tune_bayes()</code> (see below).</p>
+<p>Now, we can extract the actual prices <code>price</code> from the assessment data and compare them to the predicted prices <code>.pred</code>.
+Then, the <strong>yardstick</strong> package comes into play: The function <code>metrics()</code> calculates three different metrics for numeric outcomes.
+Furthermore, it automatically recognizes that <code>lm_preds</code> is grouped by folds and thus calculates the metrics for each fold.</p>
+<p>Across the three folds, we see that the RMSE is a little higher and R squared a little smaller compared to above (see output of <code>glance(lm_fit1$fit)</code>).
 This is expected, since out-of-sample prediction is harder but also way more useful.</p>
-<pre class="r"><code>lm_fit2 %&gt;% 
+<pre class="r"><code>lm_preds &lt;- 
+    lm_fit2 %&gt;% 
     mutate(res = map2(df_ass, model_pred, ~data.frame(price = .x$price,
                                                       .pred = .y$.pred))) %&gt;% 
     select(id, res) %&gt;% 
-    unnest(res) %&gt;% 
-    group_by(id) %&gt;% 
-    metrics(truth = price, estimate = .pred)
+    tidyr::unnest(res) %&gt;% 
+    group_by(id)
+lm_preds
+#&gt; # A tibble: 5,395 x 3
+#&gt; # Groups:   id [3]
+#&gt;    id    price .pred
+#&gt;    &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+#&gt;  1 Fold1  5.84  5.83
+#&gt;  2 Fold1  6.00  6.25
+#&gt;  3 Fold1  6.00  6.05
+#&gt;  4 Fold1  6.32  6.56
+#&gt;  5 Fold1  6.32  6.31
+#&gt;  6 Fold1  7.92  7.73
+#&gt;  7 Fold1  7.93  7.58
+#&gt;  8 Fold1  7.93  7.80
+#&gt;  9 Fold1  7.93  7.88
+#&gt; 10 Fold1  7.94  7.91
+#&gt; # ... with 5,385 more rows
+
+metrics(lm_preds, truth = price, estimate = .pred)
 #&gt; # A tibble: 9 x 4
 #&gt;   id    .metric .estimator .estimate
 #&gt;   &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
@@ -316,8 +367,8 @@ This is expected, since out-of-sample prediction is harder but also way more use
 #&gt; 7 Fold1 mae     standard       0.116
 #&gt; 8 Fold2 mae     standard       0.115
 #&gt; 9 Fold3 mae     standard       0.110</code></pre>
-<p>Note that <code>yardstick::metrics()</code> has default measures for numeric and categorical outcomes, and here RMSE, R squared, and the mean absolute difference (MAE) is returned.
-You could also use one metric directly like <code>rmse</code> or define a custom set of metrics via <code>metric_set()</code>.</p>
+<p>Note that <code>metrics()</code> has default measures for numeric and categorical outcomes, and here RMSE, R squared, and the mean absolute difference (MAE) are returned.
+You could also use one metric directly like <code>rmse()</code> or define a custom set of metrics via <code>metric_set()</code>.</p>
 </div>
 <div id="tuning-model-parameters-tune-and-dials" class="section level2">
 <h2>Tuning Model Parameters: <strong>tune</strong> and <strong>dials</strong></h2>
@@ -352,7 +403,7 @@ mtry()
 <p>Thus, this model is not yet ready for fitting.
 You can either specify the maximum for <code>mtry</code> yourself using <code>update()</code>, or you can use <code>finalize()</code> to let the data decide on the maximum.</p>
 <pre class="r"><code>rf_model %&gt;% 
-    parameters %&gt;% 
+    parameters() %&gt;% 
     update(mtry = mtry(c(1L, 5L)))
 #&gt; Collection of 1 parameters for tuning
 #&gt; 
@@ -360,10 +411,10 @@ You can either specify the maximum for <code>mtry</code> yourself using <code>up
 #&gt;  mtry           mtry    nparam[+]
 
 rf_model %&gt;% 
-    parameters %&gt;% 
+    parameters() %&gt;% 
     # Here, the maximum of mtry equals the number of predictors, i.e., 24.
-    finalize(x = select(juice(dia_rec), -price)) %&gt;% 
-    magrittr::extract2(&quot;object&quot;)
+    finalize(x = select(juice(prep(dia_rec)), -price)) %&gt;% 
+    pull(&quot;object&quot;)
 #&gt; [[1]]
 #&gt; # Randomly Selected Predictors  (quantitative)
 #&gt; Range: [1, 24]</code></pre>
@@ -375,7 +426,8 @@ As you saw in the plot above, polynomials up to a degree of four seemed well sui
 However, a simpler model might do equally well, and we want to use cross-validation to decide on the degree that works best.</p>
 <p>Similar to tuning parameters in a model, certain aspects of a recipe can be tuned.
 Let’s define a second recipe and use <code>tune()</code> inside <code>step_poly()</code>.</p>
-<pre class="r"><code># Note that this recipe cannot be prepped (and juiced), since &quot;degree&quot; is unknown
+<pre class="r"><code># Note that this recipe cannot be prepped (and juiced), since &quot;degree&quot; is a
+# tuning parameter
 dia_rec2 &lt;-
     recipe(price ~ ., data = dia_train) %&gt;%
     step_log(all_outcomes()) %&gt;%
@@ -385,7 +437,7 @@ dia_rec2 &lt;-
 
 dia_rec2 %&gt;% 
     parameters() %&gt;% 
-    magrittr::extract2(&quot;object&quot;)
+    pull(&quot;object&quot;)
 #&gt; [[1]]
 #&gt; Polynomial Degree  (quantitative)
 #&gt; Range: [1, 3]</code></pre>
@@ -433,7 +485,7 @@ rf_param$object
 #&gt; Polynomial Degree  (quantitative)
 #&gt; Range: [2, 4]</code></pre>
 <p>Third, we want to use cross-validation for tuning, that is, to select the best combination of the hyperparameters.
-Bayesian optimization (see <code>vignette("svm_classification", package = "tune")</code>) is recommended for complex tuning problems, and this can be done using <code>tune_bayes()</code>.</p>
+Bayesian optimization (see <a href="https://tidymodels.github.io/tune/articles/extras/svm_classification.html">https://tidymodels.github.io/tune/</a>) is recommended for complex tuning problems, and this can be done using <code>tune_bayes()</code>.</p>
 <p>Herein, however, grid search will suffice.
 To this end, let’s create a grid of all necessary parameter combinations.</p>
 <pre class="r"><code>rf_grid &lt;- grid_regular(rf_param, levels = 3)
@@ -453,7 +505,7 @@ rf_grid
 <p>Cross-validation and hyperparameter tuning can involve fitting many models.
 Herein, for example, we have to fit 3 x 9 models (folds x parameter combinations).
 To increase speed, we can fit the models in parallel.
-This is directly supported by the <strong>tune</strong> package (see <code>vignette("optimizations", package = "tune")</code>).</p>
+This is directly supported by the <strong>tune</strong> package (see <a href="https://tidymodels.github.io/tune/articles/extras/optimizations.html#parallel-processing">https://tidymodels.github.io/tune/</a>).</p>
 <pre class="r"><code>library(&quot;doFuture&quot;)
 all_cores &lt;- parallel::detectCores(logical = FALSE)
 
@@ -546,9 +598,173 @@ Alex Hayes has a related <a href="https://www.alexpghayes.com/blog/implementing-
 <li>There are a few more tidymodels packages that I did not cover herein, like <strong>infer</strong> or <strong>tidytext</strong>. Read more about these at <a href="https://tidymodels.github.io/tidymodels/" class="uri">https://tidymodels.github.io/tidymodels/</a>.</li>
 </ul>
 </div>
+<div id="session-info" class="section level2">
+<h2>Session Info</h2>
+<pre class="r"><code>sessioninfo::session_info()
+#&gt; - Session info -------------------------------------------------------------------------
+#&gt;  setting  value                       
+#&gt;  version  R version 3.6.2 (2019-12-12)
+#&gt;  os       Windows 10 x64              
+#&gt;  system   x86_64, mingw32             
+#&gt;  ui       RTerm                       
+#&gt;  language (EN)                        
+#&gt;  collate  German_Germany.1252         
+#&gt;  ctype    German_Germany.1252         
+#&gt;  tz       Europe/Berlin               
+#&gt;  date     2020-04-02                  
+#&gt; 
+#&gt; - Packages -----------------------------------------------------------------------------
+#&gt;  package       * version    date       lib source                      
+#&gt;  assertthat      0.2.1      2019-03-21 [1] CRAN (R 3.6.2)              
+#&gt;  backports       1.1.5      2019-10-02 [1] CRAN (R 3.6.1)              
+#&gt;  base64enc       0.1-3      2015-07-28 [1] CRAN (R 3.6.0)              
+#&gt;  bayesplot       1.7.1      2019-12-01 [1] CRAN (R 3.6.2)              
+#&gt;  blogdown        0.18       2020-03-04 [1] CRAN (R 3.6.3)              
+#&gt;  bookdown        0.18       2020-03-05 [1] CRAN (R 3.6.3)              
+#&gt;  boot            1.3-23     2019-07-05 [2] CRAN (R 3.6.2)              
+#&gt;  broom         * 0.5.5      2020-02-29 [1] CRAN (R 3.6.3)              
+#&gt;  callr           3.4.3      2020-03-28 [1] CRAN (R 3.6.2)              
+#&gt;  class           7.3-15     2019-01-01 [2] CRAN (R 3.6.2)              
+#&gt;  cli             2.0.2      2020-02-28 [1] CRAN (R 3.6.3)              
+#&gt;  codetools       0.2-16     2018-12-24 [2] CRAN (R 3.6.2)              
+#&gt;  colorspace      1.4-1      2019-03-18 [1] CRAN (R 3.6.1)              
+#&gt;  colourpicker    1.0        2017-09-27 [1] CRAN (R 3.6.2)              
+#&gt;  conflicted    * 1.0.4      2019-06-21 [1] CRAN (R 3.6.3)              
+#&gt;  corrplot      * 0.84       2017-10-16 [1] CRAN (R 3.6.3)              
+#&gt;  crayon          1.3.4      2017-09-16 [1] CRAN (R 3.6.2)              
+#&gt;  crosstalk       1.1.0.1    2020-03-13 [1] CRAN (R 3.6.3)              
+#&gt;  dials         * 0.0.5      2020-04-01 [1] CRAN (R 3.6.2)              
+#&gt;  DiceDesign      1.8-1      2019-07-31 [1] CRAN (R 3.6.2)              
+#&gt;  digest          0.6.25     2020-02-23 [1] CRAN (R 3.6.3)              
+#&gt;  dplyr         * 0.8.5      2020-03-07 [1] CRAN (R 3.6.3)              
+#&gt;  DT              0.13       2020-03-23 [1] CRAN (R 3.6.3)              
+#&gt;  dygraphs        1.1.1.6    2018-07-11 [1] CRAN (R 3.6.2)              
+#&gt;  ellipsis        0.3.0      2019-09-20 [1] CRAN (R 3.6.2)              
+#&gt;  evaluate        0.14       2019-05-28 [1] CRAN (R 3.6.2)              
+#&gt;  fansi           0.4.1      2020-01-08 [1] CRAN (R 3.6.2)              
+#&gt;  farver          2.0.3      2020-01-16 [1] CRAN (R 3.6.2)              
+#&gt;  fastmap         1.0.1      2019-10-08 [1] CRAN (R 3.6.2)              
+#&gt;  foreach         1.5.0      2020-03-30 [1] CRAN (R 3.6.2)              
+#&gt;  furrr           0.1.0      2018-05-16 [1] CRAN (R 3.6.2)              
+#&gt;  future          1.16.0     2020-01-16 [1] CRAN (R 3.6.2)              
+#&gt;  generics        0.0.2      2018-11-29 [1] CRAN (R 3.6.2)              
+#&gt;  ggplot2       * 3.3.0      2020-03-05 [1] CRAN (R 3.6.3)              
+#&gt;  ggrepel       * 0.8.2      2020-03-08 [1] CRAN (R 3.6.3)              
+#&gt;  ggridges        0.5.2      2020-01-12 [1] CRAN (R 3.6.2)              
+#&gt;  globals         0.12.5     2019-12-07 [1] CRAN (R 3.6.1)              
+#&gt;  glue            1.3.2      2020-03-12 [1] CRAN (R 3.6.3)              
+#&gt;  gower           0.2.1      2019-05-14 [1] CRAN (R 3.6.1)              
+#&gt;  GPfit           1.0-8      2019-02-08 [1] CRAN (R 3.6.2)              
+#&gt;  gridExtra       2.3        2017-09-09 [1] CRAN (R 3.6.2)              
+#&gt;  gtable          0.3.0      2019-03-25 [1] CRAN (R 3.6.2)              
+#&gt;  gtools          3.8.1      2018-06-26 [1] CRAN (R 3.6.0)              
+#&gt;  hardhat         0.1.2      2020-02-28 [1] CRAN (R 3.6.3)              
+#&gt;  htmltools       0.4.0      2019-10-04 [1] CRAN (R 3.6.2)              
+#&gt;  htmlwidgets     1.5.1      2019-10-08 [1] CRAN (R 3.6.2)              
+#&gt;  httpuv          1.5.2      2019-09-11 [1] CRAN (R 3.6.2)              
+#&gt;  igraph          1.2.5      2020-03-19 [1] CRAN (R 3.6.3)              
+#&gt;  infer         * 0.5.1      2019-11-19 [1] CRAN (R 3.6.2)              
+#&gt;  inline          0.3.15     2018-05-18 [1] CRAN (R 3.6.2)              
+#&gt;  ipred           0.9-9      2019-04-28 [1] CRAN (R 3.6.2)              
+#&gt;  iterators       1.0.12     2019-07-26 [1] CRAN (R 3.6.2)              
+#&gt;  janeaustenr     0.1.5      2017-06-10 [1] CRAN (R 3.6.2)              
+#&gt;  knitr           1.28       2020-02-06 [1] CRAN (R 3.6.2)              
+#&gt;  labeling        0.3        2014-08-23 [1] CRAN (R 3.6.0)              
+#&gt;  later           1.0.0      2019-10-04 [1] CRAN (R 3.6.2)              
+#&gt;  lattice         0.20-38    2018-11-04 [2] CRAN (R 3.6.2)              
+#&gt;  lava            1.6.7      2020-03-05 [1] CRAN (R 3.6.3)              
+#&gt;  lhs             1.0.1      2019-02-03 [1] CRAN (R 3.6.2)              
+#&gt;  lifecycle       0.2.0      2020-03-06 [1] CRAN (R 3.6.3)              
+#&gt;  listenv         0.8.0      2019-12-05 [1] CRAN (R 3.6.2)              
+#&gt;  lme4            1.1-21     2019-03-05 [1] CRAN (R 3.6.2)              
+#&gt;  loo             2.2.0      2019-12-19 [1] CRAN (R 3.6.2)              
+#&gt;  lubridate       1.7.4      2018-04-11 [1] CRAN (R 3.6.2)              
+#&gt;  magrittr        1.5        2014-11-22 [1] CRAN (R 3.6.2)              
+#&gt;  markdown        1.1        2019-08-07 [1] CRAN (R 3.6.2)              
+#&gt;  MASS            7.3-51.4   2019-03-31 [2] CRAN (R 3.6.2)              
+#&gt;  Matrix          1.2-18     2019-11-27 [2] CRAN (R 3.6.2)              
+#&gt;  matrixStats     0.56.0     2020-03-13 [1] CRAN (R 3.6.3)              
+#&gt;  memoise         1.1.0      2017-04-21 [1] CRAN (R 3.6.2)              
+#&gt;  mgcv            1.8-31     2019-11-09 [2] CRAN (R 3.6.2)              
+#&gt;  mime            0.9        2020-02-04 [1] CRAN (R 3.6.2)              
+#&gt;  miniUI          0.1.1.1    2018-05-18 [1] CRAN (R 3.6.2)              
+#&gt;  minqa           1.2.4      2014-10-09 [1] CRAN (R 3.6.2)              
+#&gt;  munsell         0.5.0      2018-06-12 [1] CRAN (R 3.6.2)              
+#&gt;  nlme            3.1-142    2019-11-07 [2] CRAN (R 3.6.2)              
+#&gt;  nloptr          1.2.2.1    2020-03-11 [1] CRAN (R 3.6.3)              
+#&gt;  nnet            7.3-12     2016-02-02 [2] CRAN (R 3.6.2)              
+#&gt;  parsnip       * 0.0.5      2020-01-07 [1] CRAN (R 3.6.2)              
+#&gt;  pillar          1.4.3      2019-12-20 [1] CRAN (R 3.6.2)              
+#&gt;  pkgbuild        1.0.6      2019-10-09 [1] CRAN (R 3.6.2)              
+#&gt;  pkgconfig       2.0.3      2019-09-22 [1] CRAN (R 3.6.2)              
+#&gt;  plyr            1.8.6      2020-03-03 [1] CRAN (R 3.6.3)              
+#&gt;  prettyunits     1.1.1      2020-01-24 [1] CRAN (R 3.6.2)              
+#&gt;  pROC            1.16.2     2020-03-19 [1] CRAN (R 3.6.3)              
+#&gt;  processx        3.4.2      2020-02-09 [1] CRAN (R 3.6.2)              
+#&gt;  prodlim         2019.11.13 2019-11-17 [1] CRAN (R 3.6.2)              
+#&gt;  promises        1.1.0      2019-10-04 [1] CRAN (R 3.6.2)              
+#&gt;  ps              1.3.2      2020-02-13 [1] CRAN (R 3.6.2)              
+#&gt;  purrr         * 0.3.3      2019-10-18 [1] CRAN (R 3.6.2)              
+#&gt;  R6              2.4.1      2019-11-12 [1] CRAN (R 3.6.2)              
+#&gt;  ranger          0.12.1     2020-01-10 [1] CRAN (R 3.6.2)              
+#&gt;  Rcpp            1.0.4      2020-03-17 [1] CRAN (R 3.6.3)              
+#&gt;  recipes       * 0.1.10     2020-03-18 [1] CRAN (R 3.6.3)              
+#&gt;  reshape2        1.4.3      2017-12-11 [1] CRAN (R 3.6.2)              
+#&gt;  rlang           0.4.5.9000 2020-03-25 [1] Github (r-lib/rlang@a90b04b)
+#&gt;  rmarkdown       2.1        2020-01-20 [1] CRAN (R 3.6.2)              
+#&gt;  rpart           4.1-15     2019-04-12 [2] CRAN (R 3.6.2)              
+#&gt;  rsample       * 0.0.6      2020-03-31 [1] CRAN (R 3.6.2)              
+#&gt;  rsconnect       0.8.16     2019-12-13 [1] CRAN (R 3.6.2)              
+#&gt;  rstan           2.19.3     2020-02-11 [1] CRAN (R 3.6.2)              
+#&gt;  rstanarm        2.19.3     2020-02-11 [1] CRAN (R 3.6.2)              
+#&gt;  rstantools      2.0.0      2019-09-15 [1] CRAN (R 3.6.2)              
+#&gt;  rstudioapi      0.11       2020-02-07 [1] CRAN (R 3.6.2)              
+#&gt;  scales        * 1.1.0      2019-11-18 [1] CRAN (R 3.6.2)              
+#&gt;  sessioninfo     1.1.1      2018-11-05 [1] CRAN (R 3.6.2)              
+#&gt;  shiny           1.4.0.2    2020-03-13 [1] CRAN (R 3.6.3)              
+#&gt;  shinyjs         1.1        2020-01-13 [1] CRAN (R 3.6.2)              
+#&gt;  shinystan       2.5.0      2018-05-01 [1] CRAN (R 3.6.2)              
+#&gt;  shinythemes     1.1.2      2018-11-06 [1] CRAN (R 3.6.2)              
+#&gt;  SnowballC       0.6.0      2019-01-15 [1] CRAN (R 3.6.0)              
+#&gt;  StanHeaders     2.21.0-1   2020-01-19 [1] CRAN (R 3.6.2)              
+#&gt;  stringi         1.4.6      2020-02-17 [1] CRAN (R 3.6.2)              
+#&gt;  stringr         1.4.0      2019-02-10 [1] CRAN (R 3.6.2)              
+#&gt;  survival        3.1-8      2019-12-03 [2] CRAN (R 3.6.2)              
+#&gt;  threejs         0.3.3      2020-01-21 [1] CRAN (R 3.6.2)              
+#&gt;  tibble        * 3.0.0      2020-03-30 [1] CRAN (R 3.6.2)              
+#&gt;  tidymodels    * 0.1.0      2020-02-16 [1] CRAN (R 3.6.2)              
+#&gt;  tidyposterior   0.0.2      2018-11-15 [1] CRAN (R 3.6.2)              
+#&gt;  tidypredict     0.4.5      2020-02-10 [1] CRAN (R 3.6.2)              
+#&gt;  tidyr           1.0.2      2020-01-24 [1] CRAN (R 3.6.2)              
+#&gt;  tidyselect      1.0.0      2020-01-27 [1] CRAN (R 3.6.2)              
+#&gt;  tidytext        0.2.3      2020-03-04 [1] CRAN (R 3.6.3)              
+#&gt;  timeDate        3043.102   2018-02-21 [1] CRAN (R 3.6.2)              
+#&gt;  tokenizers      0.2.1      2018-03-29 [1] CRAN (R 3.6.2)              
+#&gt;  tune          * 0.0.1      2020-02-11 [1] CRAN (R 3.6.3)              
+#&gt;  utf8            1.1.4      2018-05-24 [1] CRAN (R 3.6.2)              
+#&gt;  vctrs           0.2.4      2020-03-10 [1] CRAN (R 3.6.3)              
+#&gt;  withr           2.1.2      2018-03-15 [1] CRAN (R 3.6.2)              
+#&gt;  workflows     * 0.1.1      2020-03-17 [1] CRAN (R 3.6.3)              
+#&gt;  xfun            0.12       2020-01-13 [1] CRAN (R 3.6.2)              
+#&gt;  xtable          1.8-4      2019-04-21 [1] CRAN (R 3.6.2)              
+#&gt;  xts             0.12-0     2020-01-19 [1] CRAN (R 3.6.2)              
+#&gt;  yaml            2.2.1      2020-02-01 [1] CRAN (R 3.6.2)              
+#&gt;  yardstick     * 0.0.6      2020-03-17 [1] CRAN (R 3.6.3)              
+#&gt;  zoo             1.8-7      2020-01-10 [1] CRAN (R 3.6.2)              
+#&gt; 
+#&gt; [1] C:/Users/hp/Documents/R/win-library/3.6
+#&gt; [2] C:/Program Files/R/R-3.6.2/library</code></pre>
+</div>
+<div id="updates" class="section level2">
+<h2>Updates</h2>
+<p>This blog post was modified on 2012-04-02.
+In the previous version, cross-validation in the section <em>Evaluating Model Performance</em> above was done using a recipe that was prepped on the whole training data.
+This could potentially lead to <a href="https://machinelearningmastery.com/data-leakage-machine-learning/">data leakage</a>, as pointed out by <a href="https://twitter.com/awunderground/status/1232485357955891200">Aaron R. Williams</a>.
+Thus, this was changed and the new version uses a recipe that is prepped separately for each fold.</p>
+</div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>For a list of models available via <strong>parsnip</strong>, see <a href="https://tidymodels.github.io/parsnip/articles/articles/Models.html" class="uri">https://tidymodels.github.io/parsnip/articles/articles/Models.html</a>.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn1"><p>For a list of models available via <strong>parsnip</strong>, see <a href="https://tidymodels.github.io/parsnip/articles/articles/Models.html" class="uri">https://tidymodels.github.io/parsnip/articles/articles/Models.html</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

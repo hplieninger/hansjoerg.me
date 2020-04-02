@@ -24,6 +24,19 @@ output:
 knitr::opts_chunk$set(echo = TRUE, collapse = TRUE, comment = "#>")
 options(width = 90)
 Sys.setenv("RSTUDIO_CONSOLE_WIDTH" = 90)
+
+predict.workflow <- function (object, new_data, type = NULL, opts = list(), ...) 
+{
+    workflow <- object
+    if (!workflow$trained) {
+        abort("Workflow has not yet been trained. Do you need to call `fit()`?")
+    }
+    blueprint <- workflow$pre$mold$blueprint
+    forged <- hardhat::forge(new_data, blueprint, outcomes = TRUE)
+    new_data <- forged$predictors
+    fit <- workflow$fit$fit
+    predict(fit, new_data, type = type, opts = opts, ...)
+}
 ```
 
 caret is a well known R package for machine learning, which includes almost everything from data pre-processing to cross-validation.
@@ -34,13 +47,10 @@ Herein, I will walk through a machine learning example from start to end and exp
 ## Set Up
 
 Loading the **tidymodels** package loads a bunch of packages for modeling and also a few others from the tidyverse like **ggplot2** and **dplyr**.
-Furthermore, we'll need **tune** and **workflows**, which are also part of the tidymodels ecosystem but are not attached by `library("tidymodels")`.
 
 ```{r warning = FALSE}
 library("conflicted")
 library("tidymodels")
-library("tune")
-library("workflows")
 
 # Additional packages for dataviz etc.
 library("ggrepel")     # for geom_label_repel()
@@ -119,10 +129,9 @@ dia_rec <-
     step_log(all_outcomes()) %>%
     step_normalize(all_predictors(), -all_nominal()) %>%
     step_dummy(all_nominal()) %>%
-    step_poly(carat, degree = 2) %>% 
-    prep() 
+    step_poly(carat, degree = 2)
 
-dia_rec
+prep(dia_rec)
 ```
 
 Calling `prep()` on a recipe applies all the steps.
@@ -130,7 +139,7 @@ You can now call `juice()` to extract the transformed data set or call `bake()` 
 
 ```{r}
 # Note the linear and quadratic term for carat and the dummies for e.g. color
-dia_juiced <- juice(dia_rec)
+dia_juiced <- juice(prep(dia_rec))
 dim(dia_juiced)
 names(dia_juiced)
 ```
@@ -216,44 +225,71 @@ ggplot(lm_predicted, aes(.fitted, price)) +
 ## Evaluating Model Performance: **yardstick**
 
 We already saw performance measures RMSE and R squared in the output of `glance()` above.
-The **yardstick** package is specifically designed for such measures for both numeric and categorical outcomes, and it plays well with multiple predictions.
+The **yardstick** package is specifically designed for such measures for both numeric and categorical outcomes, and it plays well with grouped predictions (e.g., from cross-validation).
 
 Let's use **rsample**, **parsnip**, and **yardstick** for cross-validation to get a more accurate estimation of RMSE.
 
 In the following pipeline, the model is `fit()` separately to the three *analysis data* sets, and then the fitted models are used to `predict()` on the three corresponding *assessment data* sets (i.e., 3-fold cross-validation).
-Before that, `analysis()` and `assessment()` are used to extract the respective folds, and `bake()` is used to apply the recipe steps to these data sets.
-(Note that one could have created `dia_vfold` using the prepped rather than the raw data in the first place to get rid of these two `bake()` calls.)
 
-Herein, I use list columns to store all information about the three folds in one data frame and a combination of `dplyr::mutate()` and `purrr::map()` to "loop" across the rows of the data frame.
+Before that, `analysis()` and `assessment()` are used to extract the respective folds from `dia_vfold`.
+Furthermore, the recipe `dia_rec` is `prep`ped (i.e., trained) using the analysis data of each fold, and this prepped recipe is then applied to the assessment data of each fold using `bake()`.
+Preparing the recipe separately for each fold (rather than once for the whole training data set `dia_train`) guards against [data leakage](https://machinelearningmastery.com/data-leakage-machine-learning/).
+
+The code in the following chunk makes use of list columns to store all information about the three folds in a single tibble `lm_fit2`, and a combination of `dplyr::mutate()` and `purrr::map()` is used to "loop" across the three rows of the tibble.
 
 ```{r, cache = TRUE}
-lm_fit2 <- dia_vfold %>% 
-    mutate(
-        df_ana = map(splits,  analysis),
-        df_ana = map(df_ana, ~bake(dia_rec, .x)),
-        df_ass = map(splits,  assessment),
-        df_ass = map(df_ass, ~bake(dia_rec, .x)),
-        model_fit  = map(df_ana, ~fit(lm_model, price ~ ., data = .x)),
-        model_pred = map2(model_fit, df_ass, ~predict(.x, new_data = .y)))
+# How does dia_vfold look?
+dia_vfold
+
+# Extract analysis/training and assessment/testing data
+lm_fit2 <- mutate(dia_vfold,
+                  df_ana = map (splits,  analysis),
+                  df_ass = map (splits,  assessment))
 lm_fit2
+
+lm_fit2 <- 
+    lm_fit2 %>% 
+    # prep, juice, bake
+    mutate(
+        recipe = map (df_ana, ~prep(dia_rec, training = .x)),
+        df_ana = map (recipe,  juice),
+        df_ass = map2(recipe, 
+                      df_ass, ~bake(.x, new_data = .y))) %>% 
+    # fit
+    mutate(
+        model_fit  = map(df_ana, ~fit(lm_model, price ~ ., data = .x))) %>% 
+    # predict
+    mutate(
+        model_pred = map2(model_fit, df_ass, ~predict(.x, new_data = .y)))
+  
+select(lm_fit2, id, recipe:model_pred)
 ```
 
-Now, we can extract the actual prices from the assessment data and compare them to the predicted prices.
+Note that the cross-validation code above is a bit lengthy---for didactic purposes.
+Wrapper functions (e.g., from the **tune** package) would lead to more concise code: `fit_resamples()` could be used here (without tuning), or `tune_grid()` and `tune_bayes()` (see below).
+
+Now, we can extract the actual prices `price` from the assessment data and compare them to the predicted prices `.pred`.
+Then, the **yardstick** package comes into play: The function `metrics()` calculates three different metrics for numeric outcomes.
+Furthermore, it automatically recognizes that `lm_preds` is grouped by folds and thus calculates the metrics for each fold.
+
 Across the three folds, we see that the RMSE is a little higher and R squared a little smaller compared to above (see output of `glance(lm_fit1$fit)`).
 This is expected, since out-of-sample prediction is harder but also way more useful.
 
 ```{r}
-lm_fit2 %>% 
+lm_preds <- 
+    lm_fit2 %>% 
     mutate(res = map2(df_ass, model_pred, ~data.frame(price = .x$price,
                                                       .pred = .y$.pred))) %>% 
     select(id, res) %>% 
-    unnest(res) %>% 
-    group_by(id) %>% 
-    metrics(truth = price, estimate = .pred)
+    tidyr::unnest(res) %>% 
+    group_by(id)
+lm_preds
+
+metrics(lm_preds, truth = price, estimate = .pred)
 ```
 
-Note that `yardstick::metrics()` has default measures for numeric and categorical outcomes, and here RMSE, R squared, and the mean absolute difference (MAE) is returned.
-You could also use one metric directly like `rmse` or define a custom set of metrics via ` metric_set()`.
+Note that `metrics()` has default measures for numeric and categorical outcomes, and here RMSE, R squared, and the mean absolute difference (MAE) are returned.
+You could also use one metric directly like `rmse()` or define a custom set of metrics via ` metric_set()`.
 
 ## Tuning Model Parameters: **tune** and **dials**
 
@@ -286,14 +322,14 @@ You can either specify the maximum for `mtry` yourself using `update()`, or you 
 
 ```{r}
 rf_model %>% 
-    parameters %>% 
+    parameters() %>% 
     update(mtry = mtry(c(1L, 5L)))
 
 rf_model %>% 
-    parameters %>% 
+    parameters() %>% 
     # Here, the maximum of mtry equals the number of predictors, i.e., 24.
-    finalize(x = select(juice(dia_rec), -price)) %>% 
-    magrittr::extract2("object")
+    finalize(x = select(juice(prep(dia_rec)), -price)) %>% 
+    pull("object")
 ```
 
 ### Preparing Data for Tuning: **recipes**
@@ -306,7 +342,8 @@ Similar to tuning parameters in a model, certain aspects of a recipe can be tune
 Let's define a second recipe and use `tune()` inside `step_poly()`.
 
 ```{r}
-# Note that this recipe cannot be prepped (and juiced), since "degree" is unknown
+# Note that this recipe cannot be prepped (and juiced), since "degree" is a
+# tuning parameter
 dia_rec2 <-
     recipe(price ~ ., data = dia_train) %>%
     step_log(all_outcomes()) %>%
@@ -316,8 +353,7 @@ dia_rec2 <-
 
 dia_rec2 %>% 
     parameters() %>% 
-    magrittr::extract2("object")
-
+    pull("object")
 ```
 
 ### Combine Everything: **workflows**
@@ -346,7 +382,7 @@ rf_param$object
 ```
 
 Third, we want to use cross-validation for tuning, that is, to select the best combination of the hyperparameters.
-Bayesian optimization (see `vignette("svm_classification", package = "tune")`) is recommended for complex tuning problems, and this can be done using `tune_bayes()`.
+Bayesian optimization (see [https://tidymodels.github.io/tune/](https://tidymodels.github.io/tune/articles/extras/svm_classification.html)) is recommended for complex tuning problems, and this can be done using `tune_bayes()`.
 
 Herein, however, grid search will suffice.
 To this end, let's create a grid of all necessary parameter combinations.
@@ -359,7 +395,7 @@ rf_grid
 Cross-validation and hyperparameter tuning can involve fitting many models.
 Herein, for example, we have to fit 3 x 9 models (folds x parameter combinations).
 To increase speed, we can fit the models in parallel.
-This is directly supported by the **tune** package (see `vignette("optimizations", package = "tune")`).
+This is directly supported by the **tune** package (see [https://tidymodels.github.io/tune/](https://tidymodels.github.io/tune/articles/extras/optimizations.html#parallel-processing)).
 
 ```{r parallelization, eval = FALSE}
 library("doFuture")
@@ -440,3 +476,15 @@ Alex Hayes has a related [blog post](https://www.alexpghayes.com/blog/implementi
 - Recipe steps for dealing with unbalanced data are provided by the [themis](https://cran.r-project.org/web/packages/themis/index.html) package.
 - There are a few more tidymodels packages that I did not cover herein, like **infer** or **tidytext**. Read more about these at https://tidymodels.github.io/tidymodels/.
 
+## Session Info
+
+```{r}
+sessioninfo::session_info()
+```
+
+## Updates
+
+This blog post was modified on 2012-04-02.
+In the previous version, cross-validation in the section *Evaluating Model Performance* above was done using a recipe that was prepped on the whole training data.
+This could potentially lead to [data leakage](https://machinelearningmastery.com/data-leakage-machine-learning/), as pointed out by [Aaron R. Williams](https://twitter.com/awunderground/status/1232485357955891200).
+Thus, this was changed and the new version uses a recipe that is prepped separately for each fold.
