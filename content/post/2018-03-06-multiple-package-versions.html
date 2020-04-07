@@ -16,57 +16,118 @@ output:
 
 <div id="TOC">
 <ul>
-<li><a href="#installing-packages-to-a-different-location">Installing Packages to a Different Location</a></li>
-<li><a href="#installing-packages-to-a-different-location-using-devtools">Installing Packages to a Different Location Using devtools</a></li>
-<li><a href="#loading-packages">Loading Packages</a></li>
+<li><a href="#installing-packages-to-a-custom-location">Installing Packages to a Custom Location</a></li>
+<li><a href="#installing-development-packages">Installing Development Packages</a></li>
+<li><a href="#installing-outdated-packages">Installing Outdated Packages</a></li>
+<li><a href="#special-cases">Special cases</a></li>
+<li><a href="#reproducibility-via-a-project-specific-library">Reproducibility via a Project-Specific Library</a></li>
 </ul>
 </div>
 
 <p>Recently, I had to install an older version of an R package, because a function was deprecated that I wanted to use.
-I wanted to install the old version in addition to and not instead of the new version and I came up with the following solution.</p>
-<div id="installing-packages-to-a-different-location" class="section level2">
-<h2>Installing Packages to a Different Location</h2>
-<pre class="r"><code>library(devtools)
-library(httr)
-library(curl)</code></pre>
-<p>In addition to my custom Windows library, I created two new folders to store packages in, one for older packages and one for devel versions.</p>
-<pre class="r"><code>dev_lib &lt;- file.path(&quot;~/../Documents/R/win-library/dev-versions/&quot;)
-old_lib &lt;- file.path(&quot;~/../Documents/R/win-library/old-versions/&quot;)
+I wanted to install the old version in addition to and not instead of the new version.</p>
+<p><em>This post has been updated in April 2020.
+Previously, <code>install_version()</code> and <code>install_github()</code> had no <code>lib</code> argument which made it necessary to use a workaround via the withr package to install to a non-standard library.
+Today, these functions pass <code>lib</code> to <code>install.packages()</code>, which makes this whole endeavor a lot easier.</em></p>
+<div id="installing-packages-to-a-custom-location" class="section level2">
+<h2>Installing Packages to a Custom Location</h2>
+<pre class="r"><code>library(&quot;remotes&quot;)
+library(&quot;fs&quot;)</code></pre>
+<p>In addition to my standard Windows library, I created two new folders to store packages, one for older packages and one for devel versions.</p>
+<pre class="r"><code>dev_lib &lt;- path_home_r(&quot;R/win-library/dev-versions/&quot;)
+old_lib &lt;- path_home_r(&quot;R/win-library/old-versions/&quot;)
 
-list.dirs(&quot;~/../Documents/R/win-library&quot;, recursive = FALSE)
-#&gt; [1] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/3.5&quot;         
-#&gt; [2] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/dev-versions&quot;
-#&gt; [3] &quot;C:/Users/plieninger/Documents/../Documents/R/win-library/old-versions&quot;</code></pre>
-<p>Then, I can install packages in these folders using custom arguments:</p>
-<pre class="r"><code>install.packages(&quot;~/../Downloads/MplusAutomation_0.7.tar.gz&quot;,
-                 lib = old_lib, repos = NULL)</code></pre>
+# dir_create(dev_lib)
+# dir_create(old_lib)</code></pre>
+<p>The aim was to have a folder structure similar to the one shown below:</p>
+<pre><code>C:/Users/hp/Documents/R
+└── win-library
+    ├── 3.5
+    ├── 3.6
+    |   ├── ...
+    |   ├── dplyr
+    |   ├── ...
+    │   ├── MplusAutomation
+    |   └── ...
+    ├── dev-versions
+    │   └── dplyr
+    └── old-versions
+        └── MplusAutomation</code></pre>
 </div>
-<div id="installing-packages-to-a-different-location-using-devtools" class="section level2">
-<h2>Installing Packages to a Different Location Using devtools</h2>
-<p><code>devtools::install_version()</code> allows to install a specific version of a package automatically without having to manually download the archive.
-However, you cannot use a custom path, but <code>withr::with_libpaths()</code> can take care of that. Here, for example, I install an old version of <strong>MplusAutomation</strong> and the devel version of <strong>ggplot2</strong>.</p>
-<pre class="r"><code>withr::with_libpaths(new = old_lib,
-                     code = install_version(&quot;MplusAutomation&quot;,
-                                            version = &quot;0.7&quot;,
-                                            dependencies = FALSE))</code></pre>
-<pre class="r"><code>withr::with_libpaths(new = dev_lib,
-                     code = install_github(&quot;tidyverse/ggplot2&quot;,
-                                           dependencies = FALSE))</code></pre>
-<p>Note, that I loaded <strong>devtools</strong>, <strong>httr</strong>, and <strong>curl</strong> above, because they need to be available inside <code>with_libpaths()</code>. Furthermore, I used <code>dependencies = FALSE</code>, because I already have the package dependencies in my default folder <code>&quot;/win.library/3.4/&quot;</code> and do not want them to be installed in the custom folders as well.</p>
+<div id="installing-development-packages" class="section level2">
+<h2>Installing Development Packages</h2>
+<p>The <a href="https://remotes.r-lib.org/">remotes</a> package has many functions to install packages from various sources.
+The functions in remotes used to live in the devtools package and can still be used via devtools.</p>
+<p>Probably the function that is used most is <code>install_github()</code>, which I use here to install the current version of the dplyr package from <a href="https://github.com/tidyverse/dplyr/" class="uri">https://github.com/tidyverse/dplyr/</a>.</p>
+<pre class="r"><code>install_github(&quot;tidyverse/dplyr&quot;, lib = dev_lib, upgrade = &quot;always&quot;)</code></pre>
+<p>Now, I can either load the CRAN version or the development version.
+As of this writing, the new function <code>relocate()</code> is not yet part of the CRAN version such that the first attempt fails.</p>
+<pre class="r"><code>head(iris)
+#&gt;   Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+#&gt; 1          5.1         3.5          1.4         0.2  setosa
+#&gt; 2          4.9         3.0          1.4         0.2  setosa
+#&gt; 3          4.7         3.2          1.3         0.2  setosa
+#&gt; 4          4.6         3.1          1.5         0.2  setosa
+#&gt; 5          5.0         3.6          1.4         0.2  setosa
+#&gt; 6          5.4         3.9          1.7         0.4  setosa
+
+library(&quot;dplyr&quot;)
+packageVersion(&quot;dplyr&quot;)
+#&gt; [1] &#39;0.8.5&#39;
+try(relocate(iris, Species))
+#&gt; Error in relocate(iris, Species) : could not find function &quot;relocate&quot;
+
+detach(&quot;package:dplyr&quot;)
+
+library(&quot;dplyr&quot;, lib.loc = dev_lib)
+packageVersion(&quot;dplyr&quot;)
+#&gt; [1] &#39;0.8.99.9002&#39;
+head( relocate(iris, Species) )
+#&gt;   Species Sepal.Length Sepal.Width Petal.Length Petal.Width
+#&gt; 1  setosa          5.1         3.5          1.4         0.2
+#&gt; 2  setosa          4.9         3.0          1.4         0.2
+#&gt; 3  setosa          4.7         3.2          1.3         0.2
+#&gt; 4  setosa          4.6         3.1          1.5         0.2
+#&gt; 5  setosa          5.0         3.6          1.4         0.2
+#&gt; 6  setosa          5.4         3.9          1.7         0.4</code></pre>
 </div>
-<div id="loading-packages" class="section level2">
-<h2>Loading Packages</h2>
-<p>When I load <strong>MplusAutomation</strong> (version 0.7-1), the function <code>extractModelSummaries()</code> is not available, and the call returns an error.</p>
+<div id="installing-outdated-packages" class="section level2">
+<h2>Installing Outdated Packages</h2>
+<p><code>remotes::install_version()</code> allows to install an outdated version of a package automatically without having to manually download the archive.</p>
+<pre class="r"><code>install_version(&quot;MplusAutomation&quot;, version = &quot;0.7&quot;, lib = old_lib)</code></pre>
+<p>Now, I can either load the CRAN version or the development version.
+In the current CRAN version, the function <code>extractModelSummaries()</code> is no longer available such that the first attempt fails.</p>
 <pre class="r"><code>suppressPackageStartupMessages(
-    library(MplusAutomation)
-    )
+    library(&quot;MplusAutomation&quot;)
+)
+packageVersion(&quot;MplusAutomation&quot;)
+#&gt; [1] &#39;0.7.3&#39;
 
-# doesn&#39;t work:
 MplusAutomation::extractModelSummaries()
-#&gt; extractModelSummaries has been deprecated. Please use readModels(&quot;nameofMplusoutfile.out&quot;, what=&quot;summaries&quot;)$summaries to replicate the old functionality.</code></pre>
-<p>However, when I load the old version 0.7, I can use this function as I did in previous years.</p>
-<pre class="r"><code>library(MplusAutomation, lib.loc = old_lib)
+#&gt; extractModelSummaries has been deprecated. Please use readModels(&quot;nameofMplusoutfile.out&quot;, what=&quot;summaries&quot;)$summaries to replicate the old functionality.
 
-# works:
-MplusAutomation::extractModelSummaries()</code></pre>
+detach(&quot;package:MplusAutomation&quot;)
+
+library(&quot;MplusAutomation&quot;, lib.loc = old_lib)
+packageVersion(&quot;MplusAutomation&quot;)
+#&gt; [1] &#39;0.7&#39;
+
+# works with a valid target:
+# MplusAutomation::extractModelSummaries(target = NULL)</code></pre>
+</div>
+<div id="special-cases" class="section level2">
+<h2>Special cases</h2>
+<p>As noted above, the package <a href="http://withr.r-lib.org/">withr</a> can give you further control if that is necessary.
+In the original version of this blog post, I used <code>with_libpaths()</code>, since <code>install_github()</code> did not accept a <code>lib</code> argument in the past.</p>
+<pre class="r"><code>library(&quot;withr&quot;)
+with_libpaths(new = dev_lib,
+              code = install_github(&quot;tidyverse/dplyr&quot;,
+                                    dependencies = FALSE))</code></pre>
+</div>
+<div id="reproducibility-via-a-project-specific-library" class="section level2">
+<h2>Reproducibility via a Project-Specific Library</h2>
+<p>Sometimes, you want more control.
+You may want to specify exactly the version of an R package that should be used (e.g., dplyr 0.8.0.1).
+This is the time for a dependency management system that allows you to have project-specific libraries.
+In R, this is best managed by means of the <a href="https://rstudio.github.io/packrat/">packrat</a> package or its successor, the <a href="https://rstudio.github.io/renv/">renv</a> package.</p>
 </div>
