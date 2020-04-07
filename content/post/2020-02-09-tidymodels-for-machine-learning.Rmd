@@ -24,19 +24,6 @@ output:
 knitr::opts_chunk$set(echo = TRUE, collapse = TRUE, comment = "#>")
 options(width = 90)
 Sys.setenv("RSTUDIO_CONSOLE_WIDTH" = 90)
-
-predict.workflow <- function (object, new_data, type = NULL, opts = list(), ...) 
-{
-    workflow <- object
-    if (!workflow$trained) {
-        abort("Workflow has not yet been trained. Do you need to call `fit()`?")
-    }
-    blueprint <- workflow$pre$mold$blueprint
-    forged <- hardhat::forge(new_data, blueprint, outcomes = TRUE)
-    new_data <- forged$predictors
-    fit <- workflow$fit$fit
-    predict(fit, new_data, type = type, opts = opts, ...)
-}
 ```
 
 caret is a well known R package for machine learning, which includes almost everything from data pre-processing to cross-validation.
@@ -399,7 +386,7 @@ This is directly supported by the **tune** package (see [https://tidymodels.gith
 
 ```{r parallelization, eval = FALSE}
 library("doFuture")
-all_cores <- parallel::detectCores(logical = FALSE)
+all_cores <- parallel::detectCores(logical = FALSE) - 1
 
 registerDoFuture()
 cl <- makeCluster(all_cores)
@@ -418,12 +405,11 @@ The results can be examined using `autoplot()` and `show_best()`:
 ```{r hyperparameter-tuning-in-R, eval = T}
 autoplot(rf_search, metric = "rmse") +
     labs(title = "Results of Grid Search for Two Tuning Parameters of a Random Forest")
-show_best(rf_search, "rmse", maximize = FALSE, n = 9)
+show_best(rf_search, "rmse", n = 9)
 
-select_best(rf_search, metric = "rmse", maximize = FALSE)
+select_best(rf_search, metric = "rmse")
 
-select_by_one_std_err(rf_search, mtry, degree,
-                      metric = "rmse", maximize = FALSE)
+select_by_one_std_err(rf_search, mtry, degree, metric = "rmse")
 ```
 
 With a cross-validation RMSE of ca. 0.12, the random forest model seems to outperform the linear regression from above.
@@ -435,30 +421,40 @@ We saw above that a quadratic trend was enough to get a good model.
 Furthermore, cross-validation revealed that `mtry = 4` seems to perform well.
 
 To use this combination of hyperparameters, we `fit()` the corresponding model (or workflow, more precisely) on the whole training data set `dia_train`.
-This model (or workflow) can than be used to `predict()` on data never seen before, namely, `dia_test` in the present case.
 
 ```{r}
-rf_param_final <- 
-    select_by_one_std_err(rf_search, mtry, degree,
-                          metric = "rmse", maximize = FALSE)
+rf_param_final <- select_by_one_std_err(rf_search, mtry, degree,
+                                        metric = "rmse")
 
-rf_wflow_final <- 
-    finalize_workflow(rf_wflow, rf_param_final)
+rf_wflow_final <- finalize_workflow(rf_wflow, rf_param_final)
 
-rf_wflow_final_fit <- 
-    fit(rf_wflow_final, data = dia_train)
+rf_wflow_final_fit <- fit(rf_wflow_final, data = dia_train)
+```
 
-dia_test$.pred <- predict(rf_wflow_final_fit, new_data = dia_test)$.pred
+Now, we want to use this to `predict()` on data never seen before, namely, `dia_test`.
+Unfortunately, `predict(rf_wflow_final_fit, new_data = dia_test)` does not work in the present case, because the outcome is modified in the recipe via `step_log()`.^[Using (a workflow with) a recipe, which modifies the outcome, for prediction would require skipping the respective recipe step at `bake()` time via `step_log(skip = TRUE)`.
+While this is a good idea for predicting on the test data, it is a bad idea for predicting on the assessment data during cross-validation (see also https://github.com/tidymodels/workflows/issues/31).]
+
+Thus, we need a little workaround: 
+The prepped recipe is extracted from the workflow, and this can then be used to `bake()` the testing data.
+This baked data set together with the extracted model can then be used for the final predictions.
+
+```{r}
+dia_rec3     <- pull_workflow_prepped_recipe(rf_wflow_final_fit)
+rf_final_fit <- pull_workflow_fit(rf_wflow_final_fit)
+
+dia_test$.pred <- predict(rf_final_fit, 
+                          new_data = bake(dia_rec3, dia_test))$.pred
 dia_test$logprice <- log(dia_test$price)
 
 metrics(dia_test, truth = logprice, estimate = .pred)
 ```
 
-As you can see, we get an RMSE of `r round(pull(rmse(dia_test, truth = log(price), estimate = .pred)), 2)`, which is even slightly better compared to the cross-validation RMSE.
+As you can see, we get an RMSE of `r round(pull(rmse(dia_test, truth = log(price), estimate = .pred)), 2)` on the testing data, which is even slightly better compared to the cross-validation RMSE.
 
 ## Summary
 
-The tidymodels ecosystem bundles together a set of packages, that work hand in hand to solve machine-learning problems from start to end.
+The tidymodels ecosystem bundles together a set of packages that work hand in hand to solve machine-learning problems from start to end.
 Together with the data-wrangling facilities in the **tidyverse** and the plotting tools from **ggplot2**, this makes for a rich toolbox for every data scientist working with R.
 
 The only thing that is definitely missing in **tidymodels** is a package for combining different machine learning models (i.e., ensemble/stacking/super learner).

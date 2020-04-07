@@ -54,9 +54,9 @@ Herein, I will walk through a machine learning example from start to end and exp
 library(&quot;tidymodels&quot;)
 #&gt; -- Attaching packages ------------------------------------------------ tidymodels 0.1.0 --
 #&gt; v broom     0.5.5      v recipes   0.1.10
-#&gt; v dials     0.0.5      v rsample   0.0.6 
+#&gt; v dials     0.0.6      v rsample   0.0.6 
 #&gt; v dplyr     0.8.5      v tibble    3.0.0 
-#&gt; v ggplot2   3.3.0      v tune      0.0.1 
+#&gt; v ggplot2   3.3.0      v tune      0.1.0 
 #&gt; v infer     0.5.1      v workflows 0.1.1 
 #&gt; v parsnip   0.0.5      v yardstick 0.0.6 
 #&gt; v purrr     0.3.3
@@ -507,7 +507,7 @@ Herein, for example, we have to fit 3 x 9 models (folds x parameter combinations
 To increase speed, we can fit the models in parallel.
 This is directly supported by the <strong>tune</strong> package (see <a href="https://tidymodels.github.io/tune/articles/extras/optimizations.html#parallel-processing">https://tidymodels.github.io/tune/</a>).</p>
 <pre class="r"><code>library(&quot;doFuture&quot;)
-all_cores &lt;- parallel::detectCores(logical = FALSE)
+all_cores &lt;- parallel::detectCores(logical = FALSE) - 1
 
 registerDoFuture()
 cl &lt;- makeCluster(all_cores)
@@ -519,7 +519,7 @@ plan(future::cluster, workers = cl)</code></pre>
 <pre class="r"><code>autoplot(rf_search, metric = &quot;rmse&quot;) +
     labs(title = &quot;Results of Grid Search for Two Tuning Parameters of a Random Forest&quot;)</code></pre>
 <p><img src="/post/2020-02-09-tidymodels-for-machine-learning_files/figure-html/hyperparameter-tuning-in-R-1.png" width="672" /></p>
-<pre class="r"><code>show_best(rf_search, &quot;rmse&quot;, maximize = FALSE, n = 9)
+<pre class="r"><code>show_best(rf_search, &quot;rmse&quot;, n = 9)
 #&gt; # A tibble: 9 x 7
 #&gt;    mtry degree .metric .estimator  mean     n std_err
 #&gt;   &lt;int&gt;  &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt;
@@ -533,14 +533,13 @@ plan(future::cluster, workers = cl)</code></pre>
 #&gt; 8     3      2 rmse    standard   0.128     3 0.00569
 #&gt; 9     3      4 rmse    standard   0.128     3 0.00501
 
-select_best(rf_search, metric = &quot;rmse&quot;, maximize = FALSE)
+select_best(rf_search, metric = &quot;rmse&quot;)
 #&gt; # A tibble: 1 x 2
 #&gt;    mtry degree
 #&gt;   &lt;int&gt;  &lt;int&gt;
 #&gt; 1     5      2
 
-select_by_one_std_err(rf_search, mtry, degree,
-                      metric = &quot;rmse&quot;, maximize = FALSE)
+select_by_one_std_err(rf_search, mtry, degree, metric = &quot;rmse&quot;)
 #&gt; # A tibble: 1 x 9
 #&gt;    mtry degree .metric .estimator  mean     n std_err .best .bound
 #&gt;   &lt;int&gt;  &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
@@ -552,19 +551,23 @@ Furthermore, 0.12 is (hopefully) a realistic estimate of the out-of-sample error
 <h3>Selecting the Best Model to Make the Final Predictions</h3>
 <p>We saw above that a quadratic trend was enough to get a good model.
 Furthermore, cross-validation revealed that <code>mtry = 4</code> seems to perform well.</p>
-<p>To use this combination of hyperparameters, we <code>fit()</code> the corresponding model (or workflow, more precisely) on the whole training data set <code>dia_train</code>.
-This model (or workflow) can than be used to <code>predict()</code> on data never seen before, namely, <code>dia_test</code> in the present case.</p>
-<pre class="r"><code>rf_param_final &lt;- 
-    select_by_one_std_err(rf_search, mtry, degree,
-                          metric = &quot;rmse&quot;, maximize = FALSE)
+<p>To use this combination of hyperparameters, we <code>fit()</code> the corresponding model (or workflow, more precisely) on the whole training data set <code>dia_train</code>.</p>
+<pre class="r"><code>rf_param_final &lt;- select_by_one_std_err(rf_search, mtry, degree,
+                                        metric = &quot;rmse&quot;)
 
-rf_wflow_final &lt;- 
-    finalize_workflow(rf_wflow, rf_param_final)
+rf_wflow_final &lt;- finalize_workflow(rf_wflow, rf_param_final)
 
-rf_wflow_final_fit &lt;- 
-    fit(rf_wflow_final, data = dia_train)
+rf_wflow_final_fit &lt;- fit(rf_wflow_final, data = dia_train)</code></pre>
+<p>Now, we want to use this to <code>predict()</code> on data never seen before, namely, <code>dia_test</code>.
+Unfortunately, <code>predict(rf_wflow_final_fit, new_data = dia_test)</code> does not work in the present case, because the outcome is modified in the recipe via <code>step_log()</code>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>Thus, we need a little workaround:
+The prepped recipe is extracted from the workflow, and this can then be used to <code>bake()</code> the testing data.
+This baked data set together with the extracted model can then be used for the final predictions.</p>
+<pre class="r"><code>dia_rec3     &lt;- pull_workflow_prepped_recipe(rf_wflow_final_fit)
+rf_final_fit &lt;- pull_workflow_fit(rf_wflow_final_fit)
 
-dia_test$.pred &lt;- predict(rf_wflow_final_fit, new_data = dia_test)$.pred
+dia_test$.pred &lt;- predict(rf_final_fit, 
+                          new_data = bake(dia_rec3, dia_test))$.pred
 dia_test$logprice &lt;- log(dia_test$price)
 
 metrics(dia_test, truth = logprice, estimate = .pred)
@@ -574,12 +577,12 @@ metrics(dia_test, truth = logprice, estimate = .pred)
 #&gt; 1 rmse    standard      0.113 
 #&gt; 2 rsq     standard      0.988 
 #&gt; 3 mae     standard      0.0846</code></pre>
-<p>As you can see, we get an RMSE of 0.11, which is even slightly better compared to the cross-validation RMSE.</p>
+<p>As you can see, we get an RMSE of 0.11 on the testing data, which is even slightly better compared to the cross-validation RMSE.</p>
 </div>
 </div>
 <div id="summary" class="section level2">
 <h2>Summary</h2>
-<p>The tidymodels ecosystem bundles together a set of packages, that work hand in hand to solve machine-learning problems from start to end.
+<p>The tidymodels ecosystem bundles together a set of packages that work hand in hand to solve machine-learning problems from start to end.
 Together with the data-wrangling facilities in the <strong>tidyverse</strong> and the plotting tools from <strong>ggplot2</strong>, this makes for a rich toolbox for every data scientist working with R.</p>
 <p>The only thing that is definitely missing in <strong>tidymodels</strong> is a package for combining different machine learning models (i.e., ensemble/stacking/super learner).
 We have <a href="https://cran.r-project.org/package=caretEnsemble"><strong>caretEnsemble</strong></a> for <strong>caret</strong>, and I am sure they are working on something similar for <strong>tidymodels</strong> at RStudio.
@@ -611,146 +614,146 @@ Alex Hayes has a related <a href="https://www.alexpghayes.com/blog/implementing-
 #&gt;  collate  German_Germany.1252         
 #&gt;  ctype    German_Germany.1252         
 #&gt;  tz       Europe/Berlin               
-#&gt;  date     2020-04-02                  
+#&gt;  date     2020-04-07                  
 #&gt; 
 #&gt; - Packages -----------------------------------------------------------------------------
-#&gt;  package       * version    date       lib source                      
-#&gt;  assertthat      0.2.1      2019-03-21 [1] CRAN (R 3.6.2)              
-#&gt;  backports       1.1.5      2019-10-02 [1] CRAN (R 3.6.1)              
-#&gt;  base64enc       0.1-3      2015-07-28 [1] CRAN (R 3.6.0)              
-#&gt;  bayesplot       1.7.1      2019-12-01 [1] CRAN (R 3.6.2)              
-#&gt;  blogdown        0.18       2020-03-04 [1] CRAN (R 3.6.3)              
-#&gt;  bookdown        0.18       2020-03-05 [1] CRAN (R 3.6.3)              
-#&gt;  boot            1.3-23     2019-07-05 [2] CRAN (R 3.6.2)              
-#&gt;  broom         * 0.5.5      2020-02-29 [1] CRAN (R 3.6.3)              
-#&gt;  callr           3.4.3      2020-03-28 [1] CRAN (R 3.6.2)              
-#&gt;  class           7.3-15     2019-01-01 [2] CRAN (R 3.6.2)              
-#&gt;  cli             2.0.2      2020-02-28 [1] CRAN (R 3.6.3)              
-#&gt;  codetools       0.2-16     2018-12-24 [2] CRAN (R 3.6.2)              
-#&gt;  colorspace      1.4-1      2019-03-18 [1] CRAN (R 3.6.1)              
-#&gt;  colourpicker    1.0        2017-09-27 [1] CRAN (R 3.6.2)              
-#&gt;  conflicted    * 1.0.4      2019-06-21 [1] CRAN (R 3.6.3)              
-#&gt;  corrplot      * 0.84       2017-10-16 [1] CRAN (R 3.6.3)              
-#&gt;  crayon          1.3.4      2017-09-16 [1] CRAN (R 3.6.2)              
-#&gt;  crosstalk       1.1.0.1    2020-03-13 [1] CRAN (R 3.6.3)              
-#&gt;  dials         * 0.0.5      2020-04-01 [1] CRAN (R 3.6.2)              
-#&gt;  DiceDesign      1.8-1      2019-07-31 [1] CRAN (R 3.6.2)              
-#&gt;  digest          0.6.25     2020-02-23 [1] CRAN (R 3.6.3)              
-#&gt;  dplyr         * 0.8.5      2020-03-07 [1] CRAN (R 3.6.3)              
-#&gt;  DT              0.13       2020-03-23 [1] CRAN (R 3.6.3)              
-#&gt;  dygraphs        1.1.1.6    2018-07-11 [1] CRAN (R 3.6.2)              
-#&gt;  ellipsis        0.3.0      2019-09-20 [1] CRAN (R 3.6.2)              
-#&gt;  evaluate        0.14       2019-05-28 [1] CRAN (R 3.6.2)              
-#&gt;  fansi           0.4.1      2020-01-08 [1] CRAN (R 3.6.2)              
-#&gt;  farver          2.0.3      2020-01-16 [1] CRAN (R 3.6.2)              
-#&gt;  fastmap         1.0.1      2019-10-08 [1] CRAN (R 3.6.2)              
-#&gt;  foreach         1.5.0      2020-03-30 [1] CRAN (R 3.6.2)              
-#&gt;  furrr           0.1.0      2018-05-16 [1] CRAN (R 3.6.2)              
-#&gt;  future          1.16.0     2020-01-16 [1] CRAN (R 3.6.2)              
-#&gt;  generics        0.0.2      2018-11-29 [1] CRAN (R 3.6.2)              
-#&gt;  ggplot2       * 3.3.0      2020-03-05 [1] CRAN (R 3.6.3)              
-#&gt;  ggrepel       * 0.8.2      2020-03-08 [1] CRAN (R 3.6.3)              
-#&gt;  ggridges        0.5.2      2020-01-12 [1] CRAN (R 3.6.2)              
-#&gt;  globals         0.12.5     2019-12-07 [1] CRAN (R 3.6.1)              
-#&gt;  glue            1.3.2      2020-03-12 [1] CRAN (R 3.6.3)              
-#&gt;  gower           0.2.1      2019-05-14 [1] CRAN (R 3.6.1)              
-#&gt;  GPfit           1.0-8      2019-02-08 [1] CRAN (R 3.6.2)              
-#&gt;  gridExtra       2.3        2017-09-09 [1] CRAN (R 3.6.2)              
-#&gt;  gtable          0.3.0      2019-03-25 [1] CRAN (R 3.6.2)              
-#&gt;  gtools          3.8.1      2018-06-26 [1] CRAN (R 3.6.0)              
-#&gt;  hardhat         0.1.2      2020-02-28 [1] CRAN (R 3.6.3)              
-#&gt;  htmltools       0.4.0      2019-10-04 [1] CRAN (R 3.6.2)              
-#&gt;  htmlwidgets     1.5.1      2019-10-08 [1] CRAN (R 3.6.2)              
-#&gt;  httpuv          1.5.2      2019-09-11 [1] CRAN (R 3.6.2)              
-#&gt;  igraph          1.2.5      2020-03-19 [1] CRAN (R 3.6.3)              
-#&gt;  infer         * 0.5.1      2019-11-19 [1] CRAN (R 3.6.2)              
-#&gt;  inline          0.3.15     2018-05-18 [1] CRAN (R 3.6.2)              
-#&gt;  ipred           0.9-9      2019-04-28 [1] CRAN (R 3.6.2)              
-#&gt;  iterators       1.0.12     2019-07-26 [1] CRAN (R 3.6.2)              
-#&gt;  janeaustenr     0.1.5      2017-06-10 [1] CRAN (R 3.6.2)              
-#&gt;  knitr           1.28       2020-02-06 [1] CRAN (R 3.6.2)              
-#&gt;  labeling        0.3        2014-08-23 [1] CRAN (R 3.6.0)              
-#&gt;  later           1.0.0      2019-10-04 [1] CRAN (R 3.6.2)              
-#&gt;  lattice         0.20-38    2018-11-04 [2] CRAN (R 3.6.2)              
-#&gt;  lava            1.6.7      2020-03-05 [1] CRAN (R 3.6.3)              
-#&gt;  lhs             1.0.1      2019-02-03 [1] CRAN (R 3.6.2)              
-#&gt;  lifecycle       0.2.0      2020-03-06 [1] CRAN (R 3.6.3)              
-#&gt;  listenv         0.8.0      2019-12-05 [1] CRAN (R 3.6.2)              
-#&gt;  lme4            1.1-21     2019-03-05 [1] CRAN (R 3.6.2)              
-#&gt;  loo             2.2.0      2019-12-19 [1] CRAN (R 3.6.2)              
-#&gt;  lubridate       1.7.4      2018-04-11 [1] CRAN (R 3.6.2)              
-#&gt;  magrittr        1.5        2014-11-22 [1] CRAN (R 3.6.2)              
-#&gt;  markdown        1.1        2019-08-07 [1] CRAN (R 3.6.2)              
-#&gt;  MASS            7.3-51.4   2019-03-31 [2] CRAN (R 3.6.2)              
-#&gt;  Matrix          1.2-18     2019-11-27 [2] CRAN (R 3.6.2)              
-#&gt;  matrixStats     0.56.0     2020-03-13 [1] CRAN (R 3.6.3)              
-#&gt;  memoise         1.1.0      2017-04-21 [1] CRAN (R 3.6.2)              
-#&gt;  mgcv            1.8-31     2019-11-09 [2] CRAN (R 3.6.2)              
-#&gt;  mime            0.9        2020-02-04 [1] CRAN (R 3.6.2)              
-#&gt;  miniUI          0.1.1.1    2018-05-18 [1] CRAN (R 3.6.2)              
-#&gt;  minqa           1.2.4      2014-10-09 [1] CRAN (R 3.6.2)              
-#&gt;  munsell         0.5.0      2018-06-12 [1] CRAN (R 3.6.2)              
-#&gt;  nlme            3.1-142    2019-11-07 [2] CRAN (R 3.6.2)              
-#&gt;  nloptr          1.2.2.1    2020-03-11 [1] CRAN (R 3.6.3)              
-#&gt;  nnet            7.3-12     2016-02-02 [2] CRAN (R 3.6.2)              
-#&gt;  parsnip       * 0.0.5      2020-01-07 [1] CRAN (R 3.6.2)              
-#&gt;  pillar          1.4.3      2019-12-20 [1] CRAN (R 3.6.2)              
-#&gt;  pkgbuild        1.0.6      2019-10-09 [1] CRAN (R 3.6.2)              
-#&gt;  pkgconfig       2.0.3      2019-09-22 [1] CRAN (R 3.6.2)              
-#&gt;  plyr            1.8.6      2020-03-03 [1] CRAN (R 3.6.3)              
-#&gt;  prettyunits     1.1.1      2020-01-24 [1] CRAN (R 3.6.2)              
-#&gt;  pROC            1.16.2     2020-03-19 [1] CRAN (R 3.6.3)              
-#&gt;  processx        3.4.2      2020-02-09 [1] CRAN (R 3.6.2)              
-#&gt;  prodlim         2019.11.13 2019-11-17 [1] CRAN (R 3.6.2)              
-#&gt;  promises        1.1.0      2019-10-04 [1] CRAN (R 3.6.2)              
-#&gt;  ps              1.3.2      2020-02-13 [1] CRAN (R 3.6.2)              
-#&gt;  purrr         * 0.3.3      2019-10-18 [1] CRAN (R 3.6.2)              
-#&gt;  R6              2.4.1      2019-11-12 [1] CRAN (R 3.6.2)              
-#&gt;  ranger          0.12.1     2020-01-10 [1] CRAN (R 3.6.2)              
-#&gt;  Rcpp            1.0.4      2020-03-17 [1] CRAN (R 3.6.3)              
-#&gt;  recipes       * 0.1.10     2020-03-18 [1] CRAN (R 3.6.3)              
-#&gt;  reshape2        1.4.3      2017-12-11 [1] CRAN (R 3.6.2)              
-#&gt;  rlang           0.4.5.9000 2020-03-25 [1] Github (r-lib/rlang@a90b04b)
-#&gt;  rmarkdown       2.1        2020-01-20 [1] CRAN (R 3.6.2)              
-#&gt;  rpart           4.1-15     2019-04-12 [2] CRAN (R 3.6.2)              
-#&gt;  rsample       * 0.0.6      2020-03-31 [1] CRAN (R 3.6.2)              
-#&gt;  rsconnect       0.8.16     2019-12-13 [1] CRAN (R 3.6.2)              
-#&gt;  rstan           2.19.3     2020-02-11 [1] CRAN (R 3.6.2)              
-#&gt;  rstanarm        2.19.3     2020-02-11 [1] CRAN (R 3.6.2)              
-#&gt;  rstantools      2.0.0      2019-09-15 [1] CRAN (R 3.6.2)              
-#&gt;  rstudioapi      0.11       2020-02-07 [1] CRAN (R 3.6.2)              
-#&gt;  scales        * 1.1.0      2019-11-18 [1] CRAN (R 3.6.2)              
-#&gt;  sessioninfo     1.1.1      2018-11-05 [1] CRAN (R 3.6.2)              
-#&gt;  shiny           1.4.0.2    2020-03-13 [1] CRAN (R 3.6.3)              
-#&gt;  shinyjs         1.1        2020-01-13 [1] CRAN (R 3.6.2)              
-#&gt;  shinystan       2.5.0      2018-05-01 [1] CRAN (R 3.6.2)              
-#&gt;  shinythemes     1.1.2      2018-11-06 [1] CRAN (R 3.6.2)              
-#&gt;  SnowballC       0.6.0      2019-01-15 [1] CRAN (R 3.6.0)              
-#&gt;  StanHeaders     2.21.0-1   2020-01-19 [1] CRAN (R 3.6.2)              
-#&gt;  stringi         1.4.6      2020-02-17 [1] CRAN (R 3.6.2)              
-#&gt;  stringr         1.4.0      2019-02-10 [1] CRAN (R 3.6.2)              
-#&gt;  survival        3.1-8      2019-12-03 [2] CRAN (R 3.6.2)              
-#&gt;  threejs         0.3.3      2020-01-21 [1] CRAN (R 3.6.2)              
-#&gt;  tibble        * 3.0.0      2020-03-30 [1] CRAN (R 3.6.2)              
-#&gt;  tidymodels    * 0.1.0      2020-02-16 [1] CRAN (R 3.6.2)              
-#&gt;  tidyposterior   0.0.2      2018-11-15 [1] CRAN (R 3.6.2)              
-#&gt;  tidypredict     0.4.5      2020-02-10 [1] CRAN (R 3.6.2)              
-#&gt;  tidyr           1.0.2      2020-01-24 [1] CRAN (R 3.6.2)              
-#&gt;  tidyselect      1.0.0      2020-01-27 [1] CRAN (R 3.6.2)              
-#&gt;  tidytext        0.2.3      2020-03-04 [1] CRAN (R 3.6.3)              
-#&gt;  timeDate        3043.102   2018-02-21 [1] CRAN (R 3.6.2)              
-#&gt;  tokenizers      0.2.1      2018-03-29 [1] CRAN (R 3.6.2)              
-#&gt;  tune          * 0.0.1      2020-02-11 [1] CRAN (R 3.6.3)              
-#&gt;  utf8            1.1.4      2018-05-24 [1] CRAN (R 3.6.2)              
-#&gt;  vctrs           0.2.4      2020-03-10 [1] CRAN (R 3.6.3)              
-#&gt;  withr           2.1.2      2018-03-15 [1] CRAN (R 3.6.2)              
-#&gt;  workflows     * 0.1.1      2020-03-17 [1] CRAN (R 3.6.3)              
-#&gt;  xfun            0.12       2020-01-13 [1] CRAN (R 3.6.2)              
-#&gt;  xtable          1.8-4      2019-04-21 [1] CRAN (R 3.6.2)              
-#&gt;  xts             0.12-0     2020-01-19 [1] CRAN (R 3.6.2)              
-#&gt;  yaml            2.2.1      2020-02-01 [1] CRAN (R 3.6.2)              
-#&gt;  yardstick     * 0.0.6      2020-03-17 [1] CRAN (R 3.6.3)              
-#&gt;  zoo             1.8-7      2020-01-10 [1] CRAN (R 3.6.2)              
+#&gt;  package       * version     date       lib source                      
+#&gt;  assertthat      0.2.1       2019-03-21 [1] CRAN (R 3.6.2)              
+#&gt;  backports       1.1.6       2020-04-05 [1] CRAN (R 3.6.2)              
+#&gt;  base64enc       0.1-3       2015-07-28 [1] CRAN (R 3.6.0)              
+#&gt;  bayesplot       1.7.1       2019-12-01 [1] CRAN (R 3.6.2)              
+#&gt;  blogdown        0.18        2020-03-04 [1] CRAN (R 3.6.3)              
+#&gt;  bookdown        0.18        2020-03-05 [1] CRAN (R 3.6.3)              
+#&gt;  boot            1.3-23      2019-07-05 [2] CRAN (R 3.6.2)              
+#&gt;  broom         * 0.5.5       2020-02-29 [1] CRAN (R 3.6.3)              
+#&gt;  callr           3.4.3       2020-03-28 [1] CRAN (R 3.6.2)              
+#&gt;  class           7.3-15      2019-01-01 [2] CRAN (R 3.6.2)              
+#&gt;  cli             2.0.2       2020-02-28 [1] CRAN (R 3.6.3)              
+#&gt;  codetools       0.2-16      2018-12-24 [2] CRAN (R 3.6.2)              
+#&gt;  colorspace      1.4-1       2019-03-18 [1] CRAN (R 3.6.1)              
+#&gt;  colourpicker    1.0         2017-09-27 [1] CRAN (R 3.6.2)              
+#&gt;  conflicted    * 1.0.4       2019-06-21 [1] CRAN (R 3.6.3)              
+#&gt;  corrplot      * 0.84        2017-10-16 [1] CRAN (R 3.6.3)              
+#&gt;  crayon          1.3.4       2017-09-16 [1] CRAN (R 3.6.2)              
+#&gt;  crosstalk       1.1.0.1     2020-03-13 [1] CRAN (R 3.6.3)              
+#&gt;  dials         * 0.0.6       2020-04-03 [1] CRAN (R 3.6.2)              
+#&gt;  DiceDesign      1.8-1       2019-07-31 [1] CRAN (R 3.6.2)              
+#&gt;  digest          0.6.25      2020-02-23 [1] CRAN (R 3.6.3)              
+#&gt;  dplyr         * 0.8.5       2020-03-07 [1] CRAN (R 3.6.3)              
+#&gt;  DT              0.13        2020-03-23 [1] CRAN (R 3.6.3)              
+#&gt;  dygraphs        1.1.1.6     2018-07-11 [1] CRAN (R 3.6.2)              
+#&gt;  ellipsis        0.3.0       2019-09-20 [1] CRAN (R 3.6.2)              
+#&gt;  evaluate        0.14        2019-05-28 [1] CRAN (R 3.6.2)              
+#&gt;  fansi           0.4.1       2020-01-08 [1] CRAN (R 3.6.2)              
+#&gt;  farver          2.0.3       2020-01-16 [1] CRAN (R 3.6.2)              
+#&gt;  fastmap         1.0.1       2019-10-08 [1] CRAN (R 3.6.2)              
+#&gt;  foreach         1.5.0       2020-03-30 [1] CRAN (R 3.6.2)              
+#&gt;  furrr           0.1.0       2018-05-16 [1] CRAN (R 3.6.2)              
+#&gt;  future          1.16.0      2020-01-16 [1] CRAN (R 3.6.2)              
+#&gt;  generics        0.0.2       2018-11-29 [1] CRAN (R 3.6.2)              
+#&gt;  ggplot2       * 3.3.0       2020-03-05 [1] CRAN (R 3.6.3)              
+#&gt;  ggrepel       * 0.8.2       2020-03-08 [1] CRAN (R 3.6.3)              
+#&gt;  ggridges        0.5.2       2020-01-12 [1] CRAN (R 3.6.2)              
+#&gt;  globals         0.12.5      2019-12-07 [1] CRAN (R 3.6.1)              
+#&gt;  glue            1.4.0       2020-04-03 [1] CRAN (R 3.6.2)              
+#&gt;  gower           0.2.1       2019-05-14 [1] CRAN (R 3.6.1)              
+#&gt;  GPfit           1.0-8       2019-02-08 [1] CRAN (R 3.6.2)              
+#&gt;  gridExtra       2.3         2017-09-09 [1] CRAN (R 3.6.2)              
+#&gt;  gtable          0.3.0       2019-03-25 [1] CRAN (R 3.6.2)              
+#&gt;  gtools          3.8.2       2020-03-31 [1] CRAN (R 3.6.3)              
+#&gt;  hardhat         0.1.2       2020-02-28 [1] CRAN (R 3.6.3)              
+#&gt;  htmltools       0.4.0       2019-10-04 [1] CRAN (R 3.6.2)              
+#&gt;  htmlwidgets     1.5.1       2019-10-08 [1] CRAN (R 3.6.2)              
+#&gt;  httpuv          1.5.2       2019-09-11 [1] CRAN (R 3.6.2)              
+#&gt;  igraph          1.2.5       2020-03-19 [1] CRAN (R 3.6.3)              
+#&gt;  infer         * 0.5.1       2019-11-19 [1] CRAN (R 3.6.2)              
+#&gt;  inline          0.3.15      2018-05-18 [1] CRAN (R 3.6.2)              
+#&gt;  ipred           0.9-9       2019-04-28 [1] CRAN (R 3.6.2)              
+#&gt;  iterators       1.0.12      2019-07-26 [1] CRAN (R 3.6.2)              
+#&gt;  janeaustenr     0.1.5       2017-06-10 [1] CRAN (R 3.6.2)              
+#&gt;  knitr           1.28        2020-02-06 [1] CRAN (R 3.6.2)              
+#&gt;  labeling        0.3         2014-08-23 [1] CRAN (R 3.6.0)              
+#&gt;  later           1.0.0       2019-10-04 [1] CRAN (R 3.6.2)              
+#&gt;  lattice         0.20-38     2018-11-04 [2] CRAN (R 3.6.2)              
+#&gt;  lava            1.6.7       2020-03-05 [1] CRAN (R 3.6.3)              
+#&gt;  lhs             1.0.1       2019-02-03 [1] CRAN (R 3.6.2)              
+#&gt;  lifecycle       0.2.0       2020-03-06 [1] CRAN (R 3.6.3)              
+#&gt;  listenv         0.8.0       2019-12-05 [1] CRAN (R 3.6.2)              
+#&gt;  lme4            1.1-21      2019-03-05 [1] CRAN (R 3.6.2)              
+#&gt;  loo             2.2.0       2019-12-19 [1] CRAN (R 3.6.2)              
+#&gt;  lubridate       1.7.4       2018-04-11 [1] CRAN (R 3.6.2)              
+#&gt;  magrittr        1.5         2014-11-22 [1] CRAN (R 3.6.2)              
+#&gt;  markdown        1.1         2019-08-07 [1] CRAN (R 3.6.2)              
+#&gt;  MASS            7.3-51.4    2019-03-31 [2] CRAN (R 3.6.2)              
+#&gt;  Matrix          1.2-18      2019-11-27 [2] CRAN (R 3.6.2)              
+#&gt;  matrixStats     0.56.0      2020-03-13 [1] CRAN (R 3.6.3)              
+#&gt;  memoise         1.1.0       2017-04-21 [1] CRAN (R 3.6.2)              
+#&gt;  mgcv            1.8-31      2019-11-09 [2] CRAN (R 3.6.2)              
+#&gt;  mime            0.9         2020-02-04 [1] CRAN (R 3.6.2)              
+#&gt;  miniUI          0.1.1.1     2018-05-18 [1] CRAN (R 3.6.2)              
+#&gt;  minqa           1.2.4       2014-10-09 [1] CRAN (R 3.6.2)              
+#&gt;  munsell         0.5.0       2018-06-12 [1] CRAN (R 3.6.2)              
+#&gt;  nlme            3.1-142     2019-11-07 [2] CRAN (R 3.6.2)              
+#&gt;  nloptr          1.2.2.1     2020-03-11 [1] CRAN (R 3.6.3)              
+#&gt;  nnet            7.3-12      2016-02-02 [2] CRAN (R 3.6.2)              
+#&gt;  parsnip       * 0.0.5       2020-01-07 [1] CRAN (R 3.6.2)              
+#&gt;  pillar          1.4.3       2019-12-20 [1] CRAN (R 3.6.2)              
+#&gt;  pkgbuild        1.0.6       2019-10-09 [1] CRAN (R 3.6.2)              
+#&gt;  pkgconfig       2.0.3       2019-09-22 [1] CRAN (R 3.6.2)              
+#&gt;  plyr            1.8.6       2020-03-03 [1] CRAN (R 3.6.3)              
+#&gt;  prettyunits     1.1.1       2020-01-24 [1] CRAN (R 3.6.2)              
+#&gt;  pROC            1.16.2      2020-03-19 [1] CRAN (R 3.6.3)              
+#&gt;  processx        3.4.2       2020-02-09 [1] CRAN (R 3.6.2)              
+#&gt;  prodlim         2019.11.13  2019-11-17 [1] CRAN (R 3.6.2)              
+#&gt;  promises        1.1.0       2019-10-04 [1] CRAN (R 3.6.2)              
+#&gt;  ps              1.3.2       2020-02-13 [1] CRAN (R 3.6.2)              
+#&gt;  purrr         * 0.3.3       2019-10-18 [1] CRAN (R 3.6.2)              
+#&gt;  R6              2.4.1       2019-11-12 [1] CRAN (R 3.6.2)              
+#&gt;  ranger          0.12.1      2020-01-10 [1] CRAN (R 3.6.2)              
+#&gt;  Rcpp            1.0.4       2020-03-17 [1] CRAN (R 3.6.3)              
+#&gt;  recipes       * 0.1.10      2020-03-18 [1] CRAN (R 3.6.3)              
+#&gt;  reshape2        1.4.3       2017-12-11 [1] CRAN (R 3.6.2)              
+#&gt;  rlang           0.4.5.9000  2020-03-25 [1] Github (r-lib/rlang@a90b04b)
+#&gt;  rmarkdown       2.1         2020-01-20 [1] CRAN (R 3.6.2)              
+#&gt;  rpart           4.1-15      2019-04-12 [2] CRAN (R 3.6.2)              
+#&gt;  rsample       * 0.0.6       2020-03-31 [1] CRAN (R 3.6.2)              
+#&gt;  rsconnect       0.8.16      2019-12-13 [1] CRAN (R 3.6.2)              
+#&gt;  rstan           2.19.3      2020-02-11 [1] CRAN (R 3.6.2)              
+#&gt;  rstanarm        2.19.3      2020-02-11 [1] CRAN (R 3.6.2)              
+#&gt;  rstantools      2.0.0       2019-09-15 [1] CRAN (R 3.6.2)              
+#&gt;  rstudioapi      0.11        2020-02-07 [1] CRAN (R 3.6.2)              
+#&gt;  scales        * 1.1.0       2019-11-18 [1] CRAN (R 3.6.2)              
+#&gt;  sessioninfo     1.1.1       2018-11-05 [1] CRAN (R 3.6.2)              
+#&gt;  shiny           1.4.0.2     2020-03-13 [1] CRAN (R 3.6.3)              
+#&gt;  shinyjs         1.1         2020-01-13 [1] CRAN (R 3.6.2)              
+#&gt;  shinystan       2.5.0       2018-05-01 [1] CRAN (R 3.6.2)              
+#&gt;  shinythemes     1.1.2       2018-11-06 [1] CRAN (R 3.6.2)              
+#&gt;  SnowballC       0.7.0       2020-04-01 [1] CRAN (R 3.6.3)              
+#&gt;  StanHeaders     2.21.0-1    2020-01-19 [1] CRAN (R 3.6.2)              
+#&gt;  stringi         1.4.6       2020-02-17 [1] CRAN (R 3.6.2)              
+#&gt;  stringr         1.4.0       2019-02-10 [1] CRAN (R 3.6.2)              
+#&gt;  survival        3.1-8       2019-12-03 [2] CRAN (R 3.6.2)              
+#&gt;  threejs         0.3.3       2020-01-21 [1] CRAN (R 3.6.2)              
+#&gt;  tibble        * 3.0.0       2020-03-30 [1] CRAN (R 3.6.2)              
+#&gt;  tidymodels    * 0.1.0       2020-02-16 [1] CRAN (R 3.6.2)              
+#&gt;  tidyposterior   0.0.2       2018-11-15 [1] CRAN (R 3.6.2)              
+#&gt;  tidypredict     0.4.5       2020-02-10 [1] CRAN (R 3.6.2)              
+#&gt;  tidyr           1.0.2       2020-01-24 [1] CRAN (R 3.6.2)              
+#&gt;  tidyselect      1.0.0       2020-01-27 [1] CRAN (R 3.6.2)              
+#&gt;  tidytext        0.2.3       2020-03-04 [1] CRAN (R 3.6.3)              
+#&gt;  timeDate        3043.102    2018-02-21 [1] CRAN (R 3.6.2)              
+#&gt;  tokenizers      0.2.1       2018-03-29 [1] CRAN (R 3.6.2)              
+#&gt;  tune          * 0.1.0       2020-04-02 [1] CRAN (R 3.6.3)              
+#&gt;  utf8            1.1.4       2018-05-24 [1] CRAN (R 3.6.2)              
+#&gt;  vctrs           0.2.99.9010 2020-04-03 [1] Github (r-lib/vctrs@5c69793)
+#&gt;  withr           2.1.2       2018-03-15 [1] CRAN (R 3.6.2)              
+#&gt;  workflows     * 0.1.1       2020-03-17 [1] CRAN (R 3.6.3)              
+#&gt;  xfun            0.12        2020-01-13 [1] CRAN (R 3.6.2)              
+#&gt;  xtable          1.8-4       2019-04-21 [1] CRAN (R 3.6.2)              
+#&gt;  xts             0.12-0      2020-01-19 [1] CRAN (R 3.6.2)              
+#&gt;  yaml            2.2.1       2020-02-01 [1] CRAN (R 3.6.2)              
+#&gt;  yardstick     * 0.0.6       2020-03-17 [1] CRAN (R 3.6.3)              
+#&gt;  zoo             1.8-7       2020-01-10 [1] CRAN (R 3.6.2)              
 #&gt; 
 #&gt; [1] C:/Users/hp/Documents/R/win-library/3.6
 #&gt; [2] C:/Program Files/R/R-3.6.2/library</code></pre>
@@ -766,5 +769,7 @@ Thus, this was changed and the new version uses a recipe that is prepped separat
 <hr />
 <ol>
 <li id="fn1"><p>For a list of models available via <strong>parsnip</strong>, see <a href="https://tidymodels.github.io/parsnip/articles/articles/Models.html" class="uri">https://tidymodels.github.io/parsnip/articles/articles/Models.html</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Using (a workflow with) a recipe, which modifies the outcome, for prediction would require skipping the respective recipe step at <code>bake()</code> time via <code>step_log(skip = TRUE)</code>.
+While this is a good idea for predicting on the test data, it is a bad idea for predicting on the assessment data during cross-validation (see also <a href="https://github.com/tidymodels/workflows/issues/31" class="uri">https://github.com/tidymodels/workflows/issues/31</a>).<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
